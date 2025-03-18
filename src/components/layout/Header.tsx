@@ -6,11 +6,9 @@ import Image from "next/image";
 import logo from "@/assets/images/logoTeste.webp";
 import { UserMenu } from "./UserMenu";
 
-
-
 export function Header() {
     return (
-        <header className="bg-white border-b shadow-sm w-full">
+        <header className="bg-white border-b shadow-sm w-full sticky top-0 z-50">
             <div className="w-full max-w-[1600px] mx-auto flex justify-between items-center px-8 py-3">
                 {/* Esquerda: Logo + Nome do Sistema + Botão Fila */}
                 <div className="flex items-center gap-6">
@@ -20,8 +18,7 @@ export function Header() {
                         </div>
                         <span className="text-lg font-semibold">Controle de Fila</span>
                     </Link>
-
-                    {/* Botão de Navegação */}
+               
                     <Link
                         href="/fila"
                         className="flex items-center gap-2 px-3 py-1.5 text-blue-600 bg-blue-100 rounded-md text-sm font-medium hover:bg-blue-200 transition-colors"
@@ -37,5 +34,3 @@ export function Header() {
         </header>
     );
 }
-
-

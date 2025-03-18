@@ -1,30 +1,24 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ReactNode } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 
-interface CustomDialogProps {
-  trigger: ReactNode; 
-  title: string; 
-  description?: string; 
-  children: ReactNode; 
-}
+type CustomDialogProps = {
+  title: string;
+  description?: string;
+  trigger: React.ReactNode;
+  children: React.ReactNode;
+  open?: boolean; 
+  onOpenChange?: (open: boolean) => void; 
+};
 
-export function CustomDialog({ trigger, title, description, children }: CustomDialogProps) {
+export function CustomDialog({ title, description, trigger, children, open, onOpenChange }: CustomDialogProps) {
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-md p-6 rounded-lg shadow-lg">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
-          {description && <DialogDescription className="text-sm text-gray-500">{description}</DialogDescription>}
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         {children}
       </DialogContent>
