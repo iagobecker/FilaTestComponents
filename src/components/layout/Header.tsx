@@ -5,8 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import logo from "@/assets/images/logoTeste.webp";
 import { UserMenu } from "./UserMenu";
+import { usePathname } from "next/navigation";
 
 export function Header() {
+    const pathname = usePathname();
+
     return (
         <header className="bg-white border-b shadow-sm w-full sticky top-0 z-50">
             <div className="w-full max-w-[1600px] mx-auto flex justify-between items-center px-8 py-3">
@@ -18,10 +21,15 @@ export function Header() {
                         </div>
                         <span className="text-lg font-semibold">Controle de Fila</span>
                     </Link>
-               
+
                     <Link
                         href="/fila"
-                        className="flex items-center gap-2 px-3 py-1.5 text-blue-600 bg-blue-100 rounded-md text-sm font-medium hover:bg-blue-200 transition-colors"
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors 
+                            ${pathname === "/fila"
+                                ? "bg-blue-500 text-white"
+                                : "text-blue-600 bg-transparent hover:bg-blue-200"
+                            }
+                            `}
                     >
                         <Users className="w-4 h-4" />
                         Fila

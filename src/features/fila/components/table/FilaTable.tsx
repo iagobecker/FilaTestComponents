@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Trash, PhoneCall, CircleArrowDown, CircleArrowUp, Clock, CheckCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FilaContainer } from "@/components/layout/FilaContainer";
+import { FilaContainer } from "@/features/fila/components/table/FilaContainer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 

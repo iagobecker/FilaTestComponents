@@ -1,7 +1,7 @@
 "use client";
 
 import { Users, Search } from "lucide-react";
-import { FilaActions } from "../fila/FilaActions";
+import { FilaActions } from "../../services/FilaActions";
 
 export function FilaContainer({
   children,

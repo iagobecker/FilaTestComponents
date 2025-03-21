@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, LogOut, Settings, User } from "lucide-react";
+import Link from "next/link";
+import avatar from "@/assets/images/avatar.png";
 
 export function UserMenu() {
   return (
@@ -17,10 +19,10 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           className="flex items-center gap-2 rounded-md p-2 transition 
-                     focus:outline-none focus-visible:ring-0"
+                     focus:outline-none focus-visible:ring-0 hover:bg-blue-50"
         >
-          <Avatar className="w-10 h-10">
-            <AvatarImage src="/images/user-avatar.png" alt="User Avatar" />
+          <Avatar className="w-10 h-10 ">
+            <AvatarImage src={avatar.src} alt="User Avatar" />
             <AvatarFallback>AP</AvatarFallback>
           </Avatar>
           <div className="text-left">
@@ -42,13 +44,13 @@ export function UserMenu() {
           <span>Meu Perfil</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          className="cursor-pointer flex items-center gap-2 px-3 py-2 
-                     data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
-        >
-          <Settings className="w-4 h-4 text-blue-600" />
-          <span>Configurações</span>
-        </DropdownMenuItem>
+        <Link href="/configuracoes" passHref>
+          <DropdownMenuItem className="cursor-pointer flex items-center gap-2 px-3 py-2 
+                     data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition">
+            <Settings className="w-4 h-4 text-blue-600" />
+            <span>Configurações</span>
+          </DropdownMenuItem>
+        </Link>
 
         <DropdownMenuSeparator />
 

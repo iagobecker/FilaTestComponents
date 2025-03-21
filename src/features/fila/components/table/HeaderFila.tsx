@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SectionTitle } from "../ui/section-title";
+import { SectionTitle } from "../../../../components/ui/section-title";
 import { CustomDialog } from "@/components/shared/CustomDialog";
-import { AddPersonForm } from "@/components/fila/AddPersonForm";
+import { AddPersonForm } from "@/features/fila/components/form/AddPersonForm";
 
-export function PageHeader({ addPerson }: { addPerson: (nome: string, telefone: string, observacao: string) => void }) {
+export function HeaderFila({ addPerson }: { addPerson: (nome: string, telefone: string, observacao: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

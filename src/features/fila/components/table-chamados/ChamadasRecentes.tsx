@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 import { chamadasData } from "@/data/mockData";
-import { ChamadasContainer } from "../layout/ChamadasContainer";
+import { ChamadasContainer } from "../../../../components/layout/ChamadasContainer";
 
 type ChamadaItem = {
   id: string;
