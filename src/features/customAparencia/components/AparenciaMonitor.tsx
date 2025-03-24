@@ -1,25 +1,49 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { SketchPicker } from "react-color";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import CardMonitor from "./CardMonitor"
 
-export function NomeLogoEmpresa({ addEmpresa }: { addEmpresa: (nome: string) => void }) {
+export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) => void }) {
     const [name, setName] = useState("");
     const [logo, setLogo] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const pickerRef = useRef<HTMLDivElement>(null);
 
     // Estados para armazenar as cores escolhidas
     const [primaryColor, setPrimaryColor] = useState("#4A90E2"); // Azul padrão
     const [overlayColor, setOverlayColor] = useState("#FFFFFF"); // Branco padrão
     const [fontColor, setFontColor] = useState("#000000"); // Preto padrão
 
-    // Estados para exibir os seletores de cores
-    const [pickerOpen, setPickerOpen] = useState<{ [key: string]: boolean }>({
-        primary: false,
-        overlay: false,
-        font: false,
-    });
+    
+    // Controle dos seletores de cores
+    const [pickerOpen, setPickerOpen] = useState<"primary" | "overlay" | "font" | null>(null);
+
+    const [isPickingColor, setIsPickingColor] = useState(false);
+
+    
+    // Reseta `isPickingColor` quando o usuário solta o clique
+    const handleMouseUp = () => {
+        setTimeout(() => setIsPickingColor(false), 200);
+    };
+
+    // Fecha apenas quando o usuário clicar fora e não estiver escolhendo cor
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (isPickingColor) return; 
+            if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+                setPickerOpen(null);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("mouseup", handleMouseUp); 
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("mouseup", handleMouseUp); 
+        };
+    }, [isPickingColor]);
+
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -71,6 +95,9 @@ export function NomeLogoEmpresa({ addEmpresa }: { addEmpresa: (nome: string) => 
             </Card>
 
             <br />
+            <div className="fixed bottom-60 w-[620px] right-0 m-4">
+                <CardMonitor primaryColor={primaryColor} overlayColor={overlayColor} fontColor={fontColor} />
+            </div>
 
             {/* Card - Personalizar Cores */}
             <Card className="border-2 border-blue-200 pb-3 pt-3 max-w-full sm:max-w-[75%] md:max-w-[45%]">
@@ -84,17 +111,20 @@ export function NomeLogoEmpresa({ addEmpresa }: { addEmpresa: (nome: string) => 
                 </CardHeader>
 
                 {/* Cores */}
-                <div className="py-4 flex flex-col gap-0">
+                <div className="py-4 flex flex-col gap-0" ref={pickerRef}>
                     {/* Cor Primária */}
                     <div className="flex items-start pl-4 gap-4 relative w-full border-b border-blue-200 pb-4">
                         <Button
                             type="button"
                             className="w-12 h-12 border border-gray-300"
                             style={{ backgroundColor: primaryColor }}
-                            onClick={() => setPickerOpen({ ...pickerOpen, primary: !pickerOpen.primary })}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setPickerOpen(pickerOpen === "primary" ? null : "primary");
+                            }}
                         />
-                        {pickerOpen.primary && (
-                            <div className="absolute z-10 mt-2">
+                        {pickerOpen === "primary" && (
+                            <div className="absolute z-50 mt-2 bg-white shadow-lg p-2 rounded-md">
                                 <SketchPicker
                                     color={primaryColor}
                                     onChange={(color) => setPrimaryColor(color.hex)}
@@ -115,10 +145,13 @@ export function NomeLogoEmpresa({ addEmpresa }: { addEmpresa: (nome: string) => 
                             type="button"
                             className="w-12 h-12 border border-gray-300"
                             style={{ backgroundColor: overlayColor }}
-                            onClick={() => setPickerOpen({ ...pickerOpen, overlay: !pickerOpen.overlay })}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setPickerOpen(pickerOpen === "overlay" ? null : "overlay");
+                            }}
                         />
-                        {pickerOpen.overlay && (
-                            <div className="absolute z-10 mt-2">
+                        {pickerOpen === "overlay" && (
+                            <div className="absolute z-50 mt-2 bg-white shadow-lg p-2 rounded-md">
                                 <SketchPicker
                                     color={overlayColor}
                                     onChange={(color) => setOverlayColor(color.hex)}
@@ -133,16 +166,19 @@ export function NomeLogoEmpresa({ addEmpresa }: { addEmpresa: (nome: string) => 
                         </div>
                     </div>
 
-                    {/* Cor Fonte (sem linha final) */}
+                    {/* Cor Fonte */}
                     <div className="flex items-start p-4 pb-0 gap-4 relative">
                         <Button
                             type="button"
                             className="w-12 h-12 border border-gray-300"
                             style={{ backgroundColor: fontColor }}
-                            onClick={() => setPickerOpen({ ...pickerOpen, font: !pickerOpen.font })}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setPickerOpen(pickerOpen === "font" ? null : "font");
+                            }}
                         />
-                        {pickerOpen.font && (
-                            <div className="absolute z-10 mt-2">
+                        {pickerOpen === "font" && (
+                            <div className="absolute z-50 mt-2 bg-white shadow-lg p-2 rounded-md">
                                 <SketchPicker
                                     color={fontColor}
                                     onChange={(color) => setFontColor(color.hex)}
@@ -164,7 +200,6 @@ export function NomeLogoEmpresa({ addEmpresa }: { addEmpresa: (nome: string) => 
                         Redefinir cores
                     </Button>
                 </CardFooter>
-
             </Card>
 
             <div className="flex pt-6">
@@ -173,5 +208,6 @@ export function NomeLogoEmpresa({ addEmpresa }: { addEmpresa: (nome: string) => 
                 </Button>
             </div>
         </>
+
     );
 }

@@ -33,7 +33,7 @@ export default function ConfiguracoesPage() {
                         icon={<MessageCircle className="w-6 h-6 text-green-600 " />}
                         bgColor="bg-green-100"
                         borderColor="border-green-200"
-                        href="/configuracoes/notificacoes"
+                        href="/ativaWhatsapp"
                     />
 
                     <ConfigCard
@@ -51,7 +51,7 @@ export default function ConfiguracoesPage() {
                         icon={<MessageSquare className="w-6 h-6 text-purple-600 " />}
                         bgColor="bg-purple-100"
                         borderColor="border-purple-200"
-                        href="/configuracoes/mensagens"
+                        href="/customizarMensagem"
                     />
                 </div>
             </PageContainer>
