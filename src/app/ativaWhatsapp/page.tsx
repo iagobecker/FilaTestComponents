@@ -7,7 +7,7 @@ export default function AtivaWhatsapp() {
     return (
         <>
             <Header />
-            <PageContainer children={undefined}>
+            <PageContainer >
                 <HeaderAtivaWhats />
                 <ContainerWPQRcode />
             </PageContainer>
