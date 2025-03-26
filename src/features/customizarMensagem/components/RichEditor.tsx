@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  EditorProvider,
   EditorContent,
   useEditor,
 } from "@tiptap/react";
@@ -14,6 +13,7 @@ import MenuBar from "./tiptap-editor/TipTap";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import Variable from "./variables/Variables";
+import { FaCamera, FaLaugh, FaMicrophone, FaPaperclip } from "react-icons/fa";
 
 const extensions = [
   StarterKit,
@@ -25,16 +25,32 @@ const extensions = [
 ];
 
 const initialContents = [
-  "<p>Olá {nome}, sua entrega está a caminho!</p>",
-  "<p>Rastreamento: {link}</p>",
-  "<p>Obrigado por comprar com a gente :)</p>",
+  "<p>Olá {nome}, seja bem vindo!</p>",
+  "<p>Aqui está o link para você acompanhar seu status na fila: {link}</p>",
+  "<p>Obrigado por comprar com a gente. <strong>Volte sempre!</strong></p>",
 ];
+
+{/* Vai converter as variables */ }
+function convertVariablesToHtml(html: string) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  doc.body.innerHTML = doc.body.innerHTML.replace(
+    /\{(\w+)\}/g,
+    (_, variableName) => {
+      return `<span data-variable="${variableName}" data-value="${variableName}"></span>`;
+    }
+  );
+
+  return doc.body.innerHTML;
+}
 
 const variables = [
   { label: "{nome}", value: "João Silva" },
   { label: "{link}", value: "https://example.com/rastreio" },
 ];
 
+//  passa editor como prop para o MenuBar
 function RichTextBlock({
   value,
   onChange,
@@ -46,35 +62,32 @@ function RichTextBlock({
 }) {
   const editor = useEditor({
     extensions,
-    content: value,
+    content: convertVariablesToHtml(value),
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
   });
 
-  const insertVariable = (value: string) => {
-    editor?.chain().focus().insertContent(value).run();
-  };
 
   return (
-    <div className="border p-3 border-purple-300 rounded-md bg-white shadow-sm mb-6">
+    <div className="border p-1 border-purple-300 rounded-md bg-white shadow-sm mb-6">
       {editor && (
         <>
           <MenuBar editor={editor} />
           <EditorContent
             editor={editor}
-            className="w-full min-h-[100px] bg-white px-4 py-3 rounded-md [&_.ProseMirror]:outline-none [&_.ProseMirror]:border-none [&_.ProseMirror]:shadow-none"
+            className="w-full min-h-[80px] bg-white px-4 py-3 rounded-md [&_.ProseMirror]:outline-none [&_.ProseMirror]:border-none [&_.ProseMirror]:shadow-none"
           />
           {/* Footer de variáveis */}
-          <div className="flex flex-wrap gap-2 mt-2 justify-end">
+          <div className="flex flex-wrap  pt-3 gap-2 mt-2 justify-end">
             {variables.map((v) => (
               <button
-              onClick={() => editor?.commands.insertVariable("nome")}
-              className="px-3 py-1 text-sm border cursor-pointer text-purple-800 border-purple-300 bg-purple-200 hover:bg-purple-100 rounded"
-            >
-              {v.label}
-            </button>
-            
+                key={v.label}
+                onClick={() => editor?.commands.insertVariable(v.label.replace(/[{}]/g, ''))}
+                className="px-3 py-1 text-sm border cursor-pointer text-purple-800 border-purple-300 bg-purple-200 hover:bg-purple-100 rounded"
+              >
+                {v.label}
+              </button>
             ))}
           </div>
         </>
@@ -83,9 +96,15 @@ function RichTextBlock({
   );
 }
 
-export default function RichEditor() {
-  const [previews, setPreviews] = useState(initialContents);
 
+
+export default function RichEditor() {
+
+  const [previews, setPreviews] = useState(
+    initialContents.map(convertVariablesToHtml)
+  );
+
+  // Atualiza o preview com o novo HTML do editor 
   const updatePreview = (index: number, newHtml: string) => {
     setPreviews((prev) => {
       const updated = [...prev];
@@ -94,143 +113,137 @@ export default function RichEditor() {
     });
   };
 
-  const insertVariable = (index: number, value: string) => {
-    alert(`Insira ${value} no editor ${index + 1}`);
+  // Mapeia as variáveis para substituição
+  const variablesMap = {
+    nome: "João Silva",
+    link: `<a href='https://example.com/rastreio' class='font-bold underline text-blue-600' target='_blank'>https://example.com/rastreio</a>`,
   };
+
+
+  // Renderiza o HTML com as variáveis substituídas 
+  function renderWithVariables(html: string) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    doc.querySelectorAll("[data-variable]").forEach((el) => {
+      const key = el.getAttribute("data-variable");
+      const replacement = variablesMap[key as keyof typeof variablesMap || ""];
+
+      if (replacement) {
+        const span = document.createElement("span");
+        span.innerHTML = replacement;
+        el.replaceWith(...span.childNodes);
+      }
+    });
+
+    return doc.body.innerHTML;
+  }
+
+  const sectionTitles = ["Entrada", "Chamada", "Removido"];
 
   return (
     <div className="w-full flex flex-col lg:flex-row gap-90 mt-10">
-      {/* Left side - Editors */}
-      <div className="w-full max-w-[850px]">
-      {previews.map((html, idx) => (
-        <RichTextBlock
-          key={idx}
-          value={html}
-          onChange={(html) => updatePreview(idx, html)}
-          variables={variables} 
-        />
+      {/* Editors (lado esquerdo) */}
+      <div className="w-full max-w-[850px] space-y-6">
+        {/* Renderiza os 3 blocos de editor */}
+        {previews.map((html, idx) => (
+          <div key={idx}>
+            <h2 className="font-bold text-purple-800 text-lg mb-1">{sectionTitles[idx]}</h2>
+            <RichTextBlock
+              value={html}
+              onChange={(html) => updatePreview(idx, html)}
+              variables={variables}
+            />
+          </div>
         ))}
-
 
         <div className="flex justify-between pt-2">
           <Button className="max-w-[150px] bg-blue-400 text-white hover:bg-blue-700">
             Salvar
-          </Button>          
+          </Button>
         </div>
       </div>
 
-      <div className="flex items-center justify-center mt-6 lg:mt-0">
-        <div className="w-[300px] h-[600px] rounded-2xl border-4 border-black overflow-hidden shadow-xl bg-[#e5ddd5] flex flex-col">
-          <div className="h-[50px] bg-[#075e54] text-white text-center flex items-center justify-center text-sm font-semibold">
-            WhatsApp Preview
+
+
+      <div className="flex items-start justify-center mt-6 lg:mt-0">
+        <div className="w-[300px] h-[600px] rounded-[30px] overflow-hidden shadow-xl bg-[#ece5dd] flex flex-col border-[6px] border-black relative">
+
+
+          {/* Reproduz layout do WhatsApp */}
+          {/* Top bar */}
+          <div className="h-[50px] bg-[#075e54] text-white flex items-center px-3">
+            <div className="w-8 h-8 bg-gray-300 rounded-full mr-2" ></div>
+            <div className="flex flex-col text-sm">
+              <span className="font-semibold">Controle de fila ✔</span>
+            </div>
+            <div className="ml-auto flex space-x-2 text-white text-lg">
+
+              <span>⋮</span>
+            </div>
           </div>
-          <div className="p-4 flex-1 bg-[#ece5dd] overflow-y-auto space-y-3">
-            {previews.map((html, idx) => (
+
+          {/* Mensagens */}
+          <div className="p-3 flex-1 overflow-y-auto space-y-4 text-sm">
+
+            {/* Entrada */}
+            <div>
+              <p className="font-bold text-purple-800 text-sm mb-1">Entrada</p>
               <div
-                key={idx}
-                className="bg-white rounded-lg px-3 py-2 shadow-md text-sm whitespace-pre-line leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: html }}
+                className="bg-white rounded-lg px-4 py-3 shadow text-[13px] leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[0]) }}
               />
-            ))}
+            </div>
+
+
+            {/* Chamada */}
+            <div>
+              <p className="font-bold text-purple-800 text-sm mb-1">Chamada</p>
+              <div
+                className="bg-white rounded-lg px-4 py-3 shadow text-[13px] leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[1]) }}
+              />
+            </div>
+
+            {/* Removido */}
+            <div>
+              <p className="font-bold text-purple-800 text-sm mb-1">Removido</p>
+              <div
+                className="bg-white rounded-lg px-4 py-3 shadow text-[13px] leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[2]) }}
+              />
+            </div>
+
+          </div>
+
+          {/* Campo de digitação */}
+          <div className="bg-[#e5ddd5] px-3 py-2">
+            <div className="flex items-center gap-2">
+
+              {/* Campo de mensagem */}
+              <div className="flex items-center px-3 py-2 bg-white rounded-full shadow w-[210px]">
+                <FaLaugh className="text-gray-500 text-lg mr-3 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Mensagem"
+                  className="flex-1 text-sm outline-none placeholder-gray-500 bg-transparent min-w-0"
+                  disabled
+                />
+                <FaPaperclip className="text-gray-500 text-lg mx-2 flex-shrink-0" />
+                <FaCamera className="text-gray-500 text-lg flex-shrink-0" />
+              </div>
+
+              <button className="w-10 h-10 bg-[#075e54] rounded-full flex items-center justify-center text-white text-base shadow">
+                <FaMicrophone className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </ div>
+
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// "use client";
-
-// import { useRef } from "react";
-// import { Editor } from "@tinymce/tinymce-react";
-
-// export default function RichEditor() {
-//   const editorRef = useRef<any>(null);
-
-//   const logContent = () => {
-//     if (editorRef.current) {
-//       const content = editorRef.current.getContent();
-//       alert(content);
-//     }
-//   };
-
-//   return (
-//     <div className="flex flex-col lg:flex-row gap-10 mt-10">
-//       <div className="w-full max-w-[800px]">
-//         <Editor
-         
-//           onInit={(_, editor) => (editorRef.current = editor)}
-//           initialValue="<p>Digite aqui sua mensagem...</p>"
-//           init={{
-//             height: 500,
-//             menubar: false,
-//             plugins: [
-//               "advlist",
-//               "autolink",
-//               "lists",
-//               "link",
-//               "charmap",
-//               "preview",
-//               "anchor",
-//               "searchreplace",
-//               "visualblocks",
-//               "fullscreen",
-//               "insertdatetime",
-//               "media",
-//               "table",
-//               "help",
-//               "wordcount",
-//             ],
-//             toolbar: "bold italic underline | undo redo",
-//             placeholder: "Digite aqui sua mensagem...",
-//             content_style:
-//               "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-//           }}
-//         />
-
-//         <button
-//           className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-//           onClick={logContent}
-//         >
-//           Ver conteúdo em texto
-//         </button>
-//       </div>
-
-//       {/* Preview (em branco por enquanto) */}
-//       <div className="flex items-center justify-center mt-6 lg:mt-0">
-//         <div className="w-[300px] h-[600px] rounded-2xl border-4 border-black overflow-hidden shadow-xl bg-[#e5ddd5] flex flex-col">
-//           <div className="h-[50px] bg-[#075e54] text-white text-center flex items-center justify-center text-sm font-semibold">
-//             WhatsApp Preview
-//           </div>
-//           <div className="p-4 flex-1 bg-[#ece5dd] overflow-y-auto">
-//             <div className="bg-white rounded-lg px-3 py-2 shadow-md text-sm whitespace-pre-line leading-relaxed">
-//               {/* você pode usar dangerouslySetInnerHTML aqui se quiser renderizar */}
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
 
 
 

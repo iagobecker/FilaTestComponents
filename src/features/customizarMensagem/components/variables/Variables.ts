@@ -1,4 +1,3 @@
-// app/tiptap-editor/extensions/Variable.ts
 import { Node, mergeAttributes } from '@tiptap/core'
 
 export interface VariableOptions {
@@ -15,7 +14,6 @@ declare module '@tiptap/core' {
 
 const Variable = Node.create<VariableOptions>({
   name: 'variable',
-
   group: 'inline',
   inline: true,
   atom: true,
@@ -26,6 +24,7 @@ const Variable = Node.create<VariableOptions>({
     }
   },
 
+  // define value como atributo
   addAttributes() {
     return {
       value: {
@@ -34,14 +33,22 @@ const Variable = Node.create<VariableOptions>({
     }
   },
 
+  // extrai atributos do elemento span
   parseHTML() {
     return [
       {
         tag: 'span[data-variable]',
+        getAttrs: el => {
+          const dom = el as HTMLElement;
+          return {
+            value: dom.getAttribute('data-value'),
+          };
+        },
       },
-    ]
+    ];
   },
 
+  // renderiza o elemento span com o nome da variável
   renderHTML({ HTMLAttributes }) {
     return [
       'span',
@@ -51,23 +58,28 @@ const Variable = Node.create<VariableOptions>({
           'inline-block px-2 py-0.5 text-xs font-semibold rounded bg-purple-200 text-purple-800 border border-purple-300',
       }),
       `{${HTMLAttributes.value}}`,
-    ]
+    ];
   },
 
+  // define comandos para inserir variaveis no editor 
   addCommands() {
     return {
       insertVariable:
         (value: string) =>
-        ({ chain }) => {
-          return chain()
-            .insertContent({
-              type: this.name,
-              attrs: { value },
-            })
-            .run()
-        },
+          ({ chain }) => {
+            return chain()
+              .insertContent({
+                type: this.name,
+                attrs: { value },
+              })
+              .run()
+          },
     }
   },
 })
 
 export default Variable
+
+
+
+

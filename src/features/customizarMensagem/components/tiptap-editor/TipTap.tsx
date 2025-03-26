@@ -10,8 +10,9 @@ import {
 } from "react-icons/fa";
 
 export default function MenuBar({ editor }: { editor: Editor }) {
-  if (!editor) return null;
 
+  if (!editor) return null;
+  // .chain() → inicia uma cadeia de comandos / .focus() → foca o editor / .toggleBold() → ativa ou desativa o negrito / .run() → executa a cadeia de comandos
   return (
     <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
       <div className="flex gap-2">
@@ -60,54 +61,3 @@ export default function MenuBar({ editor }: { editor: Editor }) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// "use client";
-
-// import { Editor } from "@tinymce/tinymce-react";
-// import { useRef } from "react";
-
-// export default function TinyEditor({ onChange }: { onChange?: (val: string) => void }) {
-//   const editorRef = useRef<any>(null);
-
-//   return (
-//     <Editor
-//       apiKey="no-api-key"
-//       onInit={(_, editor) => (editorRef.current = editor)}
-//       initialValue="<p>Digite aqui sua mensagem...</p>"
-//       onEditorChange={(newValue) => {
-//         onChange?.(newValue);
-//       }}
-//       init={{
-//         height: 500,
-//         menubar: false,
-//         plugins: [
-//           "advlist", "autolink", "lists", "link", "charmap", "preview",
-//           "anchor", "searchreplace", "visualblocks", "fullscreen",
-//           "insertdatetime", "media", "table", "help", "wordcount"
-//         ],
-//         toolbar: "bold italic underline | undo redo",
-//         placeholder: "Digite aqui sua mensagem...",
-//         content_style: "body { font-family:Helvetica,Arial,sans-serif; font-size:14px }",
-//       }}
-//     />
-//   );
-// }
