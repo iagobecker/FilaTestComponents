@@ -116,6 +116,18 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+.chat-bubble-right::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 0;
+  height: 0;
+  border-top: 12px solid #dcf8c6;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

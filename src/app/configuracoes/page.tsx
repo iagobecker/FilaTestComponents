@@ -39,9 +39,9 @@ export default function ConfiguracoesPage() {
                     <ConfigCard
                         title="Tempo máximo"
                         description="Configure o tempo de tolerância após chamar seus clientes e otimize o fluxo de atendimento."
-                        icon={<Clock className="w-6 h-6 text-yellow-600 " />}
-                        bgColor="bg-yellow-100"
-                        borderColor="border-yellow-200"
+                        icon={<Clock className="w-6 h-6 text-yellow-700 " />}
+                        bgColor="bg-orange-100"
+                        borderColor="border-orange-200"
                         onClick={() => setIsDialogOpen(true)}
                     />
 

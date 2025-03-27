@@ -55,7 +55,7 @@ const Variable = Node.create<VariableOptions>({
       mergeAttributes(HTMLAttributes, {
         'data-variable': HTMLAttributes.value,
         class:
-          'inline-block px-2 py-0.5 text-xs font-semibold rounded bg-purple-200 text-purple-800 border border-purple-300',
+          'inline-block px-2 py-0.5 text-xs font-semibold rounded bg-black-200 text-purple-800 border border-purple-300',
       }),
       `{${HTMLAttributes.value}}`,
     ];

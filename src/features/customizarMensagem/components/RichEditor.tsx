@@ -19,11 +19,12 @@ const extensions = [
   StarterKit,
   Underline,
   TextStyle,
-  Color.configure({ types: [TextStyle.name, ListItem.name] }),
   ListItem,
   Variable,
+  Color.configure({ types: [TextStyle.name, ListItem.name] }),
 ];
 
+// Conteúdo inicial dos editores
 const initialContents = [
   "<p>Olá {nome}, seja bem vindo!</p>",
   "<p>Aqui está o link para você acompanhar seu status na fila: {link}</p>",
@@ -79,12 +80,12 @@ function RichTextBlock({
             className="w-full min-h-[80px] bg-white px-4 py-3 rounded-md [&_.ProseMirror]:outline-none [&_.ProseMirror]:border-none [&_.ProseMirror]:shadow-none"
           />
           {/* Footer de variáveis */}
-          <div className="flex flex-wrap  pt-3 gap-2 mt-2 justify-end">
+          <div className="flex flex-wrap  pt-3 gap-2 mt-2 justify-start p-1 ">
             {variables.map((v) => (
               <button
                 key={v.label}
                 onClick={() => editor?.commands.insertVariable(v.label.replace(/[{}]/g, ''))}
-                className="px-3 py-1 text-sm border cursor-pointer text-purple-800 border-purple-300 bg-purple-200 hover:bg-purple-100 rounded"
+                className="px-3 py-1 text-sm border cursor-pointer text-purple-800 border-purple-300 bg-white hover:bg-purple-100 rounded"
               >
                 {v.label}
               </button>
@@ -148,7 +149,7 @@ export default function RichEditor() {
         {/* Renderiza os 3 blocos de editor */}
         {previews.map((html, idx) => (
           <div key={idx}>
-            <h2 className="font-bold text-purple-800 text-lg mb-1">{sectionTitles[idx]}</h2>
+            <h2 className="font-bold text-black text-lg mb-1">{sectionTitles[idx]}</h2>
             <RichTextBlock
               value={html}
               onChange={(html) => updatePreview(idx, html)}
@@ -175,7 +176,7 @@ export default function RichEditor() {
           <div className="h-[50px] bg-[#075e54] text-white flex items-center px-3">
             <div className="w-8 h-8 bg-gray-300 rounded-full mr-2" ></div>
             <div className="flex flex-col text-sm">
-              <span className="font-semibold">Controle de fila ✔</span>
+              <span className="font-semibold">João Silva ✔</span>
             </div>
             <div className="ml-auto flex space-x-2 text-white text-lg">
 
@@ -183,38 +184,47 @@ export default function RichEditor() {
             </div>
           </div>
 
+
+
           {/* Mensagens */}
           <div className="p-3 flex-1 overflow-y-auto space-y-4 text-sm">
 
+
             {/* Entrada */}
             <div>
-              <p className="font-bold text-purple-800 text-sm mb-1">Entrada</p>
-              <div
-                className="bg-white rounded-lg px-4 py-3 shadow text-[13px] leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[0]) }}
-              />
+              {/* <p className="font-bold text-black text-sm mb-1">Entrada</p> */}
+              <div className="relative max-w-[250px]">
+                <div
+                  className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
+                  dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[0]) }}
+                />
+              </div>
             </div>
-
 
             {/* Chamada */}
             <div>
-              <p className="font-bold text-purple-800 text-sm mb-1">Chamada</p>
-              <div
-                className="bg-white rounded-lg px-4 py-3 shadow text-[13px] leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[1]) }}
-              />
+              {/* <p className="font-bold text-black text-sm mb-1">Chamada</p> */}
+              <div className="relative max-w-[250px]">
+                <div
+                  className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
+                  dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[1]) }}
+                />
+              </div>
             </div>
 
             {/* Removido */}
             <div>
-              <p className="font-bold text-purple-800 text-sm mb-1">Removido</p>
-              <div
-                className="bg-white rounded-lg px-4 py-3 shadow text-[13px] leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[2]) }}
-              />
+              {/* <p className="font-bold text-black text-sm mb-1">Removido</p> */}
+              <div className="relative max-w-[250px]">
+                <div
+                  className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
+                  dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[2]) }}
+                />
+              </div>
             </div>
-
           </div>
+
+
 
           {/* Campo de digitação */}
           <div className="bg-[#e5ddd5] px-3 py-2">

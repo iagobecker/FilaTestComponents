@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FilaContainer } from "@/features/fila/components/table/FilaContainer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
+import { Modal } from "@/components/Modal";
+import { DialogTitle } from "@/components/ui/dialog";
 
 type FilaItem = {
   id: string;
@@ -29,6 +31,10 @@ export function FilaTable({ data, setData }: FilaTableProps) {
 
   const [notification, setNotification] = useState<string | null>(null);
 
+  const [showModal, setShowModal] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+
   //Remover uma row
   const removeItem = (id: string) => {
     setData((prevData) => prevData.filter((item) => item.id !== id));
@@ -38,6 +44,24 @@ export function FilaTable({ data, setData }: FilaTableProps) {
     // Remove a notificação após 3 segundos
     setTimeout(() => setNotification(null), 3000);
   };
+
+  const handleOpenModal = (id: string) => {
+    setSelectedId(id);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedId(null);
+    setShowModal(false);
+  };
+
+  const handleConfirmRemove = () => {
+    if (selectedId) {
+      removeItem(selectedId);
+      handleCloseModal();
+    }
+  };
+
 
 
   const moveItem = (id: string, direction: "up" | "down") => {
@@ -190,7 +214,12 @@ export function FilaTable({ data, setData }: FilaTableProps) {
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => removeItem(row.original.id)}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="cursor-pointer"
+                onClick={() => handleOpenModal(row.original.id)}
+              >
                 <Trash className="!w-5.5 !h-5.5 text-red-500" />
               </Button>
             </TooltipTrigger>
@@ -198,6 +227,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
               <p>Remover</p>
             </TooltipContent>
           </Tooltip>
+
         </div>
       ),
     }
@@ -211,6 +241,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
   });
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
+
 
   return (
     <TooltipProvider delayDuration={2000} skipDelayDuration={500}>
@@ -253,6 +284,32 @@ export function FilaTable({ data, setData }: FilaTableProps) {
           </div>
         </FilaContainer>
       </div>
+      {showModal && (
+        <Modal open={showModal} onClose={handleCloseModal}>
+          <div className="max-w-sm p-1 space-y-4 text-left">
+            <div className="flex items-center gap-2">
+              <div className="bg-red-100 text-red-600 p-2 rounded-full">
+                <Trash className="w-5 h-5" />
+              </div>
+              <DialogTitle className="text-lg font-semibold text-gray-900">Excluir cliente</DialogTitle>
+            </div>
+            <p className="text-sm text-gray-600">
+              Você tem certeza que deseja <span className="font-medium text-gray-800">excluir este cliente da fila</span>?<br />
+              Essa ação <span className="font-semibold text-red-600">não poderá ser desfeita</span>.
+            </p>
+
+          </div>
+          <div className="flex justify-end cursor-pointer gap-2 pt-2">
+            <Button variant="outline" onClick={handleCloseModal}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmRemove}>
+              Excluir
+            </Button>
+          </div>
+        </Modal>
+      )}
+
     </TooltipProvider>
   );
 }
