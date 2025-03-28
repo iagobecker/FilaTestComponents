@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { HeaderFila } from "@/features/fila/components/table/HeaderFila";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { filaData } from "@/data/mockData";
-import { FilaProvider } from "../../features/fila/context/FilaContext";
+import { FilaProvider } from "../../features/fila/provider/FilaProvider";
 import { FilaTable } from "../../features/fila/components/table/FilaTable";
 import { ChamadasRecentes } from "../../features/fila/components/table-chamados/ChamadasRecentes";
 

@@ -110,7 +110,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       header: "",
       cell: ({ row }) => (
         <div className="min-w-[80px] flex justify-start">
-          <span className="px-6 text-center font-bold py-1 text-0.5 text-blue-700 bg-blue-300 rounded-md">
+          <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-700  rounded-md">
             BS{row.original.id}
           </span>
         </div>
@@ -158,9 +158,9 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
         const statusColors: Record<string, string> = {
-          "Em Atendimento": "bg-green-100 text-green-700 border-green-400",
-          "Aguardando": "bg-blue-200 text-blue-700 border-blue-400",
-          "Cancelado": "bg-red-100 text-red-700 border-red-400",
+          "Em Atendimento": " text-green-600 border-green-400",
+          "Aguardando": " text-blue-600 border-blue-400",
+          "Cancelado": " text-red-600 border-red-400",
         };
 
         return (
@@ -193,7 +193,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => moveItem(row.original.id, "up")}>
-                <CircleArrowUp className="!w-5.5 !h-5.5 text-blue-500" />
+                <CircleArrowUp className="!w-5.5 !h-5.5 text-gray-600" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -204,7 +204,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => moveItem(row.original.id, "down")}>
-                <CircleArrowDown className="!w-5.5 !h-5.5 text-orange-500" />
+                <CircleArrowDown className="!w-5.5 !h-5.5 text-gray-600" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>

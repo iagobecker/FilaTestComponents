@@ -117,7 +117,7 @@ export default function RichEditor() {
   // Mapeia as variáveis para substituição
   const variablesMap = {
     nome: "João Silva",
-    link: `<a href='https://example.com/rastreio' class='font-bold underline text-blue-600' target='_blank'>https://example.com/rastreio</a>`,
+    link: `<a href='https://example.com/cliente-fila' class='font-bold underline text-blue-600' target='_blank'>https://example.com/cliente-fila</a>`,
   };
 
 

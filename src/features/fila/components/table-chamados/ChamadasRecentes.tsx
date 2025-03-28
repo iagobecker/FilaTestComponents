@@ -23,7 +23,7 @@ const columns: ColumnDef<ChamadaItem>[] = [
     header: "",
     cell: () => (
       <div className="min-w-[80px] flex justify-start">
-        <span className="px-6 text-center font-bold py-1 text-green-700 bg-green-300 rounded-md">
+        <span className="px-6 text-center font-bold py-1 text-green-700 text-[16px] rounded-md">
           B87
         </span>
       </div>
@@ -54,7 +54,7 @@ const columns: ColumnDef<ChamadaItem>[] = [
     header: "",
     cell: () => (
       <div className="flex min-w-[80px] max-w-[100px] items-center gap-1">
-      <span className="px-2 py-1 rounded-sm text-sm font-medium border bg-green-100 text-green-700 border-green-400">
+      <span className="px-2 py-1 rounded-sm text-sm font-medium border  text-green-600 border-green-400">
         Chamado
       </span>
     </div>
