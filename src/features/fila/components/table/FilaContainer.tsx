@@ -6,16 +6,16 @@ import { FilaActions } from "../../services/FilaActions";
 export function FilaContainer({
   children,
   selectedCount,
+  selectedIds,
 }: {
   children: React.ReactNode;
   selectedCount: number;
+  selectedIds: string[];
 }) {
   return (
     <div className="border border-blue-300 rounded-lg shadow-sm">
-      {/* Cabeçalho fixo azul */}
       <div className="bg-blue-50 px-4 py-3 rounded-t-lg">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 whitespace-nowrap">
               <Users className="w-5 h-5 shrink-0 text-blue-600" />
@@ -33,7 +33,7 @@ export function FilaContainer({
           </div>
 
           {/* Botões select vários */}
-          <FilaActions selectedCount={selectedCount} />
+          <FilaActions selectedCount={selectedCount} selectedIds={selectedIds} />
         </div>
       </div>
 

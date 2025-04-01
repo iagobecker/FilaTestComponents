@@ -47,8 +47,7 @@ export const filaData = [
     observacao: "Convencional",
     status: "Cancelado",
     tempo: "há 5 minutos",
-  },
-  
+  },  
 ];
 
 
@@ -62,18 +61,5 @@ export const chamadasData = [
     tempo: "há 30 minutos", 
     status: "Chamado" 
   },
-  { 
-    id: "2", 
-    nome: "Simão Almeida", 
-    telefone: "(51) 999-789863", 
-    tempo: "há 29 minutos", 
-    status: "Chamado" 
-  },
-  { 
-    id: "3", 
-    nome: "Iago Becker", 
-    telefone: "(51) 999-789863", 
-    tempo: "há 27 minutos", 
-    status: "Chamado"
-   },
+  
 ];

@@ -11,6 +11,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/Modal";
 import { DialogTitle } from "@/components/ui/dialog";
+import { Dispatch, SetStateAction } from 'react';
+import { useFila } from "../../provider/FilaProvider";
 
 type FilaItem = {
   id: string;
@@ -23,7 +25,7 @@ type FilaItem = {
 
 type FilaTableProps = {
   data: FilaItem[];
-  setData: React.Dispatch<React.SetStateAction<FilaItem[]>>;
+  setData: Dispatch<SetStateAction<FilaItem[]>>;
 };
 
 // Componente da Tabela
@@ -62,6 +64,11 @@ export function FilaTable({ data, setData }: FilaTableProps) {
     }
   };
 
+  const { chamarSelecionados } = useFila();
+
+  const chamarItem = (id: string) => {
+    chamarSelecionados([id]);
+  };
 
 
   const moveItem = (id: string, direction: "up" | "down") => {
@@ -181,7 +188,12 @@ export function FilaTable({ data, setData }: FilaTableProps) {
         <div className="w-[150px] flex justify-end gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="cursor-pointer">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="cursor-pointer"
+                onClick={() => chamarItem(row.original.id)}
+              >
                 <PhoneCall className="!w-5.5 !h-5.5 text-green-500" />
               </Button>
             </TooltipTrigger>
@@ -218,7 +230,10 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                 variant="ghost"
                 size="icon"
                 className="cursor-pointer"
-                onClick={() => handleOpenModal(row.original.id)}
+                onClick={() => {
+                  setSelectedId(row.original.id);
+                  setShowModal(true);
+                }}
               >
                 <Trash className="!w-5.5 !h-5.5 text-red-500" />
               </Button>
@@ -255,7 +270,10 @@ export function FilaTable({ data, setData }: FilaTableProps) {
 
       <div className="border-none bg-white p-1 overflow-x-auto">
 
-        <FilaContainer selectedCount={selectedCount}>
+        <FilaContainer
+          selectedCount={selectedCount}
+          selectedIds={table.getFilteredSelectedRowModel().rows.map(row => row.original.id)}
+        >
           <div className="overflow-x-auto">
             <Table>
               <TableBody>
@@ -269,7 +287,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: [10, 0], scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ type: "spring", stiffness: 250, damping: 20 }}
+                      transition={{ type: "spring", stiffness: 250, damping: 21 }}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id} className="px-4 py-2 whitespace-nowrap">

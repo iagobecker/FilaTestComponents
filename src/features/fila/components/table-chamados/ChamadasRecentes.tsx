@@ -77,9 +77,7 @@ const columns: ColumnDef<ChamadaItem>[] = [
 ];
 
 // Componente da tabela de chamadas recentes
-export function ChamadasRecentes() {
-  const [data] = useState<ChamadaItem[]>(chamadasData);
-
+export function ChamadasRecentes({ data }: { data: ChamadaItem[] }) {
   const table = useReactTable({
     data,
     columns,
@@ -96,8 +94,7 @@ export function ChamadasRecentes() {
               {table.getRowModel().rows.map((row, index) => (
                 <TableRow
                   key={row.id}
-                  className={`bg-gray-50 hover:bg-gray-100 transition-colors ${index !== chamadasData.length - 1 ? "border-b border-gray-50" : ""
-                    }`}
+                  className={`bg-gray-50 hover:bg-gray-100 transition-colors ${index !== data.length - 1 ? "border-b border-gray-50" : ""}`}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="px-2 py-2 whitespace-nowrap">

@@ -10,7 +10,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
-import avatar from "@/assets/images/avatar.png";
 
 export function UserMenu() {
   return (
@@ -22,7 +21,7 @@ export function UserMenu() {
                      focus:outline-none focus-visible:ring-0 hover:bg-blue-50"
         >
           <Avatar className="w-10 h-10 ">
-            <AvatarImage src={avatar.src} alt="User Avatar" />
+            <AvatarImage  alt="User Avatar" />
             <AvatarFallback>AP</AvatarFallback>
           </Avatar>
           <div className="text-left">

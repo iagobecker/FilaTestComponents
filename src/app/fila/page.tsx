@@ -1,20 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { HeaderFila } from "@/features/fila/components/table/HeaderFila";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { filaData } from "@/data/mockData";
-import { FilaProvider } from "../../features/fila/provider/FilaProvider";
+import { FilaProvider, useFila } from "../../features/fila/provider/FilaProvider";
 import { FilaTable } from "../../features/fila/components/table/FilaTable";
 import { ChamadasRecentes } from "../../features/fila/components/table-chamados/ChamadasRecentes";
 
 export default function FilaPage() {
-  const [data, setData] = useState(filaData);
+  return (
+    <FilaProvider>
+      <Header />
+      <PageContainer>
+        <FilaContent />
+      </PageContainer>
+    </FilaProvider>
+  );
+}
+
+function FilaContent() {
+  const { filaData, setFilaData, chamadasData } = useFila();
 
   const addPerson = (nome: string, telefone: string, observacao: string) => {
-    const newPerson = {
-      id: (data.length + 1).toString(),
+    const newPerson: { id: string; nome: string; telefone: string; observacao: string; status: string; tempo: string } = {
+      id: (filaData.length + 1).toString(),
       nome,
       telefone,
       observacao,
@@ -22,17 +31,14 @@ export default function FilaPage() {
       tempo: "há 0 minutos",
     };
 
-    setData((prevData) => [...prevData, newPerson]);
+    setFilaData(prev => [...prev, newPerson]);
   };
 
   return (
-    <FilaProvider>
-      <Header />
-      <PageContainer>
-        <HeaderFila addPerson={addPerson} />
-        <FilaTable data={data} setData={setData} />
-        <ChamadasRecentes />
-      </PageContainer>
-    </FilaProvider>
+    <>
+      <HeaderFila addPerson={addPerson} />
+      <FilaTable data={filaData} setData={setFilaData} />
+      <ChamadasRecentes data={chamadasData} />
+    </>
   );
 }

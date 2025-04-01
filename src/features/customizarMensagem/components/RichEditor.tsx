@@ -174,9 +174,9 @@ export default function RichEditor() {
           {/* Reproduz layout do WhatsApp */}
           {/* Top bar */}
           <div className="h-[50px] bg-[#075e54] text-white flex items-center px-3">
-            <div className="w-8 h-8 bg-gray-300 rounded-full mr-2" ></div>
+            <div className="size-6 bg-gray-300 rounded-full mr-2" ></div>
             <div className="flex flex-col text-sm">
-              <span className="font-semibold">João Silva ✔</span>
+              <span className="font-semibold">João Silva</span>
             </div>
             <div className="ml-auto flex space-x-2 text-white text-lg">
 
@@ -233,8 +233,7 @@ export default function RichEditor() {
               {/* Campo de mensagem */}
               <div className="flex items-center px-3 py-2 bg-white rounded-full shadow w-[210px]">
                 <FaLaugh className="text-gray-500 text-lg mr-3 flex-shrink-0" />
-                <input
-                  type="text"
+                <input                  
                   placeholder="Mensagem"
                   className="flex-1 text-sm outline-none placeholder-gray-500 bg-transparent min-w-0"
                   disabled
