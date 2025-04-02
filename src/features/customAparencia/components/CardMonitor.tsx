@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { darkenColor, lightenColor } from "@/lib/utils/colors";
-import { CircleCheck, Clock, MapPin, MoveRight, Ticket, Timer, Upload, Users } from "lucide-react";
+import { CircleCheck, Clock, Image, MapPin, MoveRight, Ticket, Timer, Upload, Users } from "lucide-react";
 
 interface CardMonitorProps {
   primaryColor: string;
@@ -51,12 +51,16 @@ export default function CardMonitor({
             }}
           >
             <div className="flex items-center">
-              {companyLogo && (
+              {companyLogo ? (
                 <img
                   src={companyLogo}
                   alt="Logo"
-                  className="w-8 h-8 rounded-full object-cover mr-2"
+                  className="size-8 rounded-full object-cover mr-2"
                 />
+              ) : (
+                <div className="w-8 h-8 rounded-sm bg-gray-200 flex items-center justify-center mr-2">
+                  <span className="text-gray-500 text-xs"> <Image className="size-7" /></span>
+                </div>
               )}
               <h2 className="text-lg font-bold text-white" style={{ color: overlayColor }}>{companyName}</h2>
             </div>
@@ -76,7 +80,7 @@ export default function CardMonitor({
 
           <div className="h-[70%] p-2 pt-0 flex">
             {/* Seção de Senha Atual - Lado esquerdo */}
-            <div className="w-2/3 mr-2">
+            <div className="basis-2/3 mr-2">
               <div className="flex items-center justify-center gap-1">
                 <Ticket className="w-4 h-4 mb-2" style={{ color: overlayColor }} />
                 <h2 className="text-[12px] font-semibold text-white mb-2 text-center" style={{ color: overlayColor }}>SENHA ATUAL</h2>
@@ -141,12 +145,19 @@ export default function CardMonitor({
           <div className="p-0 h-full pl-50 pr-50 flex flex-col">
             {/* Cabeçalho com logo e nome */}
             <div className="flex flex-col items-center mb-2">
-              {companyLogo && (
+              {companyLogo ? (
+
                 <img
                   src={companyLogo}
-                  alt="Logo"
-                  className="w-10 h-10 rounded-full object-contain mb-1"
+
+                  className="size-10 rounded-full object-contain mb-1"
                 />
+
+
+              ) : (
+                <div className="size-10 rounded-sm bg-gray-200 flex items-center justify-center mb-1">
+                  <span className="text-gray-500 text-xs"> <Image className="size-9" /></span>
+                </div>
               )}
               <h1 className="text-lg font-bold text-black">{companyName}</h1>
               <div className="flex items-center">
@@ -156,7 +167,7 @@ export default function CardMonitor({
             </div>
 
             {/* Card principal */}
-            <div className="bg-white rounded-lg p-2 border-1 flex-1 shadow-md flex flex-col justify-between">
+            <div className="bg-white rounded-lg p-2 border-1  shadow-md flex flex-col justify-between">
               {/* Posição na fila */}
               <div className="flex justify-between items-start mb-0 h-[70%] p-2 pt-0 ">
                 <div>
@@ -203,7 +214,7 @@ export default function CardMonitor({
             <div className="m-0.5"></div>
 
             {/* Card Info */}
-            <div className="bg-white rounded-lg p-2 border-1 flex-1 shadow-md flex flex-col justify-between">
+            <div className="bg-white rounded-lg p-2 border-1  shadow-md flex flex-col justify-between">
               <div className="mt-0">
                 <h4 className="text-xs font-semibold text-gray-800 mb-0" >Enquanto você espera</h4>
                 <ul className="text-[10px] text-gray-600 space-y-1">

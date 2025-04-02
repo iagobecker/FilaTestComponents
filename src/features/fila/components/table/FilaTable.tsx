@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Table, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Modal } from "@/components/Modal";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Dispatch, SetStateAction } from 'react';
 import { useFila } from "../../provider/FilaProvider";
+import Link from "next/link";
 
 type FilaItem = {
   id: string;
@@ -32,20 +33,33 @@ type FilaTableProps = {
 export function FilaTable({ data, setData }: FilaTableProps) {
 
   const [notification, setNotification] = useState<string | null>(null);
-
+  const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [rowSelection, setRowSelection] = useState({});
 
 
   //Remover uma row
   const removeItem = (id: string) => {
-    setData((prevData) => prevData.filter((item) => item.id !== id));
-
+    setData((prevData) => {
+      const newData = prevData.filter((item) => item.id !== id);
+      table.resetRowSelection();
+      return newData;
+    });
     setNotification("Item removido com sucesso!");
-
-    // Remove a notificação após 3 segundos
     setTimeout(() => setNotification(null), 3000);
   };
+
+  // Filtrar os dados com base no termo de busca
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return data;
+
+    const term = searchTerm.toLowerCase();
+    return data.filter(item =>
+      item.nome.toLowerCase().includes(term) ||
+      item.telefone.includes(searchTerm)
+    );
+  }, [searchTerm, data]);
 
   const handleOpenModal = (id: string) => {
     setSelectedId(id);
@@ -68,6 +82,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
 
   const chamarItem = (id: string) => {
     chamarSelecionados([id]);
+    table.resetRowSelection();
   };
 
 
@@ -117,7 +132,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       header: "",
       cell: ({ row }) => (
         <div className="min-w-[80px] flex justify-start">
-          <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-700  rounded-md">
+          <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-800  rounded-md">
             BS{row.original.id}
           </span>
         </div>
@@ -128,8 +143,10 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       header: "",
       cell: ({ row }) => (
         <div className="w-[300px] min-w-[180px] flex flex-col">
-          <span className="font-semibold text-[16px] cursor-pointer">{row.getValue("nome")}</span>
-          <span className="text-sm text-gray-500 underline cursor-pointer">{row.original.telefone}</span>
+          <span className="font-semibold text-[16px] cursor-context-menu">{row.getValue("nome")}</span>
+          <Link href={`/customizarMensagem?telefone=${encodeURIComponent(row.original.telefone)}`} className="text-sm text-gray-500 underline cursor-pointer">
+            {row.original.telefone}
+          </Link>
         </div>
       ),
     },
@@ -165,9 +182,9 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
         const statusColors: Record<string, string> = {
-          "Em Atendimento": " text-green-600 border-green-400",
-          "Aguardando": " text-blue-600 border-blue-400",
-          "Cancelado": " text-red-600 border-red-400",
+          "Em Atendimento": " text-gray-600 border-green-400",
+          "Aguardando": " text-gray-600 border-blue-400",
+          "Cancelado": " text-gray-600 border-red-400",
         };
 
         return (
@@ -250,9 +267,16 @@ export function FilaTable({ data, setData }: FilaTableProps) {
   ];
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    autoResetPageIndex: false,
+    state: {
+      rowSelection,
+    },
+    onRowSelectionChange: setRowSelection,
+    getRowId: (row) => row.id,
+
   });
 
   const selectedCount = table.getFilteredSelectedRowModel().rows.length;
@@ -273,6 +297,9 @@ export function FilaTable({ data, setData }: FilaTableProps) {
         <FilaContainer
           selectedCount={selectedCount}
           selectedIds={table.getFilteredSelectedRowModel().rows.map(row => row.original.id)}
+          onSearch={setSearchTerm}
+          totalItems={filteredData.length}
+          onResetSelection={() => table.resetRowSelection()}
         >
           <div className="overflow-x-auto">
             <Table>

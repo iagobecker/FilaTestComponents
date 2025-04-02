@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { SketchPicker } from "react-color";
-import { Download } from "lucide-react";
+import { Download, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CardMonitor from "./CardMonitor"
@@ -77,59 +77,69 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                 <div className="flex-1 flex flex-col gap-4">
 
                     {/* Card - Dados da Empresa */}
-                    <Card className="border-2 border-blue-200 pb-4 pt-3 max-w-full ">
+                    <Card className="border-2 border-blue-200 pb-2 pt-2 max-w-full">
                         <CardHeader className="border-b border-blue-200 font-bold text-xl pb-1">
-                            <CardTitle>Dados da empresa</CardTitle>
+                            <div className="flex justify-between items-center">
+                                <CardTitle>Dados da empresa</CardTitle>
+                            </div>
                         </CardHeader>
 
-                        <form className="space-y-0.5 p-0.5">
-                            <CardContent className="font-semibold pl-3 text-md">
-                                <p>Nome fantasia</p>
-                            </CardContent>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Nome da empresa"
-                                required
-                                className="m-3 block w-[96%] h-10 rounded-sm border border-gray-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-2"
-                            />
+                        <form className="space-y-4 p-2">
+                            {/* Seção Logo com Preview ao lado */}
+                            <div className="flex flex-col md:flex-row gap-4 items-center">
+                                {/* Input para selecionar logo */}
+                                <div className="w-full">
+                                    <label className="block text-sm font-medium mb-1">Logo</label>
+                                    <div
+                                        className="relative w-full h-10 rounded-md border border-gray-300 bg-white flex items-center px-3 cursor-pointer hover:bg-gray-50"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <span className="text-gray-400 text-sm flex-1">
+                                            {logo ? "Logo selecionada" : "Escolher arquivo no seu computador"}
+                                        </span>
+                                        <Download className="size-4 text-gray-400" />
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            ref={fileInputRef}
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                        />
+                                    </div>
+                                </div>
 
-                            {/* Logo */}
-                            <CardContent className="font-semibold pl-3 text-md">
-                                <p>Logo</p>
-                            </CardContent>
-
-                            <div className="relative m-3 w-[96%] h-10 rounded-md border border-gray-300 bg-white flex items-center px-3 cursor-pointer"
-                                onClick={() => fileInputRef.current?.click()}>
-                                <span className="text-gray-400 text-sm flex-1">
-                                    {logo ? "Logo selecionada" : "Escolher arquivo no seu computador"}
-                                </span>
-                                <Download className="w-5 h-5 text-gray-400" />
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                />
+                                {/* Preview da Logo */}
+                                <div className="w-full md:w-1/3 flex justify-center">
+                                    {logo ? (
+                                        <img
+                                            src={URL.createObjectURL(logo)}
+                                            alt="Preview da logo"
+                                            className="size-16 object-contain rounded-md border border-gray-300"
+                                        />
+                                    ) : (
+                                        <div className="size-16 rounded-md bg-gray-100 border border-gray-300 flex items-center justify-center">
+                                            <span className="text-gray-400 text-xs"> <Image className="size-15" /> </span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            {/* Pré-visualização da logo */}
-                            {logo && (
-                                <div className="m-3 flex justify-center">
-                                    <img
-                                        src={URL.createObjectURL(logo)}
-                                        alt="Preview"
-                                        className="w-32 h-32 object-cover rounded-md border border-gray-300"
-                                    />
-                                </div>
-                            )}
+                            {/* Campo Nome Fantasia */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Nome fantasia</label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Nome da empresa"
+                                    required
+                                    className="w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
+                                />
+                            </div>
                         </form>
                     </Card>
-
                     {/* Card - Personalizar Cores */}
-                    <Card className="border-2 border-blue-200 pb-3 pt-3 max-w-full ">
+                    <Card className="border-2 border-blue-200 pb-1 pt-3 max-w-full ">
                         <CardHeader className="border-b border-blue-200 font-bold text-xl">
                             <CardTitle>Personalizar cores</CardTitle>
                             <CardDescription className="text-gray-400 font-normal w-[80%]">
@@ -140,7 +150,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                         </CardHeader>
 
                         {/* Cores */}
-                        <div className="py-4 flex flex-col gap-0" ref={pickerRef}>
+                        <div className="py-1 flex-1 flex-col gap-0" ref={pickerRef}>
                             {/* Cor Primária */}
                             <div className="flex items-start pl-4 gap-4 relative w-full border-b border-blue-200 pb-4">
                                 <Button
@@ -224,7 +234,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                         </div>
 
                         {/* Botão de redefinir cores */}
-                        <CardFooter className="flex justify-end border-t border-blue-200 pt-0">
+                        <CardFooter className="flex justify-end border-t m-3 border-blue-200 pt-0">
                             <Button
                                 className="max-w-[150px] border bg-white cursor-pointer text-black hover:bg-gray-200"
                                 onClick={resetColors}
@@ -234,15 +244,15 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                         </CardFooter>
                     </Card>
 
-                    <div className="flex pt-6">
+                    <div className="flex pt-2">
                         <Button type="submit" className="max-w-[150px] bg-blue-400 text-white hover:bg-blue-700">
                             Salvar
                         </Button>
                     </div>
                 </div>
 
-                <div className="flex-1/12">
-                    <div className="sticky ml-14 ">
+                <div className="flex-1 lg:flex-none">
+                    <div className="sticky lg:ml-14 py-1  flex justify-center lg:block">
 
                         <CardMonitor
                             primaryColor={primaryColor}

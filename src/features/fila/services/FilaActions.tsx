@@ -7,17 +7,26 @@ import { Modal } from "@/components/Modal";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Trash } from "lucide-react";
 
-export function FilaActions({ selectedCount, selectedIds }: { 
-  selectedCount: number; 
-  selectedIds: string[] 
-}) {
-  const { chamarSelecionados, removerSelecionados } = useFila(); 
+interface FilaActionsProps {
+  selectedCount: number;
+  selectedIds: string[];
+  onResetSelection: () => void;
+}
+
+export function FilaActions({
+  selectedCount,
+  selectedIds,
+  onResetSelection
+}: FilaActionsProps) {
+
+  const { chamarSelecionados, removerSelecionados } = useFila();
   const [showModal, setShowModal] = useState(false);
 
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
   const handleConfirmRemove = () => {
     removerSelecionados(selectedIds);
+    onResetSelection?.();
     handleCloseModal();
   };
 
@@ -26,8 +35,11 @@ export function FilaActions({ selectedCount, selectedIds }: {
   return (
     <>
       <div className="flex justify-end gap-2 py-2">
-        <Button 
-          onClick={() => chamarSelecionados(selectedIds)}
+        <Button
+          onClick={() => {
+            chamarSelecionados(selectedIds);
+            onResetSelection?.();
+          }}
           className="bg-white hover:bg-green-100 text-green-600 px-3 py-1 rounded-md flex items-center gap-2 border border-green-400"
         >
           Chamar selecionados
@@ -36,7 +48,7 @@ export function FilaActions({ selectedCount, selectedIds }: {
           </span>
         </Button>
 
-        <Button 
+        <Button
           onClick={handleOpenModal}
           className="bg-white hover:bg-red-100 text-red-600 px-3 py-1 rounded-md flex items-center gap-2 border border-red-400"
         >

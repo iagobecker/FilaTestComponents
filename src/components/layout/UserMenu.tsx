@@ -21,20 +21,20 @@ export function UserMenu() {
                      focus:outline-none focus-visible:ring-0 hover:bg-blue-50"
         >
           <Avatar className="w-10 h-10 ">
-            <AvatarImage  alt="User Avatar" />
+            <AvatarImage alt="User Avatar" />
             <AvatarFallback>AP</AvatarFallback>
           </Avatar>
           <div className="text-left">
-            <p className="text-sm font-medium text-gray-900">Adm Perfil</p>
+            <p className="text-sm font-medium text-gray-900">Administrativo</p>
             <p className="text-xs text-gray-500">Administrador</p>
-          </div>         
+          </div>
           <ChevronDown className="w-4 h-4 text-gray-500" />
         </button>
       </DropdownMenuTrigger>
 
       {/* Conteúdo do Dropdown */}
       <DropdownMenuContent align="end" className="w-56 shadow-md rounded-md">
-        
+
         <DropdownMenuItem
           className="cursor-pointer flex items-center gap-2 px-3 py-2 
                      data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"

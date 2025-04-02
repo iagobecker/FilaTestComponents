@@ -2,16 +2,31 @@
 
 import { Users, Search } from "lucide-react";
 import { FilaActions } from "../../services/FilaActions";
+import { useEffect, useState } from "react";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 
 export function FilaContainer({
   children,
   selectedCount,
   selectedIds,
+  onSearch,
+  totalItems,
+  onResetSelection
 }: {
   children: React.ReactNode;
   selectedCount: number;
   selectedIds: string[];
+  onSearch: (term: string) => void;
+  totalItems: number;
+  onResetSelection: () => void;
 }) {
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(localSearchTerm, 300);
+
+  useEffect(() => {
+    onSearch(debouncedSearch);
+  }, [debouncedSearch, onSearch]);
+
   return (
     <div className="border border-blue-300 rounded-lg shadow-sm">
       <div className="bg-blue-50 px-4 py-3 rounded-t-lg">
@@ -19,7 +34,7 @@ export function FilaContainer({
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 whitespace-nowrap">
               <Users className="w-5 h-5 shrink-0 text-blue-600" />
-              <span className="text-xl font-semibold text-blue-600">Pessoas na Fila: 6</span>
+              <span className="text-xl font-semibold text-blue-600">Pessoas na Fila: {totalItems}</span>
             </div>
 
             <div className="relative w-full max-w-xs">
@@ -28,12 +43,18 @@ export function FilaContainer({
                 type="text"
                 placeholder="Digite para buscar"
                 className="border rounded-md pl-10 pr-3 py-1 w-full h-8 text-sm bg-white focus:outline-none focus-visible:ring-0"
+                value={localSearchTerm}
+                onChange={(e) => setLocalSearchTerm(e.target.value)}
               />
             </div>
           </div>
 
           {/* Botões select vários */}
-          <FilaActions selectedCount={selectedCount} selectedIds={selectedIds} />
+          <FilaActions
+            selectedCount={selectedCount}
+            selectedIds={selectedIds}
+            onResetSelection={onResetSelection}
+          />
         </div>
       </div>
 
