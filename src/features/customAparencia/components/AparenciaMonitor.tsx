@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { SketchPicker } from "react-color";
-import { Download, Image } from "lucide-react";
+import { Download, Image, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CardMonitor from "./CardMonitor"
@@ -58,16 +58,23 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
 
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
-            setLogo(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                console.log("Imagem carregada:", reader.result);
-            }
-            reader.readAsDataURL(file);
+        const file = e.target.files?.[0];
+        if (!file) return;
 
+        // Verificar formato
+        const validTypes = ['image/jpeg', 'image/png'];
+        if (!validTypes.includes(file.type)) {
+            alert('Formato inválido. Use apenas JPG ou PNG.');
+            return;
         }
+
+        // Verificar tamanho (2MB em bytes)
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Arquivo muito grande. Tamanho máximo: 2MB.');
+            return;
+        }
+
+        setLogo(file);
     };
 
     return (
@@ -91,21 +98,26 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                 <div className="w-full">
                                     <label className="block text-sm font-medium mb-1">Logo</label>
                                     <div
-                                        className="relative w-full h-10 rounded-md border border-gray-300 bg-white flex items-center px-3 cursor-pointer hover:bg-gray-50"
+                                        className="relative w-full h-10 rounded-md border border-gray-300 bg-white flex items-center justify-center px-3 cursor-pointer hover:bg-gray-50"
                                         onClick={() => fileInputRef.current?.click()}
                                     >
-                                        <span className="text-gray-400 text-sm flex-1">
-                                            {logo ? "Logo selecionada" : "Escolher arquivo no seu computador"}
-                                        </span>
-                                        <Download className="size-4 text-gray-400" />
+                                        <div className="flex items-center gap-2">
+                                            <Upload className="size-5 text-gray-700" />
+                                            <span className="text-gray-700 text-md font-bold">
+                                                {logo ? "Logo selecionada" : "Escolher arquivo no seu computador"}
+                                            </span>
+                                        </div>
                                         <input
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/jpeg, image/png"
                                             ref={fileInputRef}
                                             onChange={handleFileChange}
                                             className="hidden"
                                         />
                                     </div>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        Formatos aceitos: JPG, PNG. Tamanho máximo: 2MB
+                                    </p>
                                 </div>
 
                                 {/* Preview da Logo */}
@@ -118,7 +130,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                         />
                                     ) : (
                                         <div className="size-16 rounded-md bg-gray-100 border border-gray-300 flex items-center justify-center">
-                                            <span className="text-gray-400 text-xs"> <Image className="size-15" /> </span>
+                                            <Image className="size-17 text-gray-400" />
                                         </div>
                                     )}
                                 </div>

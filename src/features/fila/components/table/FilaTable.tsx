@@ -4,18 +4,25 @@ import { useMemo, useState } from "react";
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Table, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash, PhoneCall, CircleArrowDown, CircleArrowUp, Clock, CheckCircle } from "lucide-react";
+import { Trash, PhoneCall, CircleArrowDown, CircleArrowUp, Clock, CheckCircle, Edit, Pencil, PencilLine } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FilaContainer } from "@/features/fila/components/table/FilaContainer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/Modal";
-import { DialogTitle } from "@/components/ui/dialog";
 import { Dispatch, SetStateAction } from 'react';
 import { useFila } from "../../provider/FilaProvider";
-import Link from "next/link";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { EditClientForm } from "../form/EditClientForm";
 
-type FilaItem = {
+
+export type FilaItem = {
   id: string;
   nome: string;
   telefone: string;
@@ -37,6 +44,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rowSelection, setRowSelection] = useState({});
+  const [editingClient, setEditingClient] = useState<FilaItem | null>(null);
 
 
   //Remover uma row
@@ -60,11 +68,6 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       item.telefone.includes(searchTerm)
     );
   }, [searchTerm, data]);
-
-  const handleOpenModal = (id: string) => {
-    setSelectedId(id);
-    setShowModal(true);
-  };
 
   const handleCloseModal = () => {
     setSelectedId(null);
@@ -143,10 +146,30 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       header: "",
       cell: ({ row }) => (
         <div className="w-[300px] min-w-[180px] flex flex-col">
-          <span className="font-semibold text-[16px] cursor-context-menu">{row.getValue("nome")}</span>
-          <Link href={`/customizarMensagem?telefone=${encodeURIComponent(row.original.telefone)}`} className="text-sm text-gray-500 underline cursor-pointer">
+          <div className="flex items-center gap-2">
+            <span
+              className="font-semibold text-[16px] cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={() => setEditingClient(row.original)}
+            >
+              {row.getValue("nome")}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-gray-500 hover:text-blue-600 cursor-pointer"
+              onClick={() => setEditingClient(row.original)}
+            >
+              <PencilLine className="h-4 w-4 " />
+            </Button>
+          </div>
+          <a
+            href={`https://wa.me/${encodeURIComponent(row.original.telefone)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-500 underline cursor-pointer"
+          >
             {row.original.telefone}
-          </Link>
+          </a>
         </div>
       ),
     },
@@ -165,8 +188,8 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       cell: ({ row }) => (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center justify-end gap-1 cursor-pointer">
-              <Clock className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
+            <div className="flex items-center justify-center gap-1 cursor-pointer">
+              <Clock className="size-4 text-gray-400" strokeWidth={1.5} />
               <span className="text-sm font-semibold text-gray-400">{row.original.tempo}</span>
             </div>
           </TooltipTrigger>
@@ -182,11 +205,10 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
         const statusColors: Record<string, string> = {
-          "Em Atendimento": " text-gray-600 border-green-400",
-          "Aguardando": " text-gray-600 border-blue-400",
-          "Cancelado": " text-gray-600 border-red-400",
-        };
-
+          "Em Atendimento": " text-gray-500 border-green-400",
+          "Aguardando": " text-gray-500 border-blue-400",
+          "Cancelado": " text-gray-500 border-red-400",
+        }; 5
         return (
           <div className="flex max-w-[60px] min-w-[120px] items-center gap-2">
             <span
@@ -353,6 +375,32 @@ export function FilaTable({ data, setData }: FilaTableProps) {
             </Button>
           </div>
         </Modal>
+      )}
+
+      {/* Dialog de Edição */}
+      {editingClient && (
+        <Dialog
+          open={!!editingClient}
+          onOpenChange={(open) => !open && setEditingClient(null)}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Cliente</DialogTitle>
+              <DialogDescription>Atualize as informações do cliente</DialogDescription>
+            </DialogHeader>
+            <EditClientForm
+              client={editingClient}
+              onSave={(updatedClient) => {
+                setData(prev => prev.map(item =>
+                  item.id === updatedClient.id ? updatedClient : item
+                ));
+                setEditingClient(null);
+                setNotification("Cliente atualizado com sucesso!");
+                setTimeout(() => setNotification(null), 3000);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       )}
 
     </TooltipProvider>

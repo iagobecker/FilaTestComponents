@@ -3,7 +3,7 @@ export const filaData = [
   {
     id: "1",
     nome: "Eduardo Constantino",
-    telefone: "(51) 999-789863",
+    telefone: "55999789739",
     observacao: "Prioritário",
     status: "Aguardando",
     tempo: "há 20 minutos",
@@ -13,7 +13,7 @@ export const filaData = [
     nome: "Pedro Simas",
     telefone: "(51) 999-789863",
     observacao: "Convencional",
-    status: "Em Atendimento",
+    status: "Aguardando",
     tempo: "há 19 minutos",
   },
   {
@@ -48,7 +48,7 @@ export const filaData = [
     status: "Cancelado",
     tempo: "há 5 minutos",
   },  
-];
+  ];
 
 
 

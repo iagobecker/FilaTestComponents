@@ -18,7 +18,7 @@ export function DialogTempoMaximo({ isOpen, onClose }: DialogTempoMaximoProps) {
                 <DialogHeader>
                     <DialogTitle className="text-lg font-semibold">Tempo de tolerância</DialogTitle>
                     <DialogDescription className="text-gray-500 text-sm">
-                        Defina o tempo médio de tolerância em minutos, após o cliente ser chamado.
+                        Defina o tempo máximo de tolerância (em minutos) para o cliente comparecer após ser chamado. Após esse período, o sistema considerará automaticamente que o cliente não compareceu.
                     </DialogDescription>
                 </DialogHeader>
 

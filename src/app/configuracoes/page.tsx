@@ -21,7 +21,7 @@ export default function ConfiguracoesPage() {
                     <ConfigCard
                         title="Customizar aparência"
                         description="Personalize as cores do monitor de exibição para melhorar a experiência visual dos seus clientes."
-                        icon={<Palette className="w-6 h-6 text-blue-600" />}
+                        icon={<Palette className="size-6 text-blue-600" />}
                         bgColor="bg-blue-100"
                         borderColor="border-blue-200"
                         href="/customAparencia"
@@ -30,7 +30,7 @@ export default function ConfiguracoesPage() {
                     <ConfigCard
                         title="Ativar WhatsApp"
                         description="Vincule seu número para enviar notificações e atualizações da fila diretamente para os clientes."
-                        icon={<MessageCircle className="w-6 h-6 text-green-600 " />}
+                        icon={<MessageCircle className="size-6 text-green-600 " />}
                         bgColor="bg-green-100"
                         borderColor="border-green-200"
                         href="/ativaWhatsapp"
@@ -38,8 +38,8 @@ export default function ConfiguracoesPage() {
 
                     <ConfigCard
                         title="Tempo máximo"
-                        description="Configure o tempo de tolerância após chamar seus clientes e otimize o fluxo de atendimento."
-                        icon={<Clock className="w-6 h-6 text-yellow-700 " />}
+                        description="Configure o tempo máximo de tolerância após chamar seus clientes e otimize o fluxo de atendimento."
+                        icon={<Clock className="size-6 text-yellow-700 " />}
                         bgColor="bg-orange-100"
                         borderColor="border-orange-200"
                         onClick={() => setIsDialogOpen(true)}
@@ -47,8 +47,8 @@ export default function ConfiguracoesPage() {
 
                     <ConfigCard
                         title="Customizar mensagem"
-                        description="Crie mensagens personalizadas para diferentes situações e melhore a comunicação com seus clientes."
-                        icon={<MessageSquare className="w-6 h-6 text-purple-600 " />}
+                        description="Crie mensagens personalizadas no WhatsApp para diferentes situações e melhore a comunicação com seus clientes."
+                        icon={<MessageSquare className="size-6 text-purple-600 " />}
                         bgColor="bg-purple-100"
                         borderColor="border-purple-200"
                         href="/customizarMensagem"

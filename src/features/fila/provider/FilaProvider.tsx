@@ -31,6 +31,8 @@ interface FilaContextType {
   chamarSelecionados: (ids: string[]) => void;
   removerSelecionados: (selectedIds: string[]) => void;
   addPerson: (nome: string, telefone: string, observacao: string) => void;
+  retornarParaFila: (id: string) => void;
+  removerChamada: (id: string) => void;
 }
 
 const FilaContext = createContext<FilaContextType | undefined>(undefined);
@@ -48,6 +50,35 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   const [notification, setNotification] = useState<string | null>(null);
   const [filaData, setFilaData] = useState<FilaItem[]>(initialFilaData);
   const [chamadasData, setChamadasData] = useState<ChamadaItem[]>(initialChamadasData);
+
+  const retornarParaFila = (id: string) => {
+    // Encontrar o item nas chamadas recentes
+    const item = chamadasData.find(c => c.id === id);
+    if (!item) return;
+
+    // Adicionar de volta à fila
+    setFilaData(prev => [...prev, {
+      id: item.id,
+      nome: item.nome,
+      telefone: item.telefone,
+      observacao: "", // Valor padrão
+      status: "Aguardando",
+      tempo: "há 0 minutos"
+    }]);
+
+    // Remover das chamadas recentes
+    setChamadasData(prev => prev.filter(c => c.id !== id));
+
+    // Mostrar notificação
+    setNotification("Cliente retornou para a fila com sucesso!");
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const removerChamada = (id: string) => {
+    setChamadasData(prev => prev.filter(c => c.id !== id));
+    setNotification("Chamada removida com sucesso!");
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   const chamarSelecionados = (selectedIds: string[]) => {
     // Filtrar os itens selecionados
@@ -73,20 +104,28 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     setSelectedCount(0);
   };
 
-  // No FilaProvider.tsx
-const removerSelecionados = (ids: string[]) => {
-  setFilaData(prev => prev.filter(item => !ids.includes(item.id)));
-  setSelectedCount(0);
-  // Mostrar notificação
-  if (!setNotification) return; // Ensure setNotification is defined
-  // Mostrar notificação
-  setNotification(ids.length > 1 
-    ? `${ids.length} itens removidos com sucesso!` 
-    : "Item removido com sucesso!");
-  
-  setTimeout(() => setNotification(null), 3000);
-};
-  
+  const removerSelecionados = (ids: string[]) => {
+    setFilaData(prev => prev.filter(item => !ids.includes(item.id)));
+    setSelectedCount(0);
+    // Mostrar notificação
+    setNotification(ids.length > 1 
+      ? `${ids.length} itens removidos com sucesso!` 
+      : "Item removido com sucesso!");
+    
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  const addPerson = (nome: string, telefone: string, observacao: string) => {
+    const newPerson = {
+      id: (filaData.length + 1).toString(),
+      nome,
+      telefone,
+      observacao,
+      status: "Aguardando",
+      tempo: "há 0 minutos",
+    };
+    setFilaData(prevData => [...prevData, newPerson]);
+  };
 
   return (
     <FilaContext.Provider value={{
@@ -98,17 +137,9 @@ const removerSelecionados = (ids: string[]) => {
       setChamadasData,
       chamarSelecionados,
       removerSelecionados,
-      addPerson: (nome: string, telefone: string, observacao: string) => {
-        const newPerson = {
-          id: (filaData.length + 1).toString(),
-          nome,
-          telefone,
-          observacao,
-          status: "Aguardando",
-          tempo: "há 0 minutos",
-        };
-        setFilaData(prevData => [...prevData, newPerson]);
-      },
+      addPerson,
+      retornarParaFila,
+      removerChamada,
     }}>
       {children}
     </FilaContext.Provider>
