@@ -1,15 +1,20 @@
 import { useRef, useState, useEffect } from "react";
 import { SketchPicker } from "react-color";
-import { Download, Image, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Eye, Image, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CardMonitor from "./CardMonitor"
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) => void }) {
     const [name, setName] = useState("");
     const [logo, setLogo] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
+    const isSmallScreen = useMediaQuery("(max-width: 1190px)");
+    const [showPreviewModal, setShowPreviewModal] = useState(false);
+    const [currentPreview, setCurrentPreview] = useState<"monitor" | "app">("monitor");
 
     // Valores padrão das cores
     const DEFAULT_PRIMARY = "#4A90E2";
@@ -31,7 +36,6 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
 
     // Controle dos seletores de cores
     const [pickerOpen, setPickerOpen] = useState<"primary" | "overlay" | "font" | null>(null);
-
     const [isPickingColor, setIsPickingColor] = useState(false);
 
 
@@ -77,12 +81,18 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
         setLogo(file);
     };
 
+    // Função para alternar entre os mockups
+    const togglePreview = (direction: "prev" | "next") => {
+        setCurrentPreview(prev => {
+            if (direction === "next") return prev === "monitor" ? "app" : "monitor";
+            return prev === "monitor" ? "app" : "monitor";
+        });
+    };
+
     return (
         <>
             <div className="flex flex-col lg:flex-row gap-4 p-2 md:p-4">
-
                 <div className="flex-1 flex flex-col gap-4">
-
                     {/* Card - Dados da Empresa */}
                     <Card className="border-2 border-blue-200 pb-2 pt-2 max-w-full">
                         <CardHeader className="border-b border-blue-200 font-bold text-xl pb-1">
@@ -95,7 +105,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                             {/* Seção Logo com Preview ao lado */}
                             <div className="flex flex-col md:flex-row gap-4 items-center">
                                 {/* Input para selecionar logo */}
-                                <div className="w-full">
+                                <div className="w-full md:w-2/3">
                                     <label className="block text-sm font-medium mb-1">Logo</label>
                                     <div
                                         className="relative w-full h-10 rounded-md border border-gray-300 bg-white flex items-center justify-center px-3 cursor-pointer hover:bg-gray-50"
@@ -103,7 +113,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                     >
                                         <div className="flex items-center gap-2">
                                             <Upload className="size-5 text-gray-700" />
-                                            <span className="text-gray-700 text-md font-bold">
+                                            <span className="text-gray-700 text-sm md:text-md font-bold text-center">
                                                 {logo ? "Logo selecionada" : "Escolher arquivo no seu computador"}
                                             </span>
                                         </div>
@@ -126,11 +136,11 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                         <img
                                             src={URL.createObjectURL(logo)}
                                             alt="Preview da logo"
-                                            className="size-16 object-contain rounded-md border border-gray-300"
+                                            className="w-24 h-24 object-contain rounded-md border border-gray-300"
                                         />
                                     ) : (
-                                        <div className="size-16 rounded-md bg-gray-100 border border-gray-300 flex items-center justify-center">
-                                            <Image className="size-17 text-gray-400" />
+                                        <div className="w-24 h-24 rounded-md bg-gray-100 border border-gray-300 flex items-center justify-center">
+                                            <Image className="w-12 h-12 text-gray-400" />
                                         </div>
                                     )}
                                 </div>
@@ -263,21 +273,111 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                     </div>
                 </div>
 
-                <div className="flex-1 lg:flex-none">
-                    <div className="sticky lg:ml-14 py-1  flex justify-center lg:block">
+                {isSmallScreen ? (
+                    <div className="flex justify-center">
+                        <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
+                            <DialogTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="w-full max-w-[100px] bg-white text-black hover:bg-blue-600 flex items-center gap-2"
+                                >
+                                    <Eye className="size-5" /> Preview
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-[90vw] h-[90vh] flex flex-col p-0 overflow-hidden">
+                                <DialogHeader className="border-b p-4">
+                                    <DialogTitle className="text-xl font-bold">
+                                        {currentPreview === "monitor" ? "Monitor PDV" : "App do Usuário"}
+                                    </DialogTitle>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setShowPreviewModal(false)}
+                                    >
 
-                        <CardMonitor
-                            primaryColor={primaryColor}
-                            overlayColor={overlayColor}
-                            fontColor={fontColor}
-                            companyName={name || "Nome da empresa"}
-                            companyLogo={logo ? URL.createObjectURL(logo) : null}
-                        />
+                                    </Button>
+                                </DialogHeader>
+
+                                <div className="flex-1 overflow-auto flex items-center justify-center relative">
+                                    {/* Botão de navegação esquerdo */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white"
+                                        onClick={() => togglePreview("prev")}
+                                    >
+                                        <ChevronLeft className="h-6 w-6" />
+                                    </Button>
+
+                                    {/* Conteúdo do mockup atual */}
+                                    <div className="h-full w-full flex items-center justify-center p-4">
+                                        {currentPreview === "monitor" ? (
+                                            <div className="scale-[0.5] md:scale-[0.9]">
+                                                <CardMonitor
+                                                    primaryColor={primaryColor}
+                                                    overlayColor={overlayColor}
+                                                    fontColor={fontColor}
+                                                    companyName={name || "Nome da empresa"}
+                                                    companyLogo={logo ? URL.createObjectURL(logo) : null}
+                                                    showOnly="monitor"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="scale-[1] md:scale-100">
+                                                <CardMonitor
+                                                    primaryColor={primaryColor}
+                                                    overlayColor={overlayColor}
+                                                    fontColor={fontColor}
+                                                    companyName={name || "Nome da empresa"}
+                                                    companyLogo={logo ? URL.createObjectURL(logo) : null}
+                                                    showOnly="app"
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Botão de navegação direito */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white"
+                                        onClick={() => togglePreview("next")}
+                                    >
+                                        <ChevronRight className="h-6 w-6" />
+                                    </Button>
+                                </div>
+
+                                <div className="flex justify-center gap-2 p-4 border-t">
+                                    <Button
+                                        variant={currentPreview === "monitor" ? "default" : "outline"}
+                                        onClick={() => setCurrentPreview("monitor")}
+                                    >
+                                        Monitor
+                                    </Button>
+                                    <Button
+                                        variant={currentPreview === "app" ? "default" : "outline"}
+                                        onClick={() => setCurrentPreview("app")}
+                                    >
+                                        App
+                                    </Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
-                </div>
+                ) : (
+                    <div className="flex-1 lg:flex-none">
+                        <div className="sticky lg:ml-14 py-1 flex justify-center lg:block">
+                            <CardMonitor
+                                primaryColor={primaryColor}
+                                overlayColor={overlayColor}
+                                fontColor={fontColor}
+                                companyName={name || "Nome da empresa"}
+                                companyLogo={logo ? URL.createObjectURL(logo) : null}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
-
         </>
-
     );
 }

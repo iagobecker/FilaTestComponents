@@ -34,7 +34,7 @@ export function FilaActions({
 
   return (
     <>
-      <div className="flex justify-end gap-2 py-2">
+      <div className="flex flex-col md:flex-row justify-end gap-2 py-2">
         <Button
           onClick={() => {
             chamarSelecionados(selectedIds);

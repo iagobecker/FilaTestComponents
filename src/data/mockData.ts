@@ -1,6 +1,14 @@
 //Dados Mokados (Fila de Atendimento)
 export const filaData = [
   {
+    id: "0",
+    nome: "Constantino Vargas Cardoso lima",
+    telefone: "55999789739",
+    observacao: "Prioritário",
+    status: "Aguardando",
+    tempo: "há 20 minutos",
+  },
+  {
     id: "1",
     nome: "Eduardo Constantino",
     telefone: "55999789739",
@@ -59,7 +67,8 @@ export const chamadasData = [
     nome: "Christian Figueiredo", 
     telefone: "(51) 999-789863", 
     tempo: "há 30 minutos", 
-    status: "Chamado" 
+    status: "Chamado" ,
+    observacao: "Convencional"
   },
   
 ];

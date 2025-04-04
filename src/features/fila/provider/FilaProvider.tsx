@@ -19,6 +19,7 @@ type ChamadaItem = {
   telefone: string;
   tempo: string;
   status: string;
+  observacao: string;
 };
 
 interface FilaContextType {
@@ -92,7 +93,8 @@ export function FilaProvider({ children }: { children: ReactNode }) {
       nome: item.nome,
       telefone: item.telefone,
       tempo: "Agora",
-      status: "Chamado"
+      status: "Chamado",
+      observacao: "" 
     }));
 
     setChamadasData(prev => [...novasChamadas, ...prev]);

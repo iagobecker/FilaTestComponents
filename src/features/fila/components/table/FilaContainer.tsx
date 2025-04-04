@@ -29,12 +29,12 @@ export function FilaContainer({
 
   return (
     <div className="border border-blue-300 rounded-lg shadow-sm">
-      <div className="bg-blue-50 px-4 py-3 rounded-t-lg">
+      <div className="bg-blue-50 px-2 py-2 rounded-t-lg">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 whitespace-nowrap">
-              <Users className="w-5 h-5 shrink-0 text-blue-600" />
-              <span className="text-xl font-semibold text-blue-600">Pessoas na Fila: {totalItems}</span>
+              <Users className="size-4 shrink-0  text-blue-600" />
+              <span className="text-sm font-semibold text-blue-600">Na Fila: {totalItems}</span>
             </div>
 
             <div className="relative w-full max-w-xs">

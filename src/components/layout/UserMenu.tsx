@@ -18,13 +18,14 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button
           className="flex items-center gap-2 rounded-md p-2 transition 
-                     focus:outline-none focus-visible:ring-0 hover:bg-blue-50"
+                     focus:outline-none focus-visible:ring-0 hover:bg-blue-50 
+                     sm:gap-3 sm:p-3"
         >
-          <Avatar className="w-10 h-10 ">
+          <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
             <AvatarImage alt="User Avatar" />
             <AvatarFallback>AP</AvatarFallback>
           </Avatar>
-          <div className="text-left">
+          <div className="text-left hidden sm:block">
             <p className="text-sm font-medium text-gray-900">Administrativo</p>
             <p className="text-xs text-gray-500">Administrador</p>
           </div>
@@ -33,8 +34,10 @@ export function UserMenu() {
       </DropdownMenuTrigger>
 
       {/* Conteúdo do Dropdown */}
-      <DropdownMenuContent align="end" className="w-56 shadow-md rounded-md">
-
+      <DropdownMenuContent
+        align="end"
+        className="w-48 sm:w-56 shadow-md rounded-md"
+      >
         <DropdownMenuItem
           className="cursor-pointer flex items-center gap-2 px-3 py-2 
                      data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
@@ -44,8 +47,10 @@ export function UserMenu() {
         </DropdownMenuItem>
 
         <Link href="/configuracoes" passHref>
-          <DropdownMenuItem className="cursor-pointer flex items-center gap-2 px-3 py-2 
-                     data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition">
+          <DropdownMenuItem
+            className="cursor-pointer flex items-center gap-2 px-3 py-2 
+                     data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
+          >
             <Settings className="w-4 h-4 text-blue-600" />
             <span>Configurações</span>
           </DropdownMenuItem>
