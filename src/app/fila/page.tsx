@@ -6,6 +6,8 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { FilaProvider, useFila } from "../../features/fila/provider/FilaProvider";
 import { FilaTable } from "../../features/fila/components/table/FilaTable";
 import { ChamadasRecentes } from "../../features/fila/components/table-chamados/ChamadasRecentes";
+import { fetchFilaClientes } from "@/features/fila/services/FilaService";
+
 
 export default function FilaPage() {
   return (
@@ -21,18 +23,20 @@ export default function FilaPage() {
 function FilaContent() {
   const { filaData, setFilaData, chamadasData } = useFila();
 
-  const addPerson = (nome: string, telefone: string, observacao: string) => {
-    const newPerson: { id: string; nome: string; telefone: string; observacao: string; status: string; tempo: string } = {
-      id: (filaData.length + 1).toString(),
-      nome,
-      telefone,
-      observacao,
-      status: "Aguardando",
-      tempo: "há 0 minutos",
-    };
-
-    setFilaData(prev => [...prev, newPerson]);
+  const addPerson = async (nome: string, telefone: string, observacao: string) => {
+    try {
+      // Após adicionar via API, buscamos novamente toda a fila
+      const novaFila = await fetchFilaClientes();
+      const formattedFila = novaFila.map(item => ({
+        ...item,
+        id: item.id || "", 
+      }));
+      setFilaData(formattedFila);
+    } catch (error) {
+      console.error("Erro ao adicionar pessoa na fila:", error);
+    }
   };
+
 
   return (
     <>

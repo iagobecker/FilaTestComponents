@@ -14,8 +14,10 @@ import Link from "next/link"
 import { useState, useEffect } from 'react';
 
 const emailSchema = z.object({
-    email: z.string().email("Digite um e-mail válido")
+    email: z.string().email("Digite um e-mail válido"),
+    senha: z.string().min(4, "A senha deve ter pelo menos 4 caracteres")
 });
+
 
 const codeSchema = z.object({
     code: z.string().min(6, "O código deve ter 6 dígitos").max(6, "O código deve ter 6 dígitos")
@@ -25,21 +27,29 @@ export function LoginForm({
     className,
     ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+
+    // setAuthStep = definir etapa de autenticação
     const { signIn, sendVerificationCode, loading, authStep, setAuthStep } = useAuth();
+
     const [email, setEmail] = useState('');
+
+    // controller para o botão de reenviar código
     const [canResend, setCanResend] = useState(true);
     const [countdown, setCountdown] = useState(0);
 
+    // cria o formulário de email e senha com validacao zod e react-hook-form
     const emailForm = useForm<z.infer<typeof emailSchema>>({
         resolver: zodResolver(emailSchema),
-        defaultValues: { email: "" }
+        defaultValues: { email: "", senha: "" }
     });
 
+    // formulário para o código de verificação
     const codeForm = useForm<z.infer<typeof codeSchema>>({
         resolver: zodResolver(codeSchema),
         defaultValues: { code: "" }
     });
 
+    // decrementa o contador a cada segundo - habilita o botão de reenviar código
     useEffect(() => {
         if (countdown > 0) {
             const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -50,32 +60,36 @@ export function LoginForm({
     }, [countdown]);
 
 
-    async function handleSendCode(values: z.infer<typeof emailSchema>) {
+    // chamado quando o usuário envia o formulário de email e senha
+    async function handleLogin(values: z.infer<typeof emailSchema>) {
         try {
-            await sendVerificationCode(values.email);
-            setEmail(values.email);
+            // chama o sigin do AuthContext/ responsavel por salvar o token, redirecionar etc...
+            await signIn({
+                email: values.email,
+                senha: values.senha,
+            });
         } catch (error) {
             const errorMessage = error instanceof Error
                 ? error.message
-                : 'Ocorreu um erro inesperado';
+                : 'Erro inesperado ao tentar fazer login';
 
             emailForm.setError("root", {
-                message: errorMessage.includes('Network Error')
-                    ? 'Não foi possível conectar ao servidor. Verifique sua conexão.'
-                    : errorMessage
+                message: errorMessage,
             });
         }
     }
 
-    async function handleVerifyCode(values: z.infer<typeof codeSchema>) {
-        try {
-            await signIn({ email, code: values.code });
-        } catch (error) {
-            if (error instanceof Error) {
-                codeForm.setError("root", { message: error.message });
-            }
-        }
-    }
+
+
+    // async function handleVerifyCode(values: z.infer<typeof codeSchema>) {
+    //     try {
+    //         await signIn({ email, senha: values.code });
+    //     } catch (error) {
+    //         if (error instanceof Error) {
+    //             codeForm.setError("root", { message: error.message });
+    //         }
+    //     }
+    // }
 
     return (
         <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -95,10 +109,12 @@ export function LoginForm({
                 <h1 className="text-xl font-bold">Bem vindo(a) ao Controla de Fila</h1>
             </div>
 
+            {/* Renderiza o formlário de email/senha apenas se authStep for "email" */}
             {authStep === 'email' && (
                 <Form {...emailForm}>
-                    <form onSubmit={emailForm.handleSubmit(handleSendCode)}>
+                    <form onSubmit={emailForm.handleSubmit(handleLogin)}>
                         <div className="flex flex-col gap-6">
+                            {/* Campos do formulário conectados ao useForm */}
                             <FormField
                                 control={emailForm.control}
                                 name="email"
@@ -111,6 +127,25 @@ export function LoginForm({
                                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                 placeholder="seu@email.com"
                                                 {...field}
+                                                disabled={loading || false}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={emailForm.control}
+                                name="senha"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Senha</FormLabel>
+                                        <FormControl>
+                                            <input
+                                                type="password"
+                                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                                placeholder="Digite sua senha"
+                                                {...field}
                                                 disabled={loading}
                                             />
                                         </FormControl>
@@ -119,6 +154,7 @@ export function LoginForm({
                                 )}
                             />
 
+                        {/* Ao clicar, chama "lidando com Envio" (handleLogin) */}
                             <Button
                                 type="submit"
                                 className="w-full"
@@ -126,22 +162,28 @@ export function LoginForm({
                                 aria-busy={loading}
                             >
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Enviar código
+                                Entrar
                             </Button>
+
+                            {emailForm.formState.errors.root && (
+                                <div className="text-red-500 text-sm">
+                                    {emailForm.formState.errors.root.message}
+                                </div>
+                            )}
+
                         </div>
                     </form>
                 </Form>
             )}
 
-            {authStep === 'code' && (
+            {authStep === 'senha' && (
                 <>
-                    <div className="text-center" aria-live="polite">
-                        <p>Enviamos um código de 6 dígitos para</p>
+                    <div className="text-center">                       
                         <p className="font-semibold">{email}</p>
                     </div>
 
                     <Form {...codeForm}>
-                        <form onSubmit={codeForm.handleSubmit(handleVerifyCode)}>
+                        <form onSubmit={emailForm.handleSubmit(handleLogin)}>
                             <div className="flex flex-col gap-6">
                                 <FormField
                                     control={codeForm.control}
@@ -211,7 +253,7 @@ export function LoginForm({
 
             <div className="text-center text-sm">
                 Problemas com o acesso?{" "}
-                <Link href="/ajuda" className="underline underline-offset-4">
+                <Link href="/login" className="underline underline-offset-4">
                     Clique aqui
                 </Link>
             </div>

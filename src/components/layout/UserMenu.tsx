@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   DropdownMenu,
@@ -10,11 +10,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/features/auth/context/AuthContext";
 
 export function UserMenu() {
+  const { signOut } = useAuth();
+
   return (
     <DropdownMenu>
-      {/* Avatar + Nome + Ícone de Dropdown */}
       <DropdownMenuTrigger asChild>
         <button
           className="flex items-center gap-2 rounded-md p-2 transition 
@@ -33,7 +35,6 @@ export function UserMenu() {
         </button>
       </DropdownMenuTrigger>
 
-      {/* Conteúdo do Dropdown */}
       <DropdownMenuContent
         align="end"
         className="w-48 sm:w-56 shadow-md rounded-md"
@@ -59,6 +60,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
+          onClick={signOut} 
           className="cursor-pointer flex items-center gap-2 px-3 py-2 text-red-600 
                      data-[highlighted]:bg-red-100 transition"
         >

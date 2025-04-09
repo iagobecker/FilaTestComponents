@@ -1,142 +1,173 @@
 'use client';
 
-import { createContext, useEffect, useState } from "react";
-import { setCookie, parseCookies, destroyCookie } from 'nookies'
-import Router from 'next/router'
-import { Api } from '@/api/api'
-import React from "react";
-import axios from "axios";
+import { createContext, useEffect, useState } from 'react';
+import { setCookie, parseCookies, destroyCookie } from 'nookies';
+import { Api } from '@/api/api';
+import React from 'react';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode';
+
+
 
 type User = {
-    id: string;
-    name: string;
-    email: string;
-    signOut: () => void;
-}
+  id: string;
+  name: string;
+  email: string;
+  signOut: () => void;
+};
 
-type SignInData = {
-    email: string;
-    password: string;
-}
+type DecodedToken = {
+  sub: string;
+  email: string;
+  name?: string;
+};
 
 type AuthContextType = {
-    isAuthenticated: boolean;
-    user: User | null;
-    signIn: (data: { email: string; code: string }) => Promise<void>;
-    sendVerificationCode: (email: string) => Promise<void>;
-    loading: boolean;
-    authStep: 'email' | 'code' | 'authenticated';
-    setAuthStep: (step: 'email' | 'code' | 'authenticated') => void;
-    signOut: () => void;
-}
+  isAuthenticated: boolean;
+  user: User | null;
+  signIn: (data: { email: string; senha: string }) => Promise<void>;
+  sendVerificationCode: (email: string) => Promise<void>;
+  loading: boolean;
+  authStep: 'email' | 'senha' | 'authenticated';
+  setAuthStep: (step: 'email' | 'senha' | 'authenticated') => void;
+  signOut: () => void;
+};
 
-export const AuthContext = createContext({} as AuthContextType)
+export const AuthContext = createContext({} as AuthContextType);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [authStep, setAuthStep] = useState<'email' | 'code' | 'authenticated'>('email');
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [authStep, setAuthStep] = useState<'email' | 'senha' | 'authenticated'>('email');
+  const router = useRouter();
+  const isAuthenticated = !!user;
 
-    const isAuthenticated = !!user;
+  useEffect(() => {
+    async function loadUserFromCookies() {
+      const { 'auth.token': token } = parseCookies();
 
-    useEffect(() => {
-        async function loadUserFromCookies() {
-            const { 'auth.token': token } = parseCookies()
+      if (token) {
+        try {
+          Api.setAuthorizationHeader(token);
+          const decoded = jwtDecode<DecodedToken>(token);
 
-            if (token) {
-                try {
-                    Api.setAuthorizationHeader(token)
-                    // Adapte esta chamada para API
-                    const userInfo = await Api.get('/auth/me')
-                    if (userInfo.data) {
-                        setUser(userInfo.data)
-                    }
-                } catch (error) {
-                    console.error('Failed to load user', error)
-                    signOut()
-                }
+          setUser({
+            id: decoded.sub,
+            name: decoded.name ?? '',
+            email: decoded.email,
+            signOut,
+          });
+
+          setAuthStep('authenticated');
+        } catch (error: any) {
+          if (axios.isAxiosError(error)) {
+            if (error.response?.status === 401) {
+              signOut();
             }
-            setLoading(false)
+          }
         }
-        loadUserFromCookies()
-    }, [])
+      }
 
-   // AuthContext.tsx
-async function sendVerificationCode(email: string) {
+      setLoading(false);
+    }
+
+    loadUserFromCookies();
+  }, []);
+
+  async function sendVerificationCode(email: string) {
     try {
       setLoading(true);
-      const response = await Api.post('/auth/send-code', { email });
+      const response = await axios.post('http://localhost:5135/api/empresas/login', {
+        email,
+      });
+
       if (response.status !== 200) {
         throw new Error('Falha ao enviar código');
       }
-      setAuthStep('code');
+
+      setAuthStep('senha');
     } catch (error) {
       let errorMessage = 'Erro ao enviar código';
-      
+
       if (axios.isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || 
-                      error.message || 
-                      'Erro desconhecido na requisição';
+        errorMessage = error.response?.data?.message || error.message || 'Erro desconhecido na requisição';
       }
-      
+
       throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
   }
 
-    async function signIn({ email, code }: { email: string; code: string }) {
-        try {
-            setLoading(true);
-            const response = await Api.post('/auth/verify-code', { email, code });
-            const { token, user } = response.data;
+  async function signIn({ email, senha }: { email: string; senha: string }) {
+    try {
+      setLoading(true);
 
-            setCookie(undefined, 'auth.token', token, {
-                maxAge: 60 * 60 * 24 * 7, // 1 semana
-                path: '/',
-            });
+      const response = await Api.post('/empresas/login', { email, senha });
+      const { token } = response.data;
 
-            Api.setAuthorizationHeader(token);
-            setUser(user);
-            setAuthStep('authenticated');
-            Router.push('/dashboard');
-        } catch (error) {
-            console.error('Login failed', error);
-            throw error;
-        } finally {
-            setLoading(false);
-        }
+      setCookie(undefined, 'auth.token', token, {
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      });
+
+      Api.setAuthorizationHeader(token);
+
+      const decoded = jwtDecode<DecodedToken>(token);
+
+      setUser({
+        id: decoded.sub,
+        name: decoded.name ?? '',
+        email: decoded.email,
+        signOut,
+      });
+
+      setAuthStep('authenticated');
+      router.push('/fila');
+    } catch (error: any) {
+      let message = 'Erro ao fazer login';
+
+      if (axios.isAxiosError(error)) {
+        message = error.response?.data?.message || 'Credenciais inválidas';
+      }
+
+      throw new Error(message);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    function signOut() {
-        destroyCookie(undefined, 'auth.token', { path: '/' })
-        Api.removeAuthorizationHeader()
-        setUser(null)
-        Router.push('/login')
-    }
+  function signOut() {
+    destroyCookie(undefined, 'auth.token', { path: '/' });
+    Api.removeAuthorizationHeader();
+    setUser(null);
+    setAuthStep('email');
+    router.push('/login');
+  }
 
-    return (
-        <AuthContext.Provider value={{
-            user,
-            isAuthenticated,
-            signIn,
-            sendVerificationCode,
-            authStep,
-            setAuthStep,
-            signOut,
-
-            loading
-        }}>
-            {children}
-        </AuthContext.Provider>
-    )
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        signIn,
+        sendVerificationCode,
+        authStep,
+        setAuthStep,
+        signOut,
+        loading,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-// Hook para usar o contexto
 export const useAuth = () => {
-    const context = React.useContext(AuthContext)
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider')
-    }
-    return context
-}
+  const context = React.useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

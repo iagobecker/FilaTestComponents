@@ -21,21 +21,15 @@ import {
 } from "@/components/ui/dialog";
 import { EditClientForm } from "../form/EditClientForm";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
+import { FilaItem } from "@/features/fila/types";
 
 
-export type FilaItem = {
-  id: string;
-  nome: string;
-  telefone: string;
-  observacao: string;
-  status: string;
-  tempo: string;
-};
 
 type FilaTableProps = {
   data: FilaItem[];
   setData: Dispatch<SetStateAction<FilaItem[]>>;
 };
+;
 
 // Componente da Tabela
 export function FilaTable({ data, setData }: FilaTableProps) {
@@ -176,7 +170,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => moveItem(row.original.id, "up")}
+                    onClick={() => row.original.id && moveItem(row.original.id, "up")}
                   >
                     <CircleArrowUp className="size-6 text-gray-600" />
                   </Button>
@@ -191,7 +185,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => moveItem(row.original.id, "down")}
+                    onClick={() => row.original.id && moveItem(row.original.id, "down")}
                   >
                     <CircleArrowDown className="size-6 text-gray-600" />
                   </Button>
@@ -209,7 +203,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 cursor-pointer"
-                    onClick={() => chamarItem(row.original.id)}
+                    onClick={() => row.original.id && chamarItem(row.original.id)}
                   >
                     <PhoneCall className="size-6 text-green-500" />
                   </Button>
@@ -225,7 +219,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => {
-                      setSelectedId(row.original.id);
+                      setSelectedId(row.original.id ?? null);
                       setShowModal(true);
                     }}
                   >
@@ -366,7 +360,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                 variant="ghost"
                 size="icon"
                 className="cursor-pointer"
-                onClick={() => chamarItem(row.original.id)}
+                onClick={() => chamarItem(row.original.id ?? '')}
               >
                 <PhoneCall className="!w-5.5 !h-5.5 text-green-500" />
               </Button>
@@ -380,7 +374,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
           <>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => moveItem(row.original.id, "up")}>
+                <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => row.original.id && moveItem(row.original.id, "up")}>
                   <CircleArrowUp className="!w-5.5 !h-5.5 text-gray-600" />
                 </Button>
               </TooltipTrigger>
@@ -391,7 +385,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => moveItem(row.original.id, "down")}>
+                <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => row.original.id && moveItem(row.original.id, "down")}>
                   <CircleArrowDown className="!w-5.5 !h-5.5 text-gray-600" />
                 </Button>
               </TooltipTrigger>
@@ -409,7 +403,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                 size="icon"
                 className="cursor-pointer"
                 onClick={() => {
-                  setSelectedId(row.original.id);
+                  setSelectedId(row.original.id ?? null);
                   setShowModal(true);
                 }}
               >
@@ -434,7 +428,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       rowSelection,
     },
     onRowSelectionChange: setRowSelection,
-    getRowId: (row) => row.id,
+    getRowId: (row) => row.id || '',
 
   });
 
@@ -455,7 +449,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
 
         <FilaContainer
           selectedCount={selectedCount}
-          selectedIds={table.getFilteredSelectedRowModel().rows.map(row => row.original.id)}
+          selectedIds={table.getFilteredSelectedRowModel().rows.map(row => row.original.id).filter((id): id is string => id !== undefined)}
           onSearch={setSearchTerm}
           totalItems={filteredData.length}
           onResetSelection={() => table.resetRowSelection()}

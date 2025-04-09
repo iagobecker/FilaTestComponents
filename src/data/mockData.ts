@@ -2,6 +2,7 @@
 export const filaData = [
   {
     id: "0",
+    ticket: "123456",
     nome: "Constantino Vargas Cardoso lima",
     telefone: "55999789739",
     observacao: "Prioritário",
@@ -10,6 +11,7 @@ export const filaData = [
   },
   {
     id: "1",
+    ticket: "123456",
     nome: "Eduardo Constantino",
     telefone: "55999789739",
     observacao: "Prioritário",
@@ -18,6 +20,7 @@ export const filaData = [
   },
   {
     id: "2",
+    ticket: "123456",
     nome: "Pedro Simas",
     telefone: "(51) 999-789863",
     observacao: "Convencional",
@@ -26,6 +29,7 @@ export const filaData = [
   },
   {
     id: "3",
+    ticket: "123456",
     nome: "Anderson Silva",
     telefone: "(51) 999-789863",
     observacao: "Cliente Vip",
@@ -34,6 +38,7 @@ export const filaData = [
   },
   {
     id: "4",
+    ticket: "123456",
     nome: "Vitor Vargas",
     telefone: "(51) 999-789863",
     observacao: "Prioritário",
@@ -42,6 +47,7 @@ export const filaData = [
   },
   {
     id: "5",
+    ticket: "123456",
     nome: "Pedro Alvares",
     telefone: "(51) 999-789863",
     observacao: "Convencional",
@@ -50,6 +56,7 @@ export const filaData = [
   },
   {
     id: "6",
+    ticket: "123456",
     nome: "Nicolas Tesla",
     telefone: "(51) 999-789863",
     observacao: "Convencional",
@@ -64,6 +71,7 @@ export const filaData = [
 export const chamadasData = [
   { 
     id: "1", 
+    ticket: "123456",
     nome: "Christian Figueiredo", 
     telefone: "(51) 999-789863", 
     tempo: "há 30 minutos", 

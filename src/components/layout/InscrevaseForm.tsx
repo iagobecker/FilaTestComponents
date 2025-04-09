@@ -55,6 +55,15 @@ export function InscrevaseForm({
                             />
                         </div>
                         <div className="grid gap-2">
+                            <label htmlFor="email">CPF/CNPJ</label>
+                            <input
+                                id="email"
+                                type="email"
+                                placeholder="999.999.999-99"
+                                required
+                            />
+                        </div>
+                        <div className="grid gap-2">
                             <label htmlFor="password">Senha</label>
                             <input
                                 id="password"
