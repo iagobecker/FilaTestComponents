@@ -6,8 +6,9 @@ export type FilaItem = {
     status: string;
     tempo: string;
     ticket: string | null;
+    dataHoraCriado?: string;
   };
-  
+
   export type ClienteDTO = {
     id: string;
     nome: string;
@@ -19,7 +20,29 @@ export type FilaItem = {
     dataHoraEntrada: string;
     dataHoraAlterado: string;
     dataHoraOrdenacao: string;
+    ticket: string | null;
+    hash: string;
+    dataHoraChamada: string | null;
+    dataHoraDeletado: string | null;
   };
+  
+  export type HorarioResponse = {
+    id: string;
+    diaSemana: number;
+    horaInicio: string;
+    horaFinal: string;
+  }
+  
+  export type FilaResponse = {
+    id: string;
+    setor: string | null;
+    tempoMedioEspera: number;
+    empresaId: string;
+    dataHoraCriado: string;
+    clientes: ClienteResponse[];
+    horarios: HorarioResponse[];
+  };
+
   export type ClienteResponse = {
     id: string;
     nome: string;
@@ -28,4 +51,5 @@ export type FilaItem = {
     status: number;
     observacao: string | null;
     dataHoraOrdenacao: string;
+    dataHoraCriado: string;
   };

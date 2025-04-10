@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import CardMonitor from "./CardMonitor"
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { VincularButton } from "@/features/vinculacao/components/VincularButton";
 
 export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) => void }) {
     const [name, setName] = useState("");
@@ -266,10 +267,12 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                         </CardFooter>
                     </Card>
 
-                    <div className="flex pt-2">
+                    <div className="flex pt-4 justify-between items-center">
                         <Button type="submit" className="max-w-[150px] bg-blue-400 text-white hover:bg-blue-700">
                             Salvar
                         </Button>
+
+                        <VincularButton />
                     </div>
                 </div>
 

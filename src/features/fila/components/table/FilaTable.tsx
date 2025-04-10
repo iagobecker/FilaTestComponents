@@ -265,7 +265,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       cell: ({ row }: { row: Row<FilaItem> }) => (
         <div className="min-w-[50px] flex justify-start">
           <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-800  rounded-md">
-            BS{row.original.id}
+            BS -- {row.original.id}
           </span>
         </div>
       ),
@@ -323,7 +323,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Seg 10 Março, 15:27</p>
+            <p>{row.original.dataHoraCriado}</p>
           </TooltipContent>
         </Tooltip>
       ),

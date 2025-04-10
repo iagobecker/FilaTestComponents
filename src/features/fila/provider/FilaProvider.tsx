@@ -61,11 +61,11 @@ export function FilaProvider({ children }: { children: ReactNode }) {
         }
 
         const fila = await fetchFilaClientes();
-        const sanitizedFila = fila.map(item => ({
+        const renderizaFila = fila.map(item => ({
           ...item,
-          id: item.id || "", 
+          id: item.nome || "", 
         }));
-        setFilaData(sanitizedFila);
+        setFilaData(renderizaFila);
       } catch (error) {
         console.error("Erro ao carregar fila:", error);
       }

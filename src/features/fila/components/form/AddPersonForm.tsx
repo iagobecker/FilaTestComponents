@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Api } from "@/api/api"
 import { toast } from "sonner"
 import { ClienteDTO } from "@/features/fila/types"
+import { getCurrentTimeLocal } from "@/lib/utils/timeUtils";
+
 
 export function AddPersonForm({
   addPerson,
@@ -44,31 +46,34 @@ export function AddPersonForm({
   
     try {
       const now = new Date().toISOString();
+      const time = getCurrentTimeLocal(); 
   
-      const response = await Api.post("/empresas/filas/adicionar-cliente", {
-        id: crypto.randomUUID(),
+      const payload = {
+        status: 1,
         nome: name,
+        ticket: null,
         telefone: phoneDigits,
         observacao: observation,
-        status: 1,
         filaId: "b36f453e-a763-4ee1-ae2d-6660c2740de5",
+        hash: null,
+        dataHoraOrdenacao: now,
+        dataHoraChamada: null,
+        id: crypto.randomUUID(),
         dataHoraCriado: now,
-        dataHoraEntrada: now,
-        dataHoraAlterado: now, 
-        dataHoraOrdenacao: now 
-      });
+        dataHoraAlterado: now,
+        dataHoraDeletado: null,
+      };
   
-      if (response.status === 200 || response.status === 201) {
-        addPerson(name, phoneDigits, observation);
-        toast.success("Cliente adicionado com sucesso!");
-        onClose();
-      } else {
-        throw new Error("Erro inesperado ao adicionar cliente.");
-      }
+      await Api.post("/empresas/filas/adicionar-cliente", payload);
+  
+      addPerson(name, phoneDigits, observation);
+      toast.success("Cliente adicionado com sucesso!");
+      onClose();
     } catch (err: any) {
       console.error(err);
       setError(
-        err?.response?.data?.message || "Erro ao adicionar cliente à fila."
+        err?.response?.data?.message ||
+        "Erro ao adicionar cliente à fila."
       );
     } finally {
       setIsLoading(false);
