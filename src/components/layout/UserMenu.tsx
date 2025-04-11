@@ -39,13 +39,17 @@ export function UserMenu() {
         align="end"
         className="w-48 sm:w-56 shadow-md rounded-md"
       >
-        <DropdownMenuItem
-          className="cursor-pointer flex items-center gap-2 px-3 py-2 
-                     data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
-        >
-          <User className="w-4 h-4 text-blue-600" />
-          <span>Meu Perfil</span>
-        </DropdownMenuItem>
+        <Link href="/dadosEmpresa" passHref>
+          <DropdownMenuItem
+            className="cursor-pointer flex items-center gap-2 px-3 py-2 
+               data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
+          >
+            <User className="w-4 h-4 text-blue-600" />
+            <span>Dados da empresa</span>
+          </DropdownMenuItem>
+        </Link>
+
+
 
         <Link href="/configuracoes" passHref>
           <DropdownMenuItem
@@ -60,7 +64,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          onClick={signOut} 
+          onClick={signOut}
           className="cursor-pointer flex items-center gap-2 px-3 py-2 text-red-600 
                      data-[highlighted]:bg-red-100 transition"
         >
