@@ -6,7 +6,8 @@ import { Dispatch, SetStateAction } from 'react';
 import { fetchFilaClientes } from "../services/FilaService";
 import { Api, setAuthorizationHeader } from "@/api/api";
 import { parseCookies } from "nookies";
-import { FilaItem } from "@/features/fila/types";
+import { FilaItem } from "@/features/fila/types"
+
 
 
 

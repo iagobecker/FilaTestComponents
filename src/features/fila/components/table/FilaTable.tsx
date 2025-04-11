@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/dialog";
 import { EditClientForm } from "../form/EditClientForm";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import { FilaItem } from "@/features/fila/types";
+import { FilaItem } from "@/features/fila/types"
+
 
 
 

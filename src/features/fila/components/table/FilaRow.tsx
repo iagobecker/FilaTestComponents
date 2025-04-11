@@ -3,15 +3,11 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Phone, Trash, CircleArrowUp, CircleArrowDown } from "lucide-react";
+import { FilaItem } from "@/features/fila/types"
+
 
 type BadgeVariant = "success" | "warning" | "danger" | "default";
 
-type FilaItem = {
-  id?: string; 
-  nome: string;
-  status: string;
-  telefone: string;
-};
 
 // Define a função que renderiza uma linha da tabela
 export function FilaRow({
