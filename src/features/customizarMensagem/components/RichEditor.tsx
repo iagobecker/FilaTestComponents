@@ -36,18 +36,21 @@ const initialContents = [
 
 {/* Vai converter as variables */ }
 function convertVariablesToHtml(html: string) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
+  if (typeof window === 'undefined') return html
+
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
 
   doc.body.innerHTML = doc.body.innerHTML.replace(
     /\{(\w+)\}/g,
     (_, variableName) => {
-      return `<span data-variable="${variableName}" data-value="${variableName}"></span>`;
+      return `<span data-variable="${variableName}" data-value="${variableName}"></span>`
     }
-  );
+  )
 
-  return doc.body.innerHTML;
+  return doc.body.innerHTML
 }
+
 
 const variables = [
   { label: "{nome}", value: "João Silva" },
@@ -128,22 +131,25 @@ export default function RichEditor() {
 
   // Renderiza o HTML com as variáveis substituídas 
   function renderWithVariables(html: string) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-
-    doc.querySelectorAll("[data-variable]").forEach((el) => {
-      const key = el.getAttribute("data-variable");
-      const replacement = variablesMap[key as keyof typeof variablesMap || ""];
-
+    if (typeof window === 'undefined') return html
+  
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+  
+    doc.querySelectorAll('[data-variable]').forEach((el) => {
+      const key = el.getAttribute('data-variable')
+      const replacement = variablesMap[key as keyof typeof variablesMap || ""]
+  
       if (replacement) {
-        const span = document.createElement("span");
-        span.innerHTML = replacement;
-        el.replaceWith(...span.childNodes);
+        const span = document.createElement("span")
+        span.innerHTML = replacement
+        el.replaceWith(...span.childNodes)
       }
-    });
-
-    return doc.body.innerHTML;
+    })
+  
+    return doc.body.innerHTML
   }
+  
 
   const sectionTitles = ["Entrada", "Chamada", "Removido"];
 
