@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { Api } from "@/api/api" 
+import { Api } from "@/api/api"
+import { useAuth } from "@/features/auth/context/AuthContext"
 
 const formSchema = z.object({
   nomeEmpresa: z.string().min(1, "Nome da empresa é obrigatório"),
@@ -24,31 +25,31 @@ export default function DadosEmpresaForm() {
     register,
     handleSubmit,
     formState: { errors },
-    reset, 
+    reset,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
   })
 
-  // Carregar dados da empresa
+
   useEffect(() => {
     async function fetchEmpresa() {
       try {
-        const res = await Api.get("/empresas") 
-        const empresa = res.data
+        const res = await Api.get('/empresas/pegar-dados-empresa');
+        const empresa = res.data;
 
         reset({
           nomeEmpresa: empresa.nome,
           email: empresa.email,
           cpfCnpj: empresa.cpfCnpj,
           redefinirEmail: empresa.email,
-        })
+        });
       } catch (err) {
-        console.error("Erro ao buscar empresa:", err)
+        console.error("Erro ao buscar dados da empresa autenticada:", err);
       }
     }
 
-    fetchEmpresa()
-  }, [reset])
+    fetchEmpresa();
+  }, [reset]);
 
   const onSubmit = (data: FormData) => {
     console.log("Dados salvos:", data)

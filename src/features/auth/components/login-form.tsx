@@ -12,6 +12,14 @@ import { useAuth } from "@/features/auth/context/AuthContext"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from 'react';
+import { jwtDecode } from "jwt-decode"
+
+interface DecodedToken {
+    // Define the expected properties of the decoded token
+    exp?: number;
+    iat?: number;
+    [key: string]: any;
+}
 
 const emailSchema = z.object({
     email: z.string().email("Digite um e-mail válido"),
@@ -58,7 +66,14 @@ export function LoginForm({
             setCanResend(true);
         }
     }, [countdown]);
-
+    const token = localStorage.getItem('token'); // Retrieve token from localStorage or another source
+    if (token) {
+        const decoded = jwtDecode<DecodedToken>(token);
+        console.log("🎯 Decoded JWT:", decoded);
+    } else {
+        console.error("Token not found");
+    }
+    
 
     // chamado quando o usuário envia o formulário de email e senha
     async function handleLogin(values: z.infer<typeof emailSchema>) {

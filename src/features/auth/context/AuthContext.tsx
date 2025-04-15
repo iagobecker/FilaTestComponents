@@ -2,7 +2,7 @@
 
 import { createContext, useEffect, useState } from 'react';
 import { setCookie, parseCookies, destroyCookie } from 'nookies';
-import { Api } from '@/api/api';
+import { Api, initializeToken } from '@/api/api';
 import React from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
@@ -18,10 +18,12 @@ type User = {
 };
 
 type DecodedToken = {
-  sub: string;
-  email: string;
+  sub?: string;
   name?: string;
-};
+  email?: string;
+  [key: string]: any;
+}
+
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -43,28 +45,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isAuthenticated = !!user;
 
+
   useEffect(() => {
     async function loadUserFromCookies() {
       const { 'auth.token': token } = parseCookies();
 
       if (token) {
+        initializeToken(token);
+
         try {
           Api.setAuthorizationHeader(token);
           const decoded = jwtDecode<DecodedToken>(token);
+          const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+          const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+          const name = decoded["name"] || "Administrador";
+
+          if (!id || !decodedEmail) {
+            return;
+          }
 
           setUser({
-            id: decoded.sub,
-            name: decoded.name ?? '',
-            email: decoded.email,
+            id,
+            name,
+            email: decodedEmail,
             signOut,
           });
 
           setAuthStep('authenticated');
         } catch (error: any) {
-          if (axios.isAxiosError(error)) {
-            if (error.response?.status === 401) {
-              signOut();
-            }
+          if (axios.isAxiosError(error) && error.response?.status === 401) {
+            signOut();
           }
         }
       }
@@ -75,10 +85,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUserFromCookies();
   }, []);
 
+
+
   async function sendVerificationCode(email: string) {
     try {
       setLoading(true);
-      const response = await axios.post('http://10.0.0.84:5135/api/empresas/login', {
+      const response = await axios.post('http://10.0.0.128:5135/api/empresas/login', {
         email,
       });
 
@@ -115,15 +127,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       Api.setAuthorizationHeader(token);
 
       const decoded = jwtDecode<DecodedToken>(token);
+      const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+      const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
 
-      setUser({
-        id: decoded.sub,
-        name: decoded.name ?? '',
-        email: decoded.email,
-        signOut,
-      });
+      const name = decoded["name"] || "Administrador";
 
-      setAuthStep('authenticated');
+      if (id && decodedEmail) {
+        setUser({
+          id,
+          name,
+          email: decodedEmail,
+          signOut,
+        });
+        setAuthStep('authenticated');
+      } else {
+        console.warn("Token válido, mas não contém id ou email.");
+      }
       router.push('/fila');
     } catch (error: any) {
       let message = 'Erro ao fazer login';
