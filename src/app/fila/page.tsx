@@ -29,7 +29,7 @@ function FilaContent() {
       const novaFila = await fetchFilaClientes();
       const formattedFila = novaFila.map(item => ({
         ...item,
-        id: item.id || "", 
+        id: item.id || "",
       }));
       setFilaData(formattedFila);
     } catch (error) {
@@ -42,7 +42,10 @@ function FilaContent() {
     <>
       <HeaderFila addPerson={addPerson} />
       <FilaTable data={filaData} setData={setFilaData} />
-      <ChamadasRecentes data={chamadasData} />
+      <ChamadasRecentes data={chamadasData.map((item) => ({
+        ...item,
+        status: String(item.status),
+      }))} />
     </>
   );
 }
