@@ -1,5 +1,3 @@
-import { StatusType } from "./provider/FilaProvider";
-
 export type FilaItem = {
     id: string;
     nome: string;
@@ -10,6 +8,17 @@ export type FilaItem = {
     ticket: string | null;
     dataHoraCriado?: string;
   };
+
+  export enum Status {
+    Aguardando = 1,
+    Chamado = 2,
+    Atendido = 3,
+    NaoCompareceu = 4,
+    Removido = 5,
+  }
+  
+  export type StatusType = Status;
+  
 
   export type ClienteDTO = {
     id: string;

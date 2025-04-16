@@ -1,3 +1,5 @@
+'use client';
+
 import { cn } from "../../lib/utils/cn"
 import { Button } from "@/components/ui/button"
 import LogoCervantes from "@/assets/images/LogoCervantes.jpg"

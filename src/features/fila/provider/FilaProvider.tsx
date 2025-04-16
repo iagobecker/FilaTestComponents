@@ -10,14 +10,14 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import { FilaItem } from "@/features/fila/types";
+import { FilaItem, StatusType } from "@/features/fila/types";
 import { fetchFilaClientes } from "../services/FilaService";
 import { Api, setAuthorizationHeader } from "@/api/api";
 import { parseCookies } from "nookies";
 
-export type StatusType = 1 | 2 | 3 | 4 | 5;
 
-type BaseClientItem = {
+
+export type BaseClientItem = {
   id: string;
   ticket: string | null;
   nome: string;

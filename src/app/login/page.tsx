@@ -1,5 +1,3 @@
-// import { LoginForm } from '@/components/layout/LoginForm'
-
 import { LoginForm } from "@/features/auth/components/login-form";
 
 export default function LoginPage() {

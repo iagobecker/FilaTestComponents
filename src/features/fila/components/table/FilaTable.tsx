@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/Modal";
 import { Dispatch, SetStateAction } from 'react';
-import { StatusType, useFila } from "../../provider/FilaProvider";
+import {  useFila } from "../../provider/FilaProvider";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { EditClientForm } from "../form/EditClientForm";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import { FilaItem } from "@/features/fila/types"
+import { FilaItem, Status } from "@/features/fila/types"
 
 
 
@@ -331,7 +331,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
       accessorKey: "status",
       header: "",
       cell: ({ row }: { row: Row<FilaItem> }) => {
-        const status = Number(row.getValue("status")) as StatusType;
+        const status = Number(row.getValue("status")) as Status;
     
         return (
           <div className={`${isMobile ? 'mt-2' : ''} flex max-w-[60px] min-w-[120px] items-center gap-2`}>

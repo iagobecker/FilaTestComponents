@@ -59,20 +59,17 @@ export function LoginForm({
 
     // decrementa o contador a cada segundo - habilita o botão de reenviar código
     useEffect(() => {
-        if (countdown > 0) {
-            const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-            return () => clearTimeout(timer);
-        } else {
-            setCanResend(true);
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('token');
+          if (token) {
+            const decoded = jwtDecode<DecodedToken>(token);
+            console.log("🎯 Decoded JWT:", decoded);
+          } else {
+            console.error("Token not found");
+          }
         }
-    }, [countdown]);
-    const token = localStorage.getItem('token'); // Retrieve token from localStorage or another source
-    if (token) {
-        const decoded = jwtDecode<DecodedToken>(token);
-        console.log("🎯 Decoded JWT:", decoded);
-    } else {
-        console.error("Token not found");
-    }
+      }, []);
+      
     
 
     // chamado quando o usuário envia o formulário de email e senha

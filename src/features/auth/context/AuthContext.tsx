@@ -48,42 +48,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function loadUserFromCookies() {
+      if (typeof window === "undefined") return; // 👈 impede execução no SSR
+  
       const { 'auth.token': token } = parseCookies();
-
+  
       if (token) {
         initializeToken(token);
-
+  
         try {
           Api.setAuthorizationHeader(token);
           const decoded = jwtDecode<DecodedToken>(token);
           const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
           const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
           const name = decoded["name"] || "Administrador";
-
-          if (!id || !decodedEmail) {
-            return;
-          }
-
+  
+          if (!id || !decodedEmail) return;
+  
           setUser({
             id,
             name,
             email: decodedEmail,
             signOut,
           });
-
-          setAuthStep('authenticated');
+  
+          setAuthStep("authenticated");
         } catch (error: any) {
           if (axios.isAxiosError(error) && error.response?.status === 401) {
             signOut();
           }
         }
       }
-
+  
       setLoading(false);
     }
-
+  
     loadUserFromCookies();
   }, []);
+  
 
 
 
