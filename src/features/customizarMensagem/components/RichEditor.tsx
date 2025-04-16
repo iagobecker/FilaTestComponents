@@ -11,12 +11,15 @@ import { Color } from "@tiptap/extension-color";
 import ListItem from "@tiptap/extension-list-item";
 import MenuBar from "./tiptap-editor/TipTap";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Variable from "./variables/Variables";
 import { FaCamera, FaLaugh, FaMicrophone, FaPaperclip } from "react-icons/fa";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { atualizarConfiguracao } from "@/features/configuracoes/services/configuracoes";
+import { toast } from "sonner";
+import { useConfigPreview } from "@/lib/hooks/useConfigPreview"
 
 const extensions = [
   StarterKit,
@@ -49,6 +52,19 @@ function convertVariablesToHtml(html: string) {
   )
 
   return doc.body.innerHTML
+}
+
+function convertHtmlToVariablesString(html: string) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  doc.querySelectorAll('[data-variable]').forEach((el) => {
+    const variable = el.getAttribute("data-variable");
+    const textNode = document.createTextNode(`{${variable}}`);
+    el.replaceWith(textNode);
+  });
+
+  return doc.body.innerHTML;
 }
 
 
@@ -107,11 +123,9 @@ function RichTextBlock({
 
 export default function RichEditor() {
 
-  const [previews, setPreviews] = useState(
-    initialContents.map(convertVariablesToHtml)
-  );
   const isSmallScreen = useMediaQuery("(max-width: 1190px)");
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
 
   // Atualiza o preview com o novo HTML do editor 
   const updatePreview = (index: number, newHtml: string) => {
@@ -122,6 +136,10 @@ export default function RichEditor() {
     });
   };
 
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   // Mapeia as variáveis para substituição
   const variablesMap = {
     nome: "João Silva",
@@ -129,26 +147,16 @@ export default function RichEditor() {
   };
 
 
-  // Renderiza o HTML com as variáveis substituídas 
-  function renderWithVariables(html: string) {
-    if (typeof window === 'undefined') return html
-  
-    const parser = new DOMParser()
-    const doc = parser.parseFromString(html, 'text/html')
-  
-    doc.querySelectorAll('[data-variable]').forEach((el) => {
-      const key = el.getAttribute('data-variable')
-      const replacement = variablesMap[key as keyof typeof variablesMap || ""]
-  
-      if (replacement) {
-        const span = document.createElement("span")
-        span.innerHTML = replacement
-        el.replaceWith(...span.childNodes)
-      }
-    })
-  
-    return doc.body.innerHTML
-  }
+  const empresaId = "2251881f-386b-402d-a1f2-e364706ef9c2";
+  const {
+    config,
+    previews,
+    setPreviews,
+    loading,
+    convertVariablesToHtml,
+    convertHtmlToVariablesString,
+    renderWithVariables,
+  } = useConfigPreview(empresaId);
   
 
   const sectionTitles = ["Entrada", "Chamada", "Removido"];
@@ -158,21 +166,45 @@ export default function RichEditor() {
       {/* Editors (lado esquerdo) */}
       <div className="w-full max-w-[850px] space-y-6">
         {/* Renderiza os 3 blocos de editor */}
-        {previews.map((html, idx) => (
-          <div key={idx}>
-            <h2 className="font-bold text-black text-lg mb-1">{sectionTitles[idx]}</h2>
-            <RichTextBlock
-              value={html}
-              onChange={(html) => updatePreview(idx, html)}
-              variables={variables}
-            />
-          </div>
-        ))}
-
+        {!loading && previews.map((html, idx) => (
+  <div key={idx}>
+    <h2 className="font-bold text-black text-lg mb-1">{sectionTitles[idx]}</h2>
+    <RichTextBlock
+      value={html}
+      onChange={(html) => {
+        const updated = [...previews];
+        updated[idx] = convertHtmlToVariablesString(html);
+        setPreviews(updated);
+      }}
+      variables={variables}
+    />
+  </div>
+))}
         <div className="flex justify-between pt-2">
-          <Button className="max-w-[150px] bg-blue-400 text-white hover:bg-blue-700">
-            Salvar
+          <Button
+            onClick={async () => {
+              if (!config) return;
+
+              try {
+                await atualizarConfiguracao({
+                  ...config,
+                  mensagemEntrada: convertHtmlToVariablesString(previews[0]),
+                  mensagemChamada: convertHtmlToVariablesString(previews[1]),
+                  mensagemRemovido: convertHtmlToVariablesString(previews[2]),
+                  whatsappAtivo: config.whatsappAtivo ?? true,
+                });
+                toast.success("Mensagens salvas com sucesso!");
+              } catch (err) {
+                toast.error("Erro ao salvar mensagens.");
+                console.error(err);
+              }
+            }}
+            className="max-w-[150px] bg-blue-400 text-white hover:bg-blue-700"
+            disabled={loading}
+          >
+            {loading ? "Carregando..." : "Salvar"}
           </Button>
+
         </div>
         {/* Botão para visualizar preview em telas pequenas */}
         {isSmallScreen && (
@@ -217,20 +249,20 @@ export default function RichEditor() {
                     <div className="p-3 flex-1 overflow-y-auto space-y-4 text-sm">
                       {/* Entrada */}
                       <div>
-                        <div className="relative max-w-[250px]">
-                          <div
-                            className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[0]) }}
-                          />
-                        </div>
-                      </div>
+  <div className="relative max-w-[250px]">
+    <div
+      className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
+      dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[0], variablesMap) }}
+    />
+  </div>
+</div>
 
                       {/* Chamada */}
                       <div>
                         <div className="relative max-w-[250px]">
                           <div
                             className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[1]) }}
+                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[1],variablesMap) }}
                           />
                         </div>
                       </div>
@@ -240,7 +272,7 @@ export default function RichEditor() {
                         <div className="relative max-w-[250px]">
                           <div
                             className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[2]) }}
+                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[2],variablesMap) }}
                           />
                         </div>
                       </div>
@@ -291,39 +323,20 @@ export default function RichEditor() {
 
             {/* Mensagens */}
             <div className="p-3 flex-1 overflow-y-auto space-y-4 text-sm">
-
-              {/* Entrada */}
-              <div>
-                {/* <p className="font-bold text-black text-sm mb-1">Entrada</p> */}
-                <div className="relative max-w-[250px]">
-                  <div
-                    className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                    dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[0]) }}
-                  />
+              {previews.map((html, idx) => (
+                <div key={idx}>
+                  <div className="relative max-w-[250px]">
+                    <div
+                      className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
+                      dangerouslySetInnerHTML={{
+                        __html: hasMounted
+                          ? renderWithVariables(convertVariablesToHtml(previews[idx]), variablesMap)
+                          : "",
+                      }}                    
+                    />
+                  </div>
                 </div>
-              </div>
-
-              {/* Chamada */}
-              <div>
-                {/* <p className="font-bold text-black text-sm mb-1">Chamada</p> */}
-                <div className="relative max-w-[250px]">
-                  <div
-                    className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                    dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[1]) }}
-                  />
-                </div>
-              </div>
-
-              {/* Removido */}
-              <div>
-                {/* <p className="font-bold text-black text-sm mb-1">Removido</p> */}
-                <div className="relative max-w-[250px]">
-                  <div
-                    className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                    dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[2]) }}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Campo de digitação */}

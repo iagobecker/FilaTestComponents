@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { Api } from "@/api/api"
 import { useAuth } from "@/features/auth/context/AuthContext"
 
@@ -83,25 +82,7 @@ export default function DadosEmpresaForm() {
         {errors.cpfCnpj && (
           <p className="text-sm text-red-500">{errors.cpfCnpj.message}</p>
         )}
-      </div>
-
-      <Separator className="my-4" />
-
-      <div className="space-y-1">
-        <Label>Redefinir senha</Label>
-        <p className="text-sm text-muted-foreground">
-          Informe seu email e enviaremos um link <br />
-          para recuperação da sua senha
-        </p>
-        <Input
-          type="email"
-          placeholder="email@exemplo.com"
-          {...register("redefinirEmail")}
-        />
-        {errors.redefinirEmail && (
-          <p className="text-sm text-red-500">{errors.redefinirEmail.message}</p>
-        )}
-      </div>
+      </div>    
 
       <div className="pt-4">
         <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white">

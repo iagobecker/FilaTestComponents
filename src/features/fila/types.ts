@@ -1,9 +1,11 @@
+import { StatusType } from "./provider/FilaProvider";
+
 export type FilaItem = {
     id: string;
     nome: string;
     telefone: string;
     observacao: string;
-    status: string;
+    status: StatusType;
     tempo: string;
     ticket: string | null;
     dataHoraCriado?: string;

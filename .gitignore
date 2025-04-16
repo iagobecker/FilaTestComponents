@@ -20,6 +20,16 @@
 # production
 /build
 
+.vs/
+*.sqlite
+*.db
+*.vsscc
+*.user
+*.suo
+*.ncb
+*.sdf
+*.cache
+
 # misc
 .DS_Store
 *.pem

@@ -1,72 +1,116 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from "react";
-import { filaData as initialFilaData, chamadasData as initialChamadasData } from "@/data/mockData";
-import { Dispatch, SetStateAction } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useMemo,
+  Dispatch,
+  SetStateAction,
+} from "react";
+import { FilaItem } from "@/features/fila/types";
 import { fetchFilaClientes } from "../services/FilaService";
 import { Api, setAuthorizationHeader } from "@/api/api";
 import { parseCookies } from "nookies";
-import { FilaItem } from "@/features/fila/types"
 
+export type StatusType = 1 | 2 | 3 | 4 | 5;
 
-
-
-
-type ChamadaItem = {
+type BaseClientItem = {
   id: string;
   ticket: string | null;
   nome: string;
   telefone: string;
-  tempo: string;
-  status: string;
   observacao: string;
+  tempo: string;
+  status: StatusType;
+  dataHoraCriado?: string;
 };
+
+type FilaItemExt = BaseClientItem;
+type ChamadaItem = BaseClientItem;
 
 interface FilaContextType {
   selectedCount: number;
   setSelectedCount: (count: number) => void;
-  filaData: FilaItem[];
-  setFilaData: Dispatch<SetStateAction<FilaItem[]>>;
+  filaData: FilaItemExt[];
+  setFilaData: Dispatch<SetStateAction<FilaItemExt[]>>;
   chamadasData: ChamadaItem[];
-  setChamadasData: (data: ChamadaItem[]) => void;
-  chamarSelecionados: (ids: string[]) => void;
-  removerSelecionados: (selectedIds: string[]) => void;
+  setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>>;
+  chamarSelecionados: (ids: string[]) => Promise<void>;
+  removerSelecionados: (selectedIds: string[]) => Promise<void>;
   addPerson: (nome: string, telefone: string, observacao: string) => void;
   retornarParaFila: (id: string) => void;
   removerChamada: (id: string) => void;
+  marcarComoAtendido: (id: string) => void;
+  marcarComoNaoCompareceu: (id: string) => void;
+  getStatusText: (status: StatusType) => string;
+  getStatusColor: (status: StatusType) => string;
 }
 
 const FilaContext = createContext<FilaContextType | undefined>(undefined);
 
-export function useFila() {
+export const useFila = () => {
   const context = useContext(FilaContext);
   if (!context) {
     throw new Error("useFila deve ser usado dentro de um FilaProvider");
   }
   return context;
-}
+};
+
+const getStatusText = (status: StatusType): string => {
+  switch (status) {
+    case 1: return "Aguardando";
+    case 2: return "Chamado";
+    case 3: return "Atendido";
+    case 4: return "Não Compareceu";
+    case 5: return "Removido";
+    default: return "Desconhecido";
+  }
+};
+
+const getStatusColor = (status: StatusType): string => {
+  switch (status) {
+    case 1: return "border-blue-400";
+    case 2: return "border-yellow-400";
+    case 3: return "border-green-400";
+    case 4: return "border-red-400";
+    case 5: return "border-gray-400";
+    default: return "border-gray-700";
+  }
+};
 
 export function FilaProvider({ children }: { children: ReactNode }) {
   const [selectedCount, setSelectedCount] = useState(0);
+  const [allClients, setAllClients] = useState<(FilaItemExt | ChamadaItem)[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
-  const [filaData, setFilaData] = useState<FilaItem[]>(initialFilaData);
-  const [chamadasData, setChamadasData] = useState<ChamadaItem[]>(initialChamadasData);
+
+  const filaData = useMemo(() => {
+    return allClients.filter(client => client.status === 1) as FilaItemExt[];
+  }, [allClients]);
+
+  const chamadasData = useMemo(() => {
+    return allClients.filter(client => client.status > 1) as ChamadaItem[];
+  }, [allClients]);
 
   useEffect(() => {
     async function loadFila() {
       try {
-        const { 'auth.token': token } = parseCookies();
-
-        if (token) {
-          setAuthorizationHeader(token);
-        }
+        const { "auth.token": token } = parseCookies();
+        if (token) setAuthorizationHeader(token);
 
         const fila = await fetchFilaClientes();
-        const renderizaFila = fila.map(item => ({
+        const render = fila.map(item => ({
           ...item,
-          id: item.nome || "", 
+          id: item.id || crypto.randomUUID(),
+          status: (typeof item.status === "string" ? parseInt(item.status) : item.status) as StatusType || 1,
+          tempo: item.tempo || "há 0 minutos",
+          ticket: item.ticket || null,
+          observacao: item.observacao || "",
+          dataHoraCriado: item.dataHoraCriado || new Date().toISOString(),
         }));
-        setFilaData(renderizaFila);
+        setAllClients(render);
       } catch (error) {
         console.error("Erro ao carregar fila:", error);
       }
@@ -75,101 +119,109 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     loadFila();
   }, []);
 
+  const updateClientStatus = (id: string, status: StatusType) => {
+    setAllClients(prev =>
+      prev.map(client => client.id === id ? { ...client, status } : client)
+    );
+  };
+
   const retornarParaFila = (id: string) => {
-    // Encontrar o item nas chamadas recentes
-    const item = chamadasData.find(c => c.id === id);
-    if (!item) return;
-
-    // Adicionar de volta à fila
-    setFilaData(prev => [...prev, {
-      id: item.id,
-      ticket: item.ticket,
-      nome: item.nome,
-      telefone: item.telefone,
-      observacao: "", 
-      status: "Aguardando",
-      tempo: "há 0 minutos"
-    }]);
-
-    // Remover das chamadas recentes
-    setChamadasData(prev => prev.filter(c => c.id !== id));
-
-    // Mostrar notificação
-    setNotification("Cliente retornou para a fila com sucesso!");
+    updateClientStatus(id, 1);
+    setNotification("Cliente retornou à fila");
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  const marcarComoAtendido = (id: string) => {
+    Api.post("/api/empresas/filas/atender-clientes", { clienteIds: [id] });
+    updateClientStatus(id, 3);
+  };
+
+  const marcarComoNaoCompareceu = (id: string) => {
+    Api.post("/api/empresas/filas/desistir-clientes", { clienteIds: [id] });
+    updateClientStatus(id, 4);
   };
 
   const removerChamada = (id: string) => {
-    setChamadasData(prev => prev.filter(c => c.id !== id));
-    setNotification("Chamada removida com sucesso!");
-    setTimeout(() => setNotification(null), 3000);
+    Api.post("/api/empresas/filas/remover-clientes", { clienteIds: [id] });
+    updateClientStatus(id, 5);
   };
 
-  const chamarSelecionados = (selectedIds: string[]) => {
-    // Filtrar os itens selecionados
-    const selecionados = filaData.filter(item => item.id && selectedIds.includes(item.id));
-
-    if (selecionados.length === 0) return;
-
-    // Adicionar à lista de chamadas recentes
-    const novasChamadas = selecionados.map(item => ({
-      id: (item.id ?? crypto.randomUUID()) as string,
-      ticket: item.ticket ?? null,
-      nome: item.nome,
-      telefone: item.telefone,
-      tempo: "Agora",
-      status: "Chamado",
-      observacao: ""
-    }));
-    
-
-    setChamadasData(prev => [...novasChamadas, ...prev]);
-
-    // Remover da fila
-    setFilaData(prev => prev.filter(item => item.id && !selectedIds.includes(item.id)));
-
-    // Resetar a seleção
+  const chamarSelecionados = async (ids: string[]) => {
+    await Api.post("/api/empresas/filas/chamar-clientes", { clienteIds: ids });
+    setAllClients(prev =>
+      prev.map(client =>
+        ids.includes(client.id)
+          ? { ...client, status: 2, tempo: "Agora" }
+          : client
+      )
+    );
     setSelectedCount(0);
   };
 
-  const removerSelecionados = (ids: string[]) => {
-    setFilaData(prev => prev.filter(item => item.id && !ids.includes(item.id)));
+  const removerSelecionados = async (ids: string[]) => {
+    await Api.post("/api/empresas/filas/remover-clientes", { clienteIds: ids });
+    setAllClients(prev =>
+      prev.map(client =>
+        ids.includes(client.id) ? { ...client, status: 5 } : client
+      )
+    );
     setSelectedCount(0);
-    // Mostrar notificação
-    setNotification(ids.length > 1 
-      ? `${ids.length} itens removidos com sucesso!` 
-      : "Item removido com sucesso!");
-    
+    setNotification(`${ids.length} cliente(s) removido(s)`);
     setTimeout(() => setNotification(null), 3000);
   };
 
   const addPerson = (nome: string, telefone: string, observacao: string) => {
-    const newPerson = {
-      id: (filaData.length + 1).toString(),
-      ticket: null,
+    const novaPessoa: FilaItemExt = {
+      id: crypto.randomUUID(),
       nome,
       telefone,
       observacao,
-      status: "Aguardando",
+      ticket: null,
+      status: 1,
       tempo: "há 0 minutos",
+      dataHoraCriado: new Date().toISOString(),
     };
-    setFilaData(prevData => [...prevData, newPerson]);
+    setAllClients(prev => [...prev, novaPessoa]);
+  };
+
+  const setFilaData: Dispatch<SetStateAction<FilaItemExt[]>> = updater => {
+    setAllClients(prev => {
+      const fila = prev.filter(c => c.status === 1);
+      const chamadas = prev.filter(c => c.status !== 1);
+      const updated = typeof updater === "function" ? updater(fila as FilaItemExt[]) : updater;
+      return [...updated, ...chamadas];
+    });
+  };
+
+  const setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>> = updater => {
+    setAllClients(prev => {
+      const fila = prev.filter(c => c.status === 1);
+      const chamadas = prev.filter(c => c.status !== 1);
+      const updated = typeof updater === "function" ? updater(chamadas as ChamadaItem[]) : updater;
+      return [...fila, ...updated];
+    });
+  };
+
+  const contextValue: FilaContextType = {
+    selectedCount,
+    setSelectedCount,
+    filaData,
+    setFilaData,
+    chamadasData,
+    setChamadasData,
+    chamarSelecionados,
+    removerSelecionados,
+    addPerson,
+    retornarParaFila,
+    removerChamada,
+    marcarComoAtendido,
+    marcarComoNaoCompareceu,
+    getStatusText,
+    getStatusColor,
   };
 
   return (
-    <FilaContext.Provider value={{
-      selectedCount,
-      setSelectedCount,
-      filaData,
-      setFilaData,
-      chamadasData,
-      setChamadasData,
-      chamarSelecionados,
-      removerSelecionados,
-      addPerson,
-      retornarParaFila,
-      removerChamada,
-    }}>
+    <FilaContext.Provider value={contextValue}>
       {children}
     </FilaContext.Provider>
   );

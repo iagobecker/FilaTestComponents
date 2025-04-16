@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/Modal";
 import { Dispatch, SetStateAction } from 'react';
-import { useFila } from "../../provider/FilaProvider";
+import { StatusType, useFila } from "../../provider/FilaProvider";
 import {
   Dialog,
   DialogContent,
@@ -28,12 +28,11 @@ import { FilaItem } from "@/features/fila/types"
 
 type FilaTableProps = {
   data: FilaItem[];
-  setData: Dispatch<SetStateAction<FilaItem[]>>;
 };
-;
+
 
 // Componente da Tabela
-export function FilaTable({ data, setData }: FilaTableProps) {
+export function FilaTable({ data,  }: FilaTableProps) {
   const isMobile = useMediaQuery("(max-width: 1060px)");
   const [notification, setNotification] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,17 +40,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const [editingClient, setEditingClient] = useState<FilaItem | null>(null);
-
-
-  //Remover uma row
-  const removeItem = (id: string) => {
-    setSelectedId(id);
-    setData((prevData) => {
-      return prevData.filter((item) => item.id !== id);
-    });
-    setNotification("Item removido com sucesso!");
-    setTimeout(() => setNotification(null), 3000);
-  };
+ 
 
   // Filtrar os dados com base no termo de busca
   const filteredData = useMemo(() => {
@@ -69,23 +58,29 @@ export function FilaTable({ data, setData }: FilaTableProps) {
     setShowModal(false);
   };
 
-  const handleConfirmRemove = () => {
+  const handleConfirmRemove = async () => {
     if (selectedId) {
-      removeItem(selectedId);
+      await removerSelecionados([selectedId]);
       handleCloseModal();
     }
   };
 
-  const { chamarSelecionados } = useFila();
+  const {
+    chamarSelecionados,
+    removerSelecionados,
+    setFilaData,
+    getStatusText,
+    getStatusColor
+  } = useFila();
 
-  const chamarItem = (id: string) => {
-    chamarSelecionados([id]);
+  const chamarItem = async (id: string) => {
+    await chamarSelecionados([id]);
     table.resetRowSelection();
   };
 
 
   const moveItem = (id: string, direction: "up" | "down") => {
-    setData((prevData) => {
+    setFilaData((prevData) => {
       const index = prevData.findIndex((item) => item.id === id);
       if (index === -1) return prevData;
       let newIndex = direction === "up" ? index - 1 : index + 1;
@@ -95,6 +90,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       return newData;
     });
   };
+  
 
   const MobileRow = ({ row }: { row: Row<FilaItem> }) => {
     const statusColors: Record<string, string> = {
@@ -115,7 +111,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
               className="flex-shrink-0"
             />
             <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-800 rounded-md whitespace-nowrap flex-shrink-0">
-              BS{row.original.id}
+              BS{String(row.index + 1).padStart(2, '0')}
             </span>
             <span
               className="font-semibold text-[16px] cursor-pointer hover:text-blue-600 transition-colors whitespace-nowrap truncate flex-1"
@@ -124,7 +120,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
               {row.original.nome}
             </span>
           </div>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -134,7 +130,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
             <PencilLine className="size-4" />
           </Button>
         </div>
-    
+
         <div className="flex justify-between gap-4 mt-1">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
@@ -142,7 +138,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                 {row.original.status}
               </span>
             </div>
-    
+
             <a
               href={`https://wa.me/${encodeURIComponent(row.original.telefone)}`}
               target="_blank"
@@ -151,7 +147,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
             >
               {row.original.telefone}
             </a>
-    
+
             <div className="mt-1">
               <span className="text-sm font-semibold text-gray-600 block">
                 {row.original.observacao}
@@ -162,7 +158,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
               </div>
             </div>
           </div>
-    
+
           <div className="flex flex-col p-1 justify-end gap-2 flex-shrink-0">
             <div className="flex gap-1">
               <Tooltip>
@@ -196,7 +192,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
                 </TooltipContent>
               </Tooltip>
             </div>
-    
+
             <div className="flex gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -266,7 +262,7 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       cell: ({ row }: { row: Row<FilaItem> }) => (
         <div className="min-w-[50px] flex justify-start">
           <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-800  rounded-md">
-            BS -- {row.original.id}
+            BS -- {String(row.index + 1).padStart(2, '0')}
           </span>
         </div>
       ),
@@ -333,18 +329,14 @@ export function FilaTable({ data, setData }: FilaTableProps) {
       accessorKey: "status",
       header: "",
       cell: ({ row }: { row: Row<FilaItem> }) => {
-        const status = row.getValue("status") as string;
-        const statusColors: Record<string, string> = {
-          "Em Atendimento": " text-gray-500 border-green-400",
-          "Aguardando": " text-gray-500 border-blue-400",
-          "Cancelado": " text-gray-500 border-red-400",
-        };
+        const status = Number(row.getValue("status")) as StatusType;
+    
         return (
           <div className={`${isMobile ? 'mt-2' : ''} flex max-w-[60px] min-w-[120px] items-center gap-2`}>
             <span
-              className={`px-3 py-1 rounded-sm text-sm font-medium border ${statusColors[status] || "bg-gray-100 text-gray-700 border-gray-700"}`}
+              className={`px-3 py-1 rounded-sm text-sm font-medium border ${getStatusColor(status)}`}
             >
-              {status}
+              {getStatusText(status)}
             </span>
           </div>
         );
@@ -474,33 +466,36 @@ export function FilaTable({ data, setData }: FilaTableProps) {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableBody>
-                  <AnimatePresence>
-                    {table.getRowModel().rows.map((row) => (
-                      <motion.tr
-                        className={`border-b border-gray-50 transition-colors ${row.getIsSelected() ? "bg-blue-100" : "hover:bg-blue-50"
-                          }`}
-                        key={row.original.id}
-                        layout="position"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: [10, 0], scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ type: "spring", stiffness: 250, damping: 21 }}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            className={`px-4 py-2 ${isMobile ? 'block' : 'whitespace-nowrap'}`}
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
-                </TableBody>
-              </Table>
+              <div className="max-h-[420px] overflow-y-auto rounded-md border">
+                <Table className="min-w-full">
+                  <TableBody>
+                    <AnimatePresence>
+
+                      {table.getRowModel().rows.map((row) => (
+                        <motion.tr
+                          className={`border-b border-gray-50 transition-colors ${row.getIsSelected() ? "bg-blue-100" : "hover:bg-blue-50"
+                            }`}
+                          key={row.original.id}
+                          layout="position"
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: [10, 0], scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ type: "spring", stiffness: 250, damping: 21 }}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              key={cell.id}
+                              className={`px-4 py-2 ${isMobile ? 'block' : 'whitespace-nowrap'}`}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </FilaContainer>
@@ -545,13 +540,14 @@ export function FilaTable({ data, setData }: FilaTableProps) {
             <EditClientForm
               client={editingClient}
               onSave={(updatedClient) => {
-                setData(prev => prev.map(item =>
+                setFilaData(prev => prev.map(item =>
                   item.id === updatedClient.id ? updatedClient : item
                 ));
                 setEditingClient(null);
                 setNotification("Cliente atualizado com sucesso!");
                 setTimeout(() => setNotification(null), 3000);
               }}
+              
             />
           </DialogContent>
         </Dialog>

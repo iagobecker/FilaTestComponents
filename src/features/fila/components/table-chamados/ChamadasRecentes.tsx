@@ -177,7 +177,7 @@ const columns: ColumnDef<ChamadaItem>[] = [
     cell: ({ row }) => (
       <div className="min-w-[80px] flex justify-start">
         <span className="px-6 text-center font-bold py-1 text-green-700 text-[16px] rounded-md">
-          BS{row.original.id}
+          BS{String(row.index + 1).padStart(2, '0')}
         </span>
       </div>
     ),
