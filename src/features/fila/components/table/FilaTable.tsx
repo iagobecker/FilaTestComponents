@@ -28,7 +28,9 @@ import { FilaItem } from "@/features/fila/types"
 
 type FilaTableProps = {
   data: FilaItem[];
+  setData: React.Dispatch<React.SetStateAction<FilaItem[]>>;
 };
+
 
 
 // Componente da Tabela
