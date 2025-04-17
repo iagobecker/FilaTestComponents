@@ -53,6 +53,14 @@ export default function ConfiguracoesPage() {
                         borderColor="border-purple-200"
                         href="/customizarMensagem"
                     />
+                    <ConfigCard
+                        title="Ativar Monitor"
+                        description="Crie mensagens personalizadas no WhatsApp para diferentes situações e melhore a comunicação com seus clientes."
+                        icon={<MessageSquare className="size-6 text-cyan-600 " />}
+                        bgColor="bg-cyan-100"
+                        borderColor="border-cyan-500"
+                        href="/configuracaoFila"
+                    />
                 </div>
             </PageContainer>
 

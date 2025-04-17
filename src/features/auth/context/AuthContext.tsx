@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function sendVerificationCode(email: string) {
     try {
       setLoading(true);
-      const response = await axios.post('http://10.0.0.67:5135/api/empresas/login', {
+      const response = await axios.post('http://10.0.0.191:5135/api/empresas/login', {
         email,
       });
 

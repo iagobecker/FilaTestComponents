@@ -61,11 +61,19 @@ export function FilaTable({ data,  }: FilaTableProps) {
   };
 
   const handleConfirmRemove = async () => {
-    if (selectedId) {
-      await removerSelecionados([selectedId]);
+    if (!selectedId) return;
+  
+    const cliente = data.find(c => c.id === selectedId);
+    if (!cliente || !(cliente.status === 1 || cliente.status === 2)) {
+      alert("Este cliente não está em um status válido para ser removido.");
       handleCloseModal();
+      return;
     }
+  
+    await removerSelecionados([selectedId]);
+    handleCloseModal();
   };
+  
 
   const {
     chamarSelecionados,
@@ -512,8 +520,8 @@ export function FilaTable({ data,  }: FilaTableProps) {
               <DialogTitle className="text-lg font-semibold text-gray-900">Excluir cliente</DialogTitle>
             </div>
             <p className="text-sm text-gray-600">
-              Você tem certeza que deseja <span className="font-medium text-gray-800">excluir este cliente da fila</span>?<br />
-              Essa ação <span className="font-semibold text-red-600">não poderá ser desfeita</span>.
+              Você tem certeza que deseja <span className="font-medium text-gray-800"><span className="font-semibold text-red-600">excluir</span> este cliente da fila</span>?<br />
+               
             </p>
 
           </div>

@@ -64,7 +64,7 @@ export function AddPersonForm({
         dataHoraDeletado: null,
       };
   
-      await Api.post("/empresas/filas/adicionar-cliente", payload);
+      await Api.post("/empresas/filas/clientes/adicionar-cliente", payload);
   
       addPerson(name, phoneDigits, observation);
       toast.success("Cliente adicionado com sucesso!");

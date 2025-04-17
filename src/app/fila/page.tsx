@@ -44,7 +44,7 @@ function FilaContent() {
       <FilaTable data={filaData} setData={setFilaData} />
       <ChamadasRecentes data={chamadasData.map((item) => ({
         ...item,
-        status: String(item.status),
+        status: Number(item.status),
       }))} />
     </>
   );

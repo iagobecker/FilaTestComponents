@@ -28,6 +28,28 @@ export type BaseClientItem = {
   dataHoraCriado?: string;
 };
 
+enum AcoesAdminClientesEnum {
+  AdicionarCliente = 1,
+  ChamarClientes = 2,
+  AtenderClientes = 3,
+  RemoverClientes = 4,
+  DesistirClientes = 5,
+  VoltarParaFilaClientes = 6,
+  TrocarPosicaoCliente = 7,
+}
+
+type ClienteAtualizado = {
+  id: string;
+  nome: string;
+  telefone: string;
+  status: StatusType;
+  observacao?: string;
+  ticket?: string | null;
+  tempo?: string;
+};
+
+
+
 type FilaItemExt = BaseClientItem;
 type ChamadaItem = BaseClientItem;
 
@@ -64,7 +86,7 @@ const getStatusText = (status: StatusType): string => {
     case 1: return "Aguardando";
     case 2: return "Chamado";
     case 3: return "Atendido";
-    case 4: return "Não Compareceu";
+    case 4: return "Desistente";
     case 5: return "Removido";
     default: return "Desconhecido";
   }
@@ -73,10 +95,10 @@ const getStatusText = (status: StatusType): string => {
 const getStatusColor = (status: StatusType): string => {
   switch (status) {
     case 1: return "border-blue-400";
-    case 2: return "border-yellow-400";
-    case 3: return "border-green-400";
+    case 2: return "border-green-400";
+    case 3: return "border-blue-600";
     case 4: return "border-red-400";
-    case 5: return "border-gray-400";
+    case 5: return "border-red-400";
     default: return "border-gray-700";
   }
 };
@@ -87,12 +109,25 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   const [notification, setNotification] = useState<string | null>(null);
 
   const filaData = useMemo(() => {
-    return allClients.filter(client => client.status === 1) as FilaItemExt[];
+    const mapa = new Map();
+    for (const client of allClients) {
+      if (client.status === 1) {
+        mapa.set(client.id, client);
+      }
+    }
+    return Array.from(mapa.values()) as FilaItemExt[];
   }, [allClients]);
 
   const chamadasData = useMemo(() => {
-    return allClients.filter(client => client.status > 1) as ChamadaItem[];
+    const mapa = new Map();
+    for (const client of allClients) {
+      if (client.status > 1) {
+        mapa.set(client.id, client);
+      }
+    }
+    return Array.from(mapa.values()) as ChamadaItem[];
   }, [allClients]);
+
 
   useEffect(() => {
     async function loadFila() {
@@ -125,64 +160,138 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const retornarParaFila = (id: string) => {
+  const marcarComoAtendido = async (id: string) => {
+    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+      ids: [id],
+      acao: 3, // AtenderClientes
+    });
+    updateClientStatus(id, 3);
+  };
+
+  const marcarComoNaoCompareceu = async (id: string) => {
+    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+      ids: [id],
+      acao: 5, // DesistirClientes
+    });
+    updateClientStatus(id, 5);
+  };
+
+  const removerChamada = async (id: string) => {
+    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+      ids: [id],
+      acao: 4, // RemoverClientes
+    });
+    updateClientStatus(id, 5);
+  };
+
+  const retornarParaFila = async (id: string) => {
+    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+      ids: [id],
+      acao: 6, // VoltarParaFilaClientes
+    });
     updateClientStatus(id, 1);
     setNotification("Cliente retornou à fila");
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const marcarComoAtendido = (id: string) => {
-    Api.post("/api/empresas/filas/atender-clientes", { clienteIds: [id] });
-    updateClientStatus(id, 3);
-  };
-
-  const marcarComoNaoCompareceu = (id: string) => {
-    Api.post("/api/empresas/filas/desistir-clientes", { clienteIds: [id] });
-    updateClientStatus(id, 4);
-  };
-
-  const removerChamada = (id: string) => {
-    Api.post("/api/empresas/filas/remover-clientes", { clienteIds: [id] });
-    updateClientStatus(id, 5);
-  };
 
   const chamarSelecionados = async (ids: string[]) => {
-    await Api.post("/api/empresas/filas/chamar-clientes", { clienteIds: ids });
-    setAllClients(prev =>
-      prev.map(client =>
-        ids.includes(client.id)
-          ? { ...client, status: 2, tempo: "Agora" }
-          : client
-      )
+    const response = await Api.post(
+      "/empresas/filas/clientes/atualizar-clientes",
+      {
+        ids,
+        acao: 2,
+      }
     );
+
+    const clientesAtualizados = response.data.clientesAtualizados;
+
+    setAllClients(prev => {
+      const mapa = new Map(prev.map(c => [c.id, c]));
+
+      clientesAtualizados.forEach((cliente: any) => {
+        mapa.set(cliente.id, {
+          ...mapa.get(cliente.id),
+          ...cliente,
+          tempo: "Agora",
+        });
+      });
+
+      return Array.from(mapa.values());
+    });
+
     setSelectedCount(0);
   };
+
 
   const removerSelecionados = async (ids: string[]) => {
-    await Api.post("/api/empresas/filas/remover-clientes", { clienteIds: ids });
-    setAllClients(prev =>
-      prev.map(client =>
-        ids.includes(client.id) ? { ...client, status: 5 } : client
-      )
+    const clientesValidos = allClients.filter(
+      (c) => ids.includes(c.id) && (c.status === 1 || c.status === 2)
     );
-    setSelectedCount(0);
-    setNotification(`${ids.length} cliente(s) removido(s)`);
-    setTimeout(() => setNotification(null), 3000);
+  
+    if (clientesValidos.length === 0) {
+      console.warn("Nenhum cliente com status válido para remoção.");
+      return;
+    }
+  
+    try {
+      await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+        ids: clientesValidos.map((c) => c.id),
+        acao: 4, // RemoverClientes
+      });
+  
+      setAllClients((prev) =>
+        prev.map((client) =>
+          clientesValidos.some((c) => c.id === client.id)
+            ? { ...client, status: 5 }
+            : client
+        )
+      );
+  
+      setSelectedCount(0);
+      setNotification(`${clientesValidos.length} cliente(s) removido(s)`);
+      setTimeout(() => setNotification(null), 3000);
+    } catch (error) {
+      console.error("Erro ao remover clientes:", error);
+    }
   };
+  
 
-  const addPerson = (nome: string, telefone: string, observacao: string) => {
-    const novaPessoa: FilaItemExt = {
-      id: crypto.randomUUID(),
+
+  const addPerson = async (nome: string, telefone: string, observacao: string) => {
+    const now = new Date().toISOString();
+
+    const payload = {
       nome,
       telefone,
       observacao,
+      filaId: "b36f453e-a763-4ee1-ae2d-6660c2740de5", // usar variável dinâmica depois dos testes
+      dataHoraCriado: now,
+      dataHoraAlterado: now,
+      dataHoraOrdenacao: now,
+      dataHoraDeletado: null,
+      dataHoraChamada: null,
       ticket: null,
-      status: 1,
-      tempo: "há 0 minutos",
-      dataHoraCriado: new Date().toISOString(),
+      hash: Math.random().toString(36).substring(2),
     };
-    setAllClients(prev => [...prev, novaPessoa]);
+
+    try {
+      const response = await Api.post("/empresas/filas/clientes/adicionar-cliente", payload);
+      const clienteCriado = response.data;
+
+      setAllClients(prev => [
+        ...prev,
+        {
+          ...clienteCriado,
+          tempo: "há 0 minutos",
+          status: 1,
+        },
+      ]);
+    } catch (error) {
+      console.error("Erro ao adicionar cliente:", error);
+    }
   };
+
 
   const setFilaData: Dispatch<SetStateAction<FilaItemExt[]>> = updater => {
     setAllClients(prev => {

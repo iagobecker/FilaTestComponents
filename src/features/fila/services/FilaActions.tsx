@@ -19,13 +19,25 @@ export function FilaActions({
   onResetSelection
 }: FilaActionsProps) {
 
-  const { chamarSelecionados, removerSelecionados } = useFila();
   const [showModal, setShowModal] = useState(false);
-
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
-  const handleConfirmRemove = () => {
-    removerSelecionados(selectedIds);
+  const { removerSelecionados, chamarSelecionados, filaData, chamadasData } = useFila();
+
+  const handleConfirmRemove = async () => {
+    const todosClientes = [...filaData, ...chamadasData];
+    const idsValidos = selectedIds.filter(id => {
+      const cliente = todosClientes.find(c => c.id === id);
+      return cliente && (cliente.status === 1 || cliente.status === 2);
+    });
+  
+    if (idsValidos.length === 0) {
+      alert("Nenhum cliente com status válido para remover.");
+      handleCloseModal();
+      return;
+    }
+  
+    await removerSelecionados(idsValidos);
     onResetSelection?.();
     handleCloseModal();
   };
