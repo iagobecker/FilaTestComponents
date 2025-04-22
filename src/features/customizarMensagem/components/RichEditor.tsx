@@ -17,7 +17,7 @@ import { FaCamera, FaLaugh, FaMicrophone, FaPaperclip } from "react-icons/fa";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { atualizarConfiguracao } from "@/features/configuracoes/services/configuracoes";
+import { atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/configuracoes";
 import { toast } from "sonner";
 import { useConfigPreview } from "@/lib/hooks/useConfigPreview"
 
@@ -66,6 +66,12 @@ function convertHtmlToVariablesString(html: string) {
 
   return doc.body.innerHTML;
 }
+
+function stripHtmlTags(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || "";
+}
+
 
 
 const variables = [
@@ -157,7 +163,7 @@ export default function RichEditor() {
     convertHtmlToVariablesString,
     renderWithVariables,
   } = useConfigPreview(empresaId);
-  
+
 
   const sectionTitles = ["Entrada", "Chamada", "Removido"];
 
@@ -167,32 +173,50 @@ export default function RichEditor() {
       <div className="w-full max-w-[850px] space-y-6">
         {/* Renderiza os 3 blocos de editor */}
         {!loading && previews.map((html, idx) => (
-  <div key={idx}>
-    <h2 className="font-bold text-black text-lg mb-1">{sectionTitles[idx]}</h2>
-    <RichTextBlock
-      value={html}
-      onChange={(html) => {
-        const updated = [...previews];
-        updated[idx] = convertHtmlToVariablesString(html);
-        setPreviews(updated);
-      }}
-      variables={variables}
-    />
-  </div>
-))}
+          <div key={idx}>
+            <h2 className="font-bold text-black text-lg mb-1">{sectionTitles[idx]}</h2>
+            <RichTextBlock
+              value={html}
+              onChange={(html) => {
+                const updated = [...previews];
+                updated[idx] = convertHtmlToVariablesString(html);
+                setPreviews(updated);
+              }}
+              variables={variables}
+            />
+          </div>
+        ))}
         <div className="flex justify-between pt-2">
           <Button
             onClick={async () => {
               if (!config) return;
 
+              const payload = {
+                ...config,
+                nomeDisplay: config.nomeDisplay ?? "",             
+                mensagemEntrada: stripHtmlTags(previews[0]) ?? "",
+                mensagemChamada: stripHtmlTags(previews[1]) ?? "",
+                mensagemRemovido: stripHtmlTags(previews[2]) ?? "",
+                corPrimaria: config.corPrimaria ?? "#000000",
+                corSobreposicao: config.corSobreposicao ?? "#FFFFFF",
+                whatsappAtivo: config.whatsappAtivo ?? false,
+                logoUrl: config.logoUrl ?? null,
+                corTexto: config.corTexto ?? null,
+                empresaId: config.empresaId,
+                id: config.id,
+                dataHoraCriado: config.dataHoraCriado,
+                dataHoraAlterado: new Date().toISOString(),
+                dataHoraDeletado: null
+              };
+              
+
               try {
-                await atualizarConfiguracao({
-                  ...config,
-                  mensagemEntrada: convertHtmlToVariablesString(previews[0]),
-                  mensagemChamada: convertHtmlToVariablesString(previews[1]),
-                  mensagemRemovido: convertHtmlToVariablesString(previews[2]),
-                  whatsappAtivo: config.whatsappAtivo ?? true,
-                });
+                if (config?.id){
+                  await atualizarConfiguracao(payload)
+                } else {
+                  await criarConfiguracao(payload)
+                }
+                console.log("✅ Chegou no toast!");
                 toast.success("Mensagens salvas com sucesso!");
               } catch (err) {
                 toast.error("Erro ao salvar mensagens.");
@@ -227,7 +251,6 @@ export default function RichEditor() {
                     className="absolute right-4 top-4"
                     onClick={() => setShowPreviewModal(false)}
                   >
-                    {/* <X className="h-5 w-5" /> */}
                     <VisuallyHidden>Fechar modal</VisuallyHidden>
                   </Button>
                 </DialogHeader>
@@ -249,20 +272,20 @@ export default function RichEditor() {
                     <div className="p-3 flex-1 overflow-y-auto space-y-4 text-sm">
                       {/* Entrada */}
                       <div>
-  <div className="relative max-w-[250px]">
-    <div
-      className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-      dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[0], variablesMap) }}
-    />
-  </div>
-</div>
+                        <div className="relative max-w-[250px]">
+                          <div
+                            className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
+                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[0], variablesMap) }}
+                          />
+                        </div>
+                      </div>
 
                       {/* Chamada */}
                       <div>
                         <div className="relative max-w-[250px]">
                           <div
                             className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[1],variablesMap) }}
+                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[1], variablesMap) }}
                           />
                         </div>
                       </div>
@@ -272,7 +295,7 @@ export default function RichEditor() {
                         <div className="relative max-w-[250px]">
                           <div
                             className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[2],variablesMap) }}
+                            dangerouslySetInnerHTML={{ __html: renderWithVariables(previews[2], variablesMap) }}
                           />
                         </div>
                       </div>
@@ -332,7 +355,7 @@ export default function RichEditor() {
                         __html: hasMounted
                           ? renderWithVariables(convertVariablesToHtml(previews[idx]), variablesMap)
                           : "",
-                      }}                    
+                      }}
                     />
                   </div>
                 </div>

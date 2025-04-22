@@ -7,6 +7,10 @@ export async function getConfiguracaoByEmpresaId(empresaId: string) {
   return lista.find(cfg => cfg.empresaId === empresaId);
 }
 
+export async function criarConfiguracao(config: any) {
+  return Api.post("/empresas/configuracoes", config)
+}
+
 export async function atualizarConfiguracao(config: any) {
-  return Api.put("/empresas/configuracoes", { model: config });
+  return Api.put("/empresas/configuracoes", config );
 }

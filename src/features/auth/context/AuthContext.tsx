@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function sendVerificationCode(email: string) {
     try {
       setLoading(true);
-      const response = await axios.post('http://10.0.0.191:5135/api/empresas/login', {
+      const response = await axios.post('http://10.0.0.191:5135/api/empresas/autenticacao/login', {
         email,
       });
 
@@ -117,17 +117,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
 
-      const response = await Api.post('/empresas/login', { email, senha });
-      const { token } = response.data;
+      const response = await Api.post('/empresas/autenticacao/login', { email, senha });
+      const { accessToken } = response.data;
 
-      setCookie(undefined, 'auth.token', token, {
+      setCookie(undefined, 'auth.token', accessToken, {
         maxAge: 60 * 60 * 24 * 7,
         path: '/',
       });
 
-      Api.setAuthorizationHeader(token);
+      Api.setAuthorizationHeader(accessToken);
 
-      const decoded = jwtDecode<DecodedToken>(token);
+      const decoded = jwtDecode<DecodedToken>(accessToken);
       const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
       const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
 
