@@ -1,8 +1,8 @@
 import { Header } from "@/components/layout/Header";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { VoltarButton } from "@/components/VoltarButton";
-import ConfiguracaoMonitorForm from "@/features/configuracoes-filas/components/ConfiguracaoMonitorForm";
-import { HeaderConfiguracoesFilas } from "@/features/configuracoes-filas/components/HeaderConfiguracoesFilas";
+import VinculacaoMonitorForm from "@/features/configuracoes-filas/components/VinculacaoMonitorForm";
+import { HeaderConfiguracoesFilas } from "@/features/configuracoes-filas/components/HeaderAtiveMonitor";
 
 export default function AtivarMonitor() {
     return(
@@ -11,7 +11,7 @@ export default function AtivarMonitor() {
         <PageContainer>
             <VoltarButton />
             <HeaderConfiguracoesFilas/>
-            <ConfiguracaoMonitorForm/>
+            <VinculacaoMonitorForm/>
         </PageContainer>
         </>
     )

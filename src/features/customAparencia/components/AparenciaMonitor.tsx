@@ -6,7 +6,6 @@ import { Card,  CardDescription, CardFooter, CardHeader, CardTitle } from "@/com
 import CardMonitor from "./CardMonitor"
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { VincularButton } from "@/features/vinculacao/components/VincularButton";
 import { useDrag } from '@use-gesture/react';
 
 
@@ -364,12 +363,10 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
 
                     </Card>
 
-                    <div className="flex pt-4 justify-between items-center">
+                    <div className="flex pt-4 justify-end items-center">
                         <Button type="submit" className="max-w-[150px] bg-blue-400 text-white cursor-pointer hover:bg-blue-500">
                             Salvar
                         </Button>
-
-                        <VincularButton />
                     </div>
                 </div>
 

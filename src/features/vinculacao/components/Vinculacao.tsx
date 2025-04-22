@@ -40,7 +40,6 @@ export default function Vinculacao() {
       try {
         const res = await Api.get('/empresas/pegar-dados-empresa')
         setEmpresa(res.data)
-        console.log('📦 Empresa logada:', res.data)
       } catch (err) {
         console.error('Erro ao buscar empresa:', err)
       }

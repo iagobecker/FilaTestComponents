@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { SectionTitle } from "../../../../components/ui/section-title";
 import { CustomDialog } from "@/components/shared/CustomDialog";
 import { AddPersonForm } from "@/features/fila/components/form/AddPersonForm";
-import { AddHorarioForm } from "@/features/fila/components/form/AddHorarioForm";
 
 export function HeaderFila({
   addPerson,
@@ -24,23 +23,7 @@ export function HeaderFila({
       </div>
 
       <div className="p-3 flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-3 sm:gap-8 w-full">
-        {/* Botão Adicionar Horário */}
-        <CustomDialog
-          title="Adicionar Horário de Atendimento"
-          description="Informe o horário de início, fim e o dia da semana"
-          trigger={
-            <Button
-              className="bg-white border border-gray-400 text-black shadow hover:bg-blue-400 cursor-pointer px-2 py-2 rounded-md"
-              onClick={() => setIsOpenAddHorario(true)}
-            >
-              Adicionar horário
-            </Button>
-          }
-          open={isOpenAddHorario}
-          onOpenChange={setIsOpenAddHorario}
-        >
-          <AddHorarioForm filaId={filaId} onClose={() => setIsOpenAddHorario(false)} />
-        </CustomDialog>
+       
         {/* Botão Adicionar Pessoa */}
         <CustomDialog
           title="Adicionar pessoa na fila"

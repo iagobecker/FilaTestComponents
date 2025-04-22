@@ -13,9 +13,7 @@ export default function CustomAparenciaPage() {
             <PageContainer>
                 <VoltarButton />
                 <HeaderCustomAparencia />
-                <AparenciaMonitor addEmpresa={function (nome: string): void {
-                    throw new Error("Function not implemented.");
-                }} />
+                <AparenciaMonitor addEmpresa={(nome: string) => console.log(`Empresa adicionada: ${nome}`)} />
             </PageContainer>
         </>
     )
