@@ -2,22 +2,26 @@ import { useRef, useState, useEffect } from "react";
 import { SketchPicker } from "react-color";
 import { ChevronLeft, ChevronRight, Eye, Image, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card,  CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import CardMonitor from "./CardMonitor"
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useDrag } from '@use-gesture/react';
+import { uploadLogo, useConfigPreview } from "@/lib/hooks/useConfigPreview";
+import { toast } from "sonner";
+import { atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/configuracoes";
 
 
 export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) => void }) {
     const [name, setName] = useState("");
     const [logo, setLogo] = useState<File | null>(null);
+    const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const pickerRef = useRef<HTMLDivElement>(null);
     const isSmallScreen = useMediaQuery("(max-width: 1190px)");
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const [currentPreview, setCurrentPreview] = useState<"monitor" | "app">("monitor");
-    
+
 
     // Valores padrão das cores
     const DEFAULT_PRIMARY = "#4A90E2";
@@ -30,10 +34,40 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
     const [fontColor, setFontColor] = useState(DEFAULT_FONT);
 
     // Função para redefinir cores
-    const resetColors = () => {
+    const resetColors = async () => {
         setPrimaryColor(DEFAULT_PRIMARY);
         setOverlayColor(DEFAULT_OVERLAY);
         setFontColor(DEFAULT_FONT);
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        if (!config) return;
+
+        const payload = {
+            ...config,
+            nomeDisplay: name,
+            corPrimaria: DEFAULT_PRIMARY,
+            corSobreposicao: DEFAULT_OVERLAY,
+            logoUrl: logoUrl,
+            corTexto: DEFAULT_FONT,
+            empresaId: config.empresaId,
+            id: config.id,
+            dataHoraCriado: config.dataHoraCriado,
+            dataHoraAlterado: new Date().toISOString(),
+            dataHoraDeletado: null
+        };
+
+        try {
+            if (config?.id) {
+                await atualizarConfiguracao(payload);
+            } else {
+                await criarConfiguracao(payload);
+            }
+            toast.success("Cores redefinidas com sucesso!");
+        } catch (err) {
+            toast.error("Erro ao redefinir cores.");
+            console.error(err);
+        }
     };
 
 
@@ -64,25 +98,35 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
     }, [isPickingColor]);
 
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Verificar formato
         const validTypes = ['image/jpeg', 'image/png'];
         if (!validTypes.includes(file.type)) {
             alert('Formato inválido. Use apenas JPG ou PNG.');
             return;
         }
 
-        // Verificar tamanho (2MB em bytes)
         if (file.size > 2 * 1024 * 1024) {
             alert('Arquivo muito grande. Tamanho máximo: 2MB.');
             return;
         }
 
         setLogo(file);
+
+        // Aqui faz o upload e pega a URL!!
+        try {
+            const url = await uploadLogo(file); // Função para subir a imagem
+            setLogoUrl(url);
+            toast.success("Logo enviada com sucesso!");
+        } catch (err) {
+            setLogo(null);
+            setLogoUrl(null);
+            toast.error("Erro ao fazer upload da logo");
+        }
     };
+
 
     // Função para alternar entre os mockups
     const togglePreview = (direction: "prev" | "next") => {
@@ -94,12 +138,29 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
 
     const bind = useDrag(({ swipe: [swipeX] }) => {
         if (swipeX === -1) {
-          setCurrentPreview("app");
+            setCurrentPreview("app");
         } else if (swipeX === 1) {
-          setCurrentPreview("monitor");
+            setCurrentPreview("monitor");
         }
-      });
-      
+    });
+
+    const empresaId = "2251881f-386b-402d-a1f2-e364706ef9c2";
+    const firstLoad = useRef(true);
+    const {
+        config,
+    } = useConfigPreview(empresaId);
+
+    useEffect(() => {
+        if (config && firstLoad.current) {
+            setName(config.nomeDisplay || "");
+            setPrimaryColor(config.corPrimaria || DEFAULT_PRIMARY);
+            setOverlayColor(config.corSobreposicao || DEFAULT_OVERLAY);
+            setFontColor(config.corTexto || DEFAULT_FONT)
+            setLogoUrl(config.logoUrl || null);
+            setLogo(null);
+            firstLoad.current = false
+        }
+    }, [config])
 
     return (
         <>
@@ -314,7 +375,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                                             overlayColor={overlayColor}
                                                             fontColor={fontColor}
                                                             companyName={name || "Nome da empresa"}
-                                                            companyLogo={logo ? URL.createObjectURL(logo) : null}
+                                                            companyLogo={logo ? URL.createObjectURL(logo) : logoUrl}
                                                             showOnly="monitor"
                                                         />
                                                     </div>
@@ -325,7 +386,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                                             overlayColor={overlayColor}
                                                             fontColor={fontColor}
                                                             companyName={name || "Nome da empresa"}
-                                                            companyLogo={logo ? URL.createObjectURL(logo) : null}
+                                                            companyLogo={logo ? URL.createObjectURL(logo) : logoUrl}
                                                             showOnly="app"
                                                         />
                                                     </div>
@@ -364,7 +425,41 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                     </Card>
 
                     <div className="flex pt-4 justify-end items-center">
-                        <Button type="submit" className="max-w-[150px] bg-blue-400 text-white cursor-pointer hover:bg-blue-500">
+                        <Button
+                            onClick={async () => {
+                                if (!config) return;
+
+                                const payload = {
+                                    ...config,
+                                    nomeDisplay: name,
+                                    corPrimaria: primaryColor,
+                                    corSobreposicao: overlayColor,
+                                    logoUrl: logoUrl,
+                                    corTexto: fontColor,
+                                    empresaId: config.empresaId,
+                                    id: config.id,
+                                    dataHoraCriado: config.dataHoraCriado,
+                                    dataHoraAlterado: new Date().toISOString(),
+                                    dataHoraDeletado: null
+                                };
+
+                                try {
+                                    if (config?.id) {
+                                        await atualizarConfiguracao(payload)
+                                    } else {
+                                        await criarConfiguracao(payload)
+                                    }
+                                    toast.success("Customizações salvas com sucesso!");
+                                } catch (err) {
+                                    toast.error("Erro ao salvar customização.");
+                                    console.error(err);
+                                }
+                            }}
+
+                            type="submit"
+                            className="max-w-[150px] bg-blue-400 text-white cursor-pointer hover:bg-blue-500"
+
+                        >
                             Salvar
                         </Button>
                     </div>

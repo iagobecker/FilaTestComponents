@@ -30,12 +30,6 @@ const extensions = [
   Color.configure({ types: [TextStyle.name, ListItem.name] }),
 ];
 
-// Conteúdo inicial dos editores
-const initialContents = [
-  "<p>Olá {nome}, seja bem vindo!</p>",
-  "<p>Aqui está o link para você acompanhar seu status na fila: {link}</p>",
-  "<p>Obrigado por comprar com a gente. <strong>Volte sempre!</strong></p>",
-];
 
 {/* Vai converter as variables */ }
 function convertVariablesToHtml(html: string) {
@@ -58,8 +52,6 @@ function stripHtmlTags(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   return doc.body.textContent || "";
 }
-
-
 
 const variables = [
   { label: "{nome}", value: "João Silva" },
@@ -208,8 +200,7 @@ export default function RichEditor() {
                   await atualizarConfiguracao(payload)
                 } else {
                   await criarConfiguracao(payload)
-                }
-                console.log("✅ Chegou no toast!");
+                }                
                 toast.success("Mensagens salvas com sucesso!");
               } catch (err) {
                 toast.error("Erro ao salvar mensagens.");

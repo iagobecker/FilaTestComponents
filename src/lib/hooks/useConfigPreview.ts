@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/configuracoes";
 import { toast } from "sonner";
 
@@ -27,7 +27,7 @@ function convertHtmlToVariablesString(html: string): string {
   return doc.body.innerHTML;
 }
 
-// Substitui as variáveis para preview
+// Substitui as variáveis para preview (exemplo: {nome} => "João")
 function renderWithVariables(html: string, map: Record<string, string>): string {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
@@ -40,6 +40,18 @@ function renderWithVariables(html: string, map: Record<string, string>): string 
   });
   return doc.body.innerHTML;
 }
+
+export async function uploadLogo(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  // Altere "/api/upload" pelo seu endpoint real de upload!
+  const res = await fetch("/api/upload", { method: "POST", body: formData });
+  if (!res.ok) throw new Error("Erro no upload");
+  const data = await res.json();
+  return data.url; // backend deve retornar: { url: "https://..." }
+}
+
 
 export function useConfigPreview(empresaId: string) {
   const [loading, setLoading] = useState(true);
@@ -83,5 +95,6 @@ export function useConfigPreview(empresaId: string) {
     convertVariablesToHtml,
     convertHtmlToVariablesString,
     renderWithVariables,
+    uploadLogo
   };
 }

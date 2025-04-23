@@ -59,7 +59,7 @@ export default function ConfiguracoesPage() {
                         icon={<MessageSquare className="size-6 text-cyan-600 " />}
                         bgColor="bg-cyan-100"
                         borderColor="border-cyan-500"
-                        href="/configuracaoFila"
+                        href="/vinculaMonitor"
                     />
                 </div>
             </PageContainer>
