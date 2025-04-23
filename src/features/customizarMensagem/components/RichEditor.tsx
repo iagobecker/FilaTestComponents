@@ -54,19 +54,6 @@ function convertVariablesToHtml(html: string) {
   return doc.body.innerHTML
 }
 
-function convertHtmlToVariablesString(html: string) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-
-  doc.querySelectorAll('[data-variable]').forEach((el) => {
-    const variable = el.getAttribute("data-variable");
-    const textNode = document.createTextNode(`{${variable}}`);
-    el.replaceWith(textNode);
-  });
-
-  return doc.body.innerHTML;
-}
-
 function stripHtmlTags(html: string): string {
   const doc = new DOMParser().parseFromString(html, 'text/html');
   return doc.body.textContent || "";
@@ -97,6 +84,12 @@ function RichTextBlock({
     },
   });
 
+  // Quando value mudar (vendo do Back), atualiza o editor
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(convertVariablesToHtml(value));
+    }
+  }, [value])
 
   return (
     <div className="border p-1 border-purple-300 rounded-md bg-white shadow-sm mb-6">

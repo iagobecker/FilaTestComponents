@@ -14,6 +14,8 @@ import { FilaItem, StatusType } from "@/features/fila/types";
 import { fetchFilaClientes } from "../services/FilaService";
 import { Api, setAuthorizationHeader } from "@/api/api";
 import { parseCookies } from "nookies";
+import { parseISO } from "date-fns/parseISO";
+import { differenceInMinutes } from "date-fns/differenceInMinutes";
 
 
 
@@ -198,28 +200,30 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   const chamarSelecionados = async (ids: string[]) => {
     const response = await Api.post(
       "/empresas/filas/clientes/atualizar-clientes",
-      {
-        ids,
-        acao: 2,
-      }
+      { ids, acao: 2 }
     );
-
-    const clientesAtualizados = response.data.clientesAtualizados;
-
-    setAllClients(prev => {
-      const mapa = new Map(prev.map(c => [c.id, c]));
-
-      clientesAtualizados.forEach((cliente: any) => {
-        mapa.set(cliente.id, {
-          ...mapa.get(cliente.id),
-          ...cliente,
-          tempo: "Agora",
-        });
-      });
-
-      return Array.from(mapa.values());
-    });
-
+    const clientesAtualizados = response.data?.clientesAtualizados ?? [];
+  
+    setAllClients(prev => prev.map(client => {
+      if (ids.includes(client.id)) {
+        // Busca pelo cliente atualizado para pegar dataHoraCriado
+        const atualizado = clientesAtualizados.find((c: ClienteAtualizado) => c.id === client.id);
+        const criado = atualizado?.dataHoraCriado
+          ? parseISO(atualizado.dataHoraCriado)
+          : new Date();
+  
+        // Tempo relativo
+        const minutos = differenceInMinutes(new Date(), criado);
+        return {
+          ...client, //novo objeto com spread
+          status: 2, // Garante atualização
+          tempo: minutos < 1 ? "Agora" : `há ${minutos} min`,
+          ...(atualizado ? atualizado : {}),
+        };
+      }
+      return client;
+    }));
+  
     setSelectedCount(0);
   };
 

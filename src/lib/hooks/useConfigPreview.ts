@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/configuracoes";
 import { toast } from "sonner";
 
@@ -45,6 +45,7 @@ export function useConfigPreview(empresaId: string) {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<any>(null);
   const [previews, setPreviews] = useState<string[]>(["", "", ""]);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -54,14 +55,16 @@ export function useConfigPreview(empresaId: string) {
           toast.error("Configuração não encontrada.");
           return;
         }
-
-        setConfig(conf);
-        setPreviews([
-            convertVariablesToHtml(conf.mensagemEntrada || ""),
-            convertVariablesToHtml(conf.mensagemChamada || ""),
-            convertVariablesToHtml(conf.mensagemRemovido || ""),
+  
+        setConfig(conf); 
+        if (initialLoad) {
+          setPreviews([
+            conf.mensagemEntrada || '',
+            conf.mensagemChamada || '',
+            conf.mensagemRemovido || ''
           ]);
-          
+          setInitialLoad(false);
+        }       
       } catch (err) {
         toast.error("Erro ao carregar mensagens.");
         console.error(err);
@@ -70,11 +73,11 @@ export function useConfigPreview(empresaId: string) {
       }
     };
     load();
-  }, [empresaId]);
-
+  }, [empresaId, initialLoad]);
+  
   return {
     config,
-    previews, 
+    previews,
     setPreviews,
     loading,
     convertVariablesToHtml,
