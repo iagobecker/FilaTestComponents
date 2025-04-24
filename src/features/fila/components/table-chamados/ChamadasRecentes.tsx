@@ -23,7 +23,6 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
     retornarParaFila,
     removerChamada,
     marcarComoAtendido,
-    marcarComoNaoCompareceu,
     getStatusText,
     getStatusColor
   } = useFila();
@@ -37,7 +36,7 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
           <div className="flex items-center gap-2">
 
             <span className="px-2 text-center font-bold py-1 text-[16px] text-green-800 rounded-md">
-              BS{row.original.id}
+              BS{String(row.index + 1).padStart(2, '0')}
             </span>
             <span className="font-semibold  text-[16px]">
               {row.original.nome}
@@ -45,11 +44,11 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
           </div>
 
           <div className="flex items-center gap-1 mt-1">
-            <span
-              className={`px-2 py-1 rounded-sm text-sm font-medium border text-gray-500 ${getStatusColor(status)}`}
-            >
-              {getStatusText(status)}
-            </span>
+          <span
+            className={`px-2 py-1 rounded-sm text-sm font-medium border text-gray-500 ${getStatusColor(status)}`}
+          >
+            {getStatusText(status)}
+          </span>
           </div>
 
           <a
@@ -72,64 +71,88 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
           </div>
         </div>
 
-        {/* Ações */}
+        {/* Ações tela mobile */}
         <div className="flex flex-col p-2 pt-15 items-end gap-2">
           <div className="flex gap-1">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => marcarComoAtendido(row.original.id)}
-                    className="cursor-pointer"
-                  >
-                    <CheckCircle className="!w-5.5 !h-5.5 text-green-500" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-black text-white px-3 py-2 rounded-md text-sm">
-                  <p>Atender</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {status === 2 ? (
+              // Status Chamado: Mostra os 3 ícones
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => marcarComoAtendido(row.original.id)}
+                        className="cursor-pointer"
+                      >
+                        <CheckCircle className="!w-5.5 !h-5.5 text-green-500" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Atender</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => retornarParaFila(row.original.id)}
+                        className="cursor-pointer"
+                      >
+                        <CircleArrowLeft className="!w-5.5 !h-5.5 text-blue-500" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Voltar para fila</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removerChamada(row.original.id)}
+                        className="cursor-pointer"
+                      >
+                        <XCircle className="!w-5.5 !h-5.5 text-red-500" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remover</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+              </>
+            ) : (
 
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => marcarComoNaoCompareceu(row.original.id)}
-                    className="cursor-pointer"
-                  >
-                    <XCircle className="!w-5.5 !h-5.5 text-red-500" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-black text-white px-3 py-2 rounded-md text-sm">
-                  <p>Remover</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => retornarParaFila(row.original.id)}
-                    className="cursor-pointer"
-                  >
-                    <CircleArrowLeft className="!w-5.5 !h-5.5 text-blue-500" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="bg-black text-white px-3 py-2 rounded-md text-sm">
-                  <p>Voltar para fila</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removerChamada(row.original.id)}
+                      className="cursor-pointer"
+                    >
+                      <XCircle className="!w-5.5 !h-5.5 text-red-500" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Remover</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </div>
+
       </div>
     </div>
   );
@@ -239,71 +262,96 @@ const columns: ColumnDef<ChamadaItem>[] = [
       );
     },
   },
+
+  // Ações tela desktop
   {
     id: "acoes",
     header: "",
     cell: ({ row }) => {
       const { retornarParaFila, removerChamada, marcarComoAtendido } = useFila();
-
+      const status = Number(row.original.status);
 
       return (
         <div className="w-[80px] flex justify-end items-center gap-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => marcarComoAtendido(row.original.id)}
-                  className="cursor-pointer"
-                >
-                  <CheckCircle className="!w-5.5 !h-5.5 text-green-500" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-black text-white px-2 py-2 rounded-md text-sm">
-                <p>Atender</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removerChamada(row.original.id)}
-                  className="cursor-pointer"
-                >
-                  <XCircle className="!w-5.5 !h-5.5 text-red-500" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-black text-white px-2 py-2 rounded-md text-sm">
-                <p>Remover</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => retornarParaFila(row.original.id)}
-                  className="cursor-pointer"
-                >
-                  <CircleArrowLeft className="!w-5.5 !h-5.5 text-blue-500" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="bg-black text-white px-3 py-2 rounded-md text-sm">
-                <p>Voltar para fila</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {status === 2 ? (
+            // Status Chamado: mostra os 3 ícones
+            <>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => marcarComoAtendido(row.original.id)}
+                      className="cursor-pointer"
+                    >
+                      <CheckCircle className="!w-5.5 !h-5.5 text-green-500" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Atender</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => retornarParaFila(row.original.id)}
+                      className="cursor-pointer"
+                    >
+                      <CircleArrowLeft className="!w-5.5 !h-5.5 text-blue-500" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Voltar para fila</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removerChamada(row.original.id)}
+                      className="cursor-pointer"
+                    >
+                      <XCircle className="!w-5.5 !h-5.5 text-red-500" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Desistiu</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+             
+            </>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  {/* <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removerChamada(row.original.id)}
+                    className="cursor-pointer"
+                  >
+                    <XCircle className="!w-5.5 !h-5.5 text-red-500" />
+                  </Button> */}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remover</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       );
     },
-  },
+  }
+
 ];
 

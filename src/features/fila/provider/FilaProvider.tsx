@@ -17,6 +17,7 @@ import { parseCookies } from "nookies";
 import { parseISO } from "date-fns/parseISO";
 import { differenceInMinutes } from "date-fns/differenceInMinutes";
 import { toast } from "sonner";
+import { padraoCliente } from "@/lib/utils/padraoCliente";
 
 
 
@@ -34,16 +35,6 @@ export type BaseClientItem = {
   dataHoraChamada?: string | null;
   dataHoraDeletado?: string | null;
 };
-
-enum AcoesAdminClientesEnum {
-  AdicionarCliente = 1,
-  ChamarClientes = 2,
-  AtenderClientes = 3,
-  RemoverClientes = 4,
-  DesistirClientes = 5,
-  VoltarParaFilaClientes = 6,
-  TrocarPosicaoCliente = 7,
-}
 
 type ClienteAtualizado = {
   id: string;
@@ -113,6 +104,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   const [selectedCount, setSelectedCount] = useState(0);
   const [allClients, setAllClients] = useState<(FilaItemExt | ChamadaItem)[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
+  const [movingId, setMovingId] = useState<string | null>(null);
 
   const filaData = useMemo(() => {
     return allClients
@@ -210,12 +202,27 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   };
 
   const removerChamada = async (id: string) => {
-    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
-      ids: [id],
-      acao: 4, // RemoverClientes
-    });
-    updateClientStatus(id, 5);
+    try {
+      await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+        ids: [id],
+        acao: 4, // RemoverClientes (soft delete)
+      });
+
+      // Remove do estado local para sumir da tabela imediatamente
+      setChamadasData(prev => prev.filter(item => item.id !== id));
+      // se está em allClients:
+      setAllClients(prev => prev.filter(item => item.id !== id));
+
+      toast.success("Cliente removido com sucesso!");
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message ||
+        "Não foi possível remover o cliente"
+      );
+    }
   };
+
+
 
   const retornarParaFila = async (id: string) => {
     await Api.post("/empresas/filas/clientes/atualizar-clientes", {
@@ -291,87 +298,67 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const trocarPosicaoCliente = async (id: string, direction: 'up' | 'down') => {
-    // Só clientes status 1
-    const fila = allClients.filter(c => c.status === 1);
-    const clienteIndex = fila.findIndex(c => c.id === id);
-    if (clienteIndex === -1) return;
-
-    // Nova posição baseada em 1!
-    let novaPosicao: number;
-    if (direction === 'up') {
-      if (clienteIndex === 0) return; // já está no topo
-      novaPosicao = clienteIndex; // pois posição começa em 1
+  const trocarPosicaoCliente = async (id: string, direction: "up" | "down") => { // id e direction como parametro
+    const fila = allClients // lista todos os clientes do context
+      .filter(c => c.status === 1) // filtra os clientes com status 1 (aguardando)
+      .sort((a, b) => (a.posicao! - b.posicao!)); // Ordena pelo campo posicao, o ! é para garantir que não seja undefined
+  
+    const index = fila.findIndex(c => c.id === id); // Encontra o índice do cliente na fila
+    if (index === -1) return; // Se não encontrar, não faz nada
+  
+    let novaPosicao = fila[index].posicao!; // inicializa a nova posição com a posição atual do cliente
+  
+    if (direction === "up" && index > 0) { // Se a direção for "up" e não estiver no topo
+      novaPosicao = fila[index].posicao! - 1; // Decrementa a posição (subindo na fila)
+    } else if (direction === "down" && index < fila.length - 1) { // Se a direção for "down" e não estiver no final
+      novaPosicao = fila[index].posicao! + 1; // Incrementa a posição (descendo na fila)
     } else {
-      if (clienteIndex === fila.length - 1) return; // já está embaixo
-      novaPosicao = clienteIndex + 2; // posição é idx + 2
+      // Está no topo ou base, não faz nada
+      return;
     }
-
-    // 1. Atualiza localmente para animação
-    setAllClients(prev => {
-      const filaAtual = prev.filter(c => c.status === 1);
-      const chamados = prev.filter(c => c.status !== 1);
-      const novaFila = [...filaAtual];
-      const [item] = novaFila.splice(clienteIndex, 1);
-      novaFila.splice(novaPosicao - 1, 0, item);
-      return [...novaFila, ...chamados];
-    });
-
+  
     try {
-      const res = await Api.post("/empresas/filas/trocar-posicao-cliente", {
+      const res = await Api.post("/empresas/filas/trocar-posicao-cliente", { // Chama a API para trocar a posição
         id,
-        novaPosicao 
-      });
-
-      // Atualiza estado com o retorno oficial da API
-      const clientesAPI = res.data; // array da fila
-      setAllClients(prev => {
-        const chamados = prev.filter(c => c.status !== 1);
-        const aguardando = clientesAPI
-          .filter((c: any) => c.status === 1)
-          .map((item: any) => ({
-            ...item,
-            tempo: prev.find(c => c.id === item.id)?.tempo ?? "há 0 minutos"
+        novaPosicao,
+      }); // Envia o id e a nova posição para a API
+  
+      // Atualize seu estado local com o retorno da API
+      const clientesAPI = res.data; // Resposta da API com os clientes atualizados
+      setAllClients(prev => { // Atualiza o estado local
+        const chamados = prev.filter(c => c.status !== 1); // Filtra os chamados (status diferente de 1)
+        const aguardando = clientesAPI // Filtra os clientes aguardando (status 1)
+          .filter((c: any) => c.status === 1) // Filtra os clientes aguardando (status 1)
+          .map((item: any) => ({ // Mapeia os clientes aguardando para o formato correto
+            ...item, // Espalha as propriedades do cliente
+            tempo: prev.find(c => c.id === item.id)?.tempo ?? "há 0 minutos" // Mantém o tempo do cliente original ou define como "há 0 minutos"
           }));
-        return [...aguardando, ...chamados];
+        return [...aguardando, ...chamados]; // Retorna a nova lista de clientes, com os aguardando atualizados e os chamados inalterados
       });
-
+  
       toast.success("Posição alterada com sucesso!");
     } catch (err) {
       toast.error("Erro ao mover cliente");
     }
   };
-
-
+  
 
   const addPerson = async (nome: string, telefone: string, observacao: string) => {
     try {
-      const now = new Date().toISOString();
       const payload = {
         nome,
         telefone,
         observacao,
         filaId: "b36f453e-a763-4ee1-ae2d-6660c2740de5",
-        dataHoraCriado: now,
-        dataHoraAlterado: now,
-        dataHoraOrdenacao: now,
-        dataHoraDeletado: null,
-        dataHoraChamada: null,
-        ticket: null,
-        hash: Math.random().toString(36).substring(2),
       };
 
-      const response = await Api.post("/empresas/filas/clientes/adicionar-cliente", payload);
+      await Api.post("/empresas/filas/clientes/adicionar-cliente", payload);
 
-      const clienteCriado = response.data;
-
+      // Sempre buscar a fila completa do backend
+      const filaAtualizada = await fetchFilaClientes();
       setAllClients(prev => [
-        ...prev,
-        {
-          ...clienteCriado,
-          tempo: "há 0 minutos",
-          status: 1,
-        },
+        ...filaAtualizada.map(c => padraoCliente(c)),
+        ...prev.filter(c => c.status !== 1)
       ]);
     } catch (error) {
       console.error("Erro ao adicionar cliente:", error);

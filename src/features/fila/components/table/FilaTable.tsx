@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/Modal";
 import { Dispatch, SetStateAction } from 'react';
-import {  useFila } from "../../provider/FilaProvider";
+import { useFila } from "../../provider/FilaProvider";
 import {
   Dialog,
   DialogContent,
@@ -23,18 +23,13 @@ import { EditClientForm } from "../form/EditClientForm";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { FilaItem, Status } from "@/features/fila/types"
 
-
-
-
 type FilaTableProps = {
   data: FilaItem[];
   setData: React.Dispatch<React.SetStateAction<FilaItem[]>>;
 };
 
-
-
 // Componente da Tabela
-export function FilaTable({ data,  }: FilaTableProps) {
+export function FilaTable({ data, }: FilaTableProps) {
   const isMobile = useMediaQuery("(max-width: 1060px)");
   const [notification, setNotification] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,7 +37,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const [editingClient, setEditingClient] = useState<FilaItem | null>(null);
- 
+
 
   // Filtrar os dados com base no termo de busca
   const filteredData = useMemo(() => {
@@ -62,18 +57,18 @@ export function FilaTable({ data,  }: FilaTableProps) {
 
   const handleConfirmRemove = async () => {
     if (!selectedId) return;
-  
+
     const cliente = data.find(c => c.id === selectedId);
     if (!cliente || !(cliente.status === 1 || cliente.status === 2)) {
       alert("Este cliente não está em um status válido para ser removido.");
       handleCloseModal();
       return;
     }
-  
+
     await removerSelecionados([selectedId]);
     handleCloseModal();
   };
-  
+
 
   const {
     chamarSelecionados,
@@ -88,19 +83,6 @@ export function FilaTable({ data,  }: FilaTableProps) {
     await chamarSelecionados([id]);
     table.resetRowSelection();
   };
-
-
-  // const moveItem = (id: string, direction: "up" | "down") => {
-  //   setFilaData((prevData) => {
-  //     const index = prevData.findIndex((item) => item.id === id);
-  //     if (index === -1) return prevData;
-  //     let newIndex = direction === "up" ? index - 1 : index + 1;
-  //     if (newIndex < 0 || newIndex >= prevData.length) return prevData;
-  //     const newData = [...prevData];
-  //     [newData[index], newData[newIndex]] = [newData[newIndex], newData[index]];
-  //     return newData;
-  //   });
-  // };
 
   const MobileRow = ({ row }: { row: Row<FilaItem> }) => {
     const statusColors: Record<string, string> = {
@@ -144,10 +126,13 @@ export function FilaTable({ data,  }: FilaTableProps) {
         <div className="flex justify-between gap-4 mt-1">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
-              <span className={`px-2 py-1 rounded-sm text-xs font-medium border ${statusColors[row.original.status] || "border-gray-700"}`}>
-                {row.original.status}
+              <span
+                className={`px-2 py-1 rounded-sm text-xs font-medium border ${getStatusColor(Number(row.original.status))}`}
+              >
+                {getStatusText(Number(row.original.status))}
               </span>
             </div>
+
 
             <a
               href={`https://wa.me/${encodeURIComponent(row.original.telefone)}`}
@@ -340,7 +325,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
       header: "",
       cell: ({ row }: { row: Row<FilaItem> }) => {
         const status = Number(row.getValue("status")) as Status;
-    
+
         return (
           <div className={`${isMobile ? 'mt-2' : ''} flex max-w-[60px] min-w-[120px] items-center gap-2`}>
             <span
@@ -377,11 +362,11 @@ export function FilaTable({ data,  }: FilaTableProps) {
           <>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                variant="ghost" 
-                size="icon" 
-                className="cursor-pointer" 
-                onClick={() => row.original.id && trocarPosicaoCliente(row.original.id, "up")}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="cursor-pointer"
+                  onClick={() => row.original.id && trocarPosicaoCliente(row.original.id, "up")}
                 >
                   <CircleArrowUp className="!w-5.5 !h-5.5 text-gray-600" />
                 </Button>
@@ -393,11 +378,11 @@ export function FilaTable({ data,  }: FilaTableProps) {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                variant="ghost" 
-                size="icon" 
-                className="cursor-pointer" 
-                onClick={() => row.original.id && trocarPosicaoCliente(row.original.id, "down")}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="cursor-pointer"
+                  onClick={() => row.original.id && trocarPosicaoCliente(row.original.id, "down")}
                 >
                   <CircleArrowDown className="!w-5.5 !h-5.5 text-gray-600" />
                 </Button>
@@ -531,7 +516,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
             </div>
             <p className="text-sm text-gray-600">
               Você tem certeza que deseja <span className="font-medium text-gray-800"><span className="font-semibold text-red-600">excluir</span> este cliente da fila</span>?<br />
-               
+
             </p>
 
           </div>
@@ -567,7 +552,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
                 setNotification("Cliente atualizado com sucesso!");
                 setTimeout(() => setNotification(null), 3000);
               }}
-              
+
             />
           </DialogContent>
         </Dialog>
