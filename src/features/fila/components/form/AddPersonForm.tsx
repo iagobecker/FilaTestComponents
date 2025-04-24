@@ -45,36 +45,15 @@ export function AddPersonForm({
     setIsLoading(true);
   
     try {
-      const now = new Date().toISOString();
-      const time = getCurrentTimeLocal(); 
-  
-      const payload = {
-        status: 1,
-        nome: name,
-        ticket: null,
-        telefone: phoneDigits,
-        observacao: observation,
-        filaId: "b36f453e-a763-4ee1-ae2d-6660c2740de5",
-        hash: null,
-        dataHoraOrdenacao: now,
-        dataHoraChamada: null,
-        id: crypto.randomUUID(),
-        dataHoraCriado: now,
-        dataHoraAlterado: now,
-        dataHoraDeletado: null,
-      };
-  
-      await Api.post("/empresas/filas/clientes/adicionar-cliente", payload);
-  
-      addPerson(name, phoneDigits, observation);
+      await addPerson(name, phoneDigits, observation); 
       toast.success("Cliente adicionado com sucesso!");
       onClose();
     } catch (err: any) {
-      console.error(err);
-      setError(
-        err?.response?.data?.message ||
-        "Erro ao adicionar cliente à fila."
-      );
+      if (err.response?.status === 400) {
+        setError("Número já cadastrado na fila!");
+      } else {
+        toast.error("Erro ao adicionar cliente!");
+      }
     } finally {
       setIsLoading(false);
     }

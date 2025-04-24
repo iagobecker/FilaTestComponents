@@ -12,7 +12,6 @@ export function HeaderFila({
   addPerson: (nome: string, telefone: string, observacao: string) => void;
 }) {
   const [isOpenAddPessoa, setIsOpenAddPessoa] = useState(false);
-  const [isOpenAddHorario, setIsOpenAddHorario] = useState(false);
 
   const filaId = "b36f453e-a763-4ee1-ae2d-6660c2740de5";
 

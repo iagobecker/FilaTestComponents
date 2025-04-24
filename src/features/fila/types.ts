@@ -6,7 +6,12 @@ export type FilaItem = {
     status: StatusType;
     tempo: string;
     ticket: string | null;
+    posicao?: number;
     dataHoraCriado?: string;
+    dataHoraOrdenacao?: string;
+    dataHoraChamada?: string | null;
+    dataHoraDeletado?: string | null;
+    dataHoraEntrada?: string | null;
   };
 
   export enum Status {

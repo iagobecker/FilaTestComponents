@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/layout/Header";
 import { ConfigCard } from "@/features/configuracoes/components/ConfigCard";
-import { Palette, MessageCircle, Clock, PhoneCall, MessageSquare } from "lucide-react";
+import { Palette, MessageCircle, Clock, PhoneCall, MessageSquare, Monitor } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { HeaderConfiguracoes } from "@/features/configuracoes/components/HeaderConfiguracoes";
 import { useState } from "react";
@@ -56,7 +56,7 @@ export default function ConfiguracoesPage() {
                     <ConfigCard
                         title="Ativar Monitor"
                         description="Crie mensagens personalizadas no WhatsApp para diferentes situações e melhore a comunicação com seus clientes."
-                        icon={<MessageSquare className="size-6 text-cyan-600 " />}
+                        icon={<Monitor className="size-6 text-cyan-600 " />}
                         bgColor="bg-cyan-100"
                         borderColor="border-cyan-500"
                         href="/vinculaMonitor"

@@ -78,6 +78,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
   const {
     chamarSelecionados,
     removerSelecionados,
+    trocarPosicaoCliente,
     setFilaData,
     getStatusText,
     getStatusColor
@@ -89,18 +90,17 @@ export function FilaTable({ data,  }: FilaTableProps) {
   };
 
 
-  const moveItem = (id: string, direction: "up" | "down") => {
-    setFilaData((prevData) => {
-      const index = prevData.findIndex((item) => item.id === id);
-      if (index === -1) return prevData;
-      let newIndex = direction === "up" ? index - 1 : index + 1;
-      if (newIndex < 0 || newIndex >= prevData.length) return prevData;
-      const newData = [...prevData];
-      [newData[index], newData[newIndex]] = [newData[newIndex], newData[index]];
-      return newData;
-    });
-  };
-  
+  // const moveItem = (id: string, direction: "up" | "down") => {
+  //   setFilaData((prevData) => {
+  //     const index = prevData.findIndex((item) => item.id === id);
+  //     if (index === -1) return prevData;
+  //     let newIndex = direction === "up" ? index - 1 : index + 1;
+  //     if (newIndex < 0 || newIndex >= prevData.length) return prevData;
+  //     const newData = [...prevData];
+  //     [newData[index], newData[newIndex]] = [newData[newIndex], newData[index]];
+  //     return newData;
+  //   });
+  // };
 
   const MobileRow = ({ row }: { row: Row<FilaItem> }) => {
     const statusColors: Record<string, string> = {
@@ -177,7 +177,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => row.original.id && moveItem(row.original.id, "up")}
+                    onClick={() => row.original.id && trocarPosicaoCliente(row.original.id, "up")}
                   >
                     <CircleArrowUp className="size-6 text-gray-600" />
                   </Button>
@@ -192,7 +192,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => row.original.id && moveItem(row.original.id, "down")}
+                    onClick={() => row.original.id && trocarPosicaoCliente(row.original.id, "down")}
                   >
                     <CircleArrowDown className="size-6 text-gray-600" />
                   </Button>
@@ -272,7 +272,7 @@ export function FilaTable({ data,  }: FilaTableProps) {
       cell: ({ row }: { row: Row<FilaItem> }) => (
         <div className="min-w-[50px] flex justify-start">
           <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-800  rounded-md">
-            BS -- {String(row.index + 1).padStart(2, '0')}
+            BS - {String(row.original.posicao ?? row.index + 1).padStart(2, '0')}
           </span>
         </div>
       ),
@@ -377,7 +377,12 @@ export function FilaTable({ data,  }: FilaTableProps) {
           <>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => row.original.id && moveItem(row.original.id, "up")}>
+                <Button 
+                variant="ghost" 
+                size="icon" 
+                className="cursor-pointer" 
+                onClick={() => row.original.id && trocarPosicaoCliente(row.original.id, "up")}
+                >
                   <CircleArrowUp className="!w-5.5 !h-5.5 text-gray-600" />
                 </Button>
               </TooltipTrigger>
@@ -388,7 +393,12 @@ export function FilaTable({ data,  }: FilaTableProps) {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="cursor-pointer" onClick={() => row.original.id && moveItem(row.original.id, "down")}>
+                <Button 
+                variant="ghost" 
+                size="icon" 
+                className="cursor-pointer" 
+                onClick={() => row.original.id && trocarPosicaoCliente(row.original.id, "down")}
+                >
                   <CircleArrowDown className="!w-5.5 !h-5.5 text-gray-600" />
                 </Button>
               </TooltipTrigger>

@@ -21,23 +21,7 @@ export default function FilaPage() {
 }
 
 function FilaContent() {
-  const { filaData, setFilaData, chamadasData } = useFila();
-
-  const addPerson = async (nome: string, telefone: string, observacao: string) => {
-    try {
-      // Após adicionar via API, buscamos novamente toda a fila
-      const novaFila = await fetchFilaClientes();
-      const formattedFila = novaFila.map(item => ({
-        ...item,
-        id: item.id || "",
-      }));
-      setFilaData(formattedFila);
-    } catch (error) {
-      console.error("Erro ao adicionar pessoa na fila:", error);
-    }
-  };
-
-
+  const { filaData, setFilaData, chamadasData, addPerson } = useFila();
   return (
     <>
       <HeaderFila addPerson={addPerson} />
