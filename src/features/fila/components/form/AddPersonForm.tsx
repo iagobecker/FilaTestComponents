@@ -2,11 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Api } from "@/api/api"
 import { toast } from "sonner"
-import { ClienteDTO } from "@/features/fila/types"
-import { getCurrentTimeLocal } from "@/lib/utils/timeUtils";
-
 
 export function AddPersonForm({
   addPerson,

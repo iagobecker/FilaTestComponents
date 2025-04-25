@@ -4,7 +4,7 @@ import { ColumnDef, flexRender, getCoreRowModel, useReactTable, Row } from "@tan
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Clock, RotateCcw, CircleArrowLeft } from "lucide-react";
-import { useFila } from "@/features/fila/provider/FilaProvider";
+import { useFilaContext } from "@/features/fila/provider/FilaProvider";
 import { ChamadasContainer } from "../../../../components/layout/ChamadasContainer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
@@ -25,7 +25,7 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
     marcarComoAtendido,
     getStatusText,
     getStatusColor
-  } = useFila();
+  } = useFilaContext();
   const status = Number(row.original.status);
 
   return (
@@ -35,21 +35,21 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
         <div>
           <div className="flex items-center gap-2">
 
-            <span className="px-2 text-center font-bold py-1 text-[16px] text-green-800 rounded-md">
-              BS{String(row.index + 1).padStart(2, '0')}
+            <span className="px-2 text-center font-bold text-[15px] py-1 text-gray-800 rounded-md">
+              {String(row.index + 1).padStart(2, '0')}
             </span>
-            <span className="font-semibold  text-[16px]">
+            <span className="font-semibold">
               {row.original.nome}
             </span>
           </div>
 
           <div className="flex items-center gap-1 mt-1">
           <span
-            className={`px-2 py-1 rounded-sm text-sm font-medium border text-gray-500 ${getStatusColor(status)}`}
+            className={`px-2 py-1 rounded-sm text-sm font-medium  text-gray-500 ${getStatusColor(status)}`}
           >
             {getStatusText(status)}
           </span>
-          </div>
+          </div> 
 
           <a
             href={`https://wa.me/${encodeURIComponent(row.original.telefone)}`}
@@ -159,7 +159,7 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
 };
 
 // Componente da tabela de chamadas recentes
-export function ChamadasRecentes({ data }: { data: ChamadaItem[] }) {
+export function TableStatusRecentes({ data }: { data: ChamadaItem[] }) {
   const isMobile = useMediaQuery("(max-width: 1060px)");
   const table = useReactTable({
     data,
@@ -178,7 +178,7 @@ export function ChamadasRecentes({ data }: { data: ChamadaItem[] }) {
             ))}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className={`overflow-x-auto ${data.length >=4 ? "max-h-[360px] overflow-y-auto" : ""}`}>
             <Table>
               <TableBody>
                 {table.getRowModel().rows.map((row, index) => (
@@ -209,8 +209,8 @@ const columns: ColumnDef<ChamadaItem>[] = [
     header: "",
     cell: ({ row }) => (
       <div className="min-w-[80px] flex justify-start">
-        <span className="px-6 text-center font-bold py-1 text-green-700 text-[16px] rounded-md">
-          BS{String(row.index + 1).padStart(2, '0')}
+        <span className="px-6 text-center font-bold py-1 text-[15px] text-gray-700 rounded-md">
+          {String(row.index + 1).padStart(2, '0')}
         </span>
       </div>
     ),
@@ -248,13 +248,13 @@ const columns: ColumnDef<ChamadaItem>[] = [
     accessorKey: "status",
     header: "",
     cell: ({ row }) => {
-      const { getStatusText, getStatusColor } = useFila();
+      const { getStatusText, getStatusColor } = useFilaContext();
       const status = Number(row.original.status);
 
       return (
         <div className="flex min-w-[90px] max-w-[100px] items-center gap-1">
           <span
-            className={`px-2 py-1 rounded-sm text-sm font-medium border text-gray-500 ${getStatusColor(status)}`}
+            className={`px-2 py-1 rounded-sm text-sm font-medium  text-gray-500 ${getStatusColor(status)}`}
           >
             {getStatusText(status)}
           </span>
@@ -268,7 +268,7 @@ const columns: ColumnDef<ChamadaItem>[] = [
     id: "acoes",
     header: "",
     cell: ({ row }) => {
-      const { retornarParaFila, removerChamada, marcarComoAtendido } = useFila();
+      const { retornarParaFila, removerChamada, marcarComoAtendido } = useFilaContext();
       const status = Number(row.original.status);
 
       return (

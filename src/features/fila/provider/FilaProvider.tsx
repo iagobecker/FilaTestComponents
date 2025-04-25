@@ -10,48 +10,19 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import { FilaItem, StatusType } from "@/features/fila/types";
-import { fetchFilaClientes } from "../services/FilaService";
+import { ChamadaItem, ClienteAtualizado, FilaItem, FilaItemExt, StatusType } from "@/features/fila/types";
+import { buscarClientesFila } from "../services/FilaService";
 import { Api, setAuthorizationHeader } from "@/api/api";
-import { parseCookies } from "nookies";
+import { parseCookies } from "nookies";// Utilitário para ler cookies
 import { parseISO } from "date-fns/parseISO";
 import { differenceInMinutes } from "date-fns/differenceInMinutes";
 import { toast } from "sonner";
-import { padraoCliente } from "@/lib/utils/padraoCliente";
+import { padraoCliente } from "@/lib/utils/padraoCliente"; // Função para padronizar o cliente
 
-
-
-export type BaseClientItem = {
-  id: string;
-  ticket: string | null;
-  nome: string;
-  telefone: string;
-  observacao: string;
-  tempo: string;
-  status: StatusType;
-  posicao?: number;
-  dataHoraCriado?: string;
-  dataHoraOrdenacao?: string;
-  dataHoraChamada?: string | null;
-  dataHoraDeletado?: string | null;
-};
-
-type ClienteAtualizado = {
-  id: string;
-  nome: string;
-  telefone: string;
-  status: StatusType;
-  observacao?: string;
-  ticket?: string | null;
-  tempo?: string;
-};
-
-type FilaItemExt = BaseClientItem;
-type ChamadaItem = BaseClientItem;
-
+// interface descrevendo tudo que será compartilhado no contexto
 interface FilaContextType {
-  selectedCount: number;
-  setSelectedCount: (count: number) => void;
+  contagemSelecionada: number;
+  setContagemSelecionada: (count: number) => void;
   filaData: FilaItemExt[];
   setFilaData: Dispatch<SetStateAction<FilaItemExt[]>>;
   chamadasData: ChamadaItem[];
@@ -60,6 +31,7 @@ interface FilaContextType {
   removerSelecionados: (selectedIds: string[]) => Promise<void>;
   trocarPosicaoCliente: (id: string, direction: "up" | "down") => Promise<void>;
   addPerson: (nome: string, telefone: string, observacao: string) => void;
+  editPerson: (clienteCompleto: FilaItem) => void;
   retornarParaFila: (id: string) => void;
   removerChamada: (id: string) => void;
   marcarComoAtendido: (id: string) => void;
@@ -68,17 +40,19 @@ interface FilaContextType {
   getStatusColor: (status: StatusType) => string;
 }
 
+// Cria o contexto com um valor padrão indefinido
 const FilaContext = createContext<FilaContextType | undefined>(undefined);
 
-export const useFila = () => {
-  const context = useContext(FilaContext);
+// Hook para acessar o contexto de forma mais fácil
+export const useFilaContext = () => {
+  const context = useContext(FilaContext); // acessa o contexto atual
   if (!context) {
-    throw new Error("useFila deve ser usado dentro de um FilaProvider");
+    throw new Error("useFilaContext deve ser usado dentro de um FilaProvider");
   }
   return context;
 };
 
-const getStatusText = (status: StatusType): string => {
+const getStatusText = (status: StatusType): string => { // Função para retornar o texto do status
   switch (status) {
     case 1: return "Aguardando";
     case 2: return "Chamado";
@@ -91,56 +65,54 @@ const getStatusText = (status: StatusType): string => {
 
 const getStatusColor = (status: StatusType): string => {
   switch (status) {
-    case 1: return "border-blue-400";
-    case 2: return "border-green-400";
-    case 3: return "border-blue-600";
-    case 4: return "border-red-400";
-    case 5: return "border-red-400";
-    default: return "border-gray-700";
+    case 1: return "text-blue-500";
+    case 2: return "text-green-500";
+    case 3: return "text-green-700";
+    case 4: return "text-yellow-500";
+    case 5: return "text-red-400";
+    default: return "text-gray-700";
   }
 };
 
 export function FilaProvider({ children }: { children: ReactNode }) {
-  const [selectedCount, setSelectedCount] = useState(0);
-  const [allClients, setAllClients] = useState<(FilaItemExt | ChamadaItem)[]>([]);
+  const [contagemSelecionada, setContagemSelecionada] = useState(0);
+  const [allClients, setAllClients] = useState<(FilaItemExt | ChamadaItem)[]>([]); // podem ser do tipo FilaItemExt ou ChamadaItem
   const [notification, setNotification] = useState<string | null>(null);
-  const [movingId, setMovingId] = useState<string | null>(null);
 
   const filaData = useMemo(() => {
     return allClients
       .filter(client => client.status === 1)
-      .sort((a, b) => {
+      .sort((a, b) => { // Ordena pela data de criação ou ordenação
         const aData = new Date(a.dataHoraOrdenacao ?? a.dataHoraCriado ?? 0).getTime();
         const bData = new Date(b.dataHoraOrdenacao ?? b.dataHoraCriado ?? 0).getTime();
-        return aData - bData;
+        return aData - bData; // ordem crescente mais antigo para o mais novo
       });
-  }, [allClients]);
+  }, [allClients]); // só recalcula quando allClients muda
 
 
   const chamadasData = useMemo(() => {
-    const mapa = new Map();
+    const mapa = new Map(); // estrutura de dados que armazena pares chave-valor únicos
     for (const client of allClients) {
       if (client.status > 1) {
         mapa.set(client.id, client);
       }
-    }
+    } // percorre todos os clientes e adiciona ao mapa se o status for maior que 1
     return Array.from(mapa.values()) as ChamadaItem[];
-  }, [allClients]);
+  }, [allClients]); 
 
 
   useEffect(() => {
     async function loadFila() {
       try {
-        const { "auth.token": token } = parseCookies();
-        if (token) setAuthorizationHeader(token);
+        const { "auth.token": token } = parseCookies(); // lê o cookie de autenticação
+        if (token) setAuthorizationHeader(token); // define o cabeçalho de autorização na API
 
-        const fila = await fetchFilaClientes();
+        const fila = await buscarClientesFila();
 
         // ORDENA pela propriedade posicao
         const ordenados = [...fila]
           .filter(item => item.status === 1)
           .sort((a, b) => {
-            // Parseia datas ISO, garante que sempre tem valor
             const aData = new Date(a.dataHoraOrdenacao ?? a.dataHoraCriado ?? 0).getTime();
             const bData = new Date(b.dataHoraOrdenacao ?? b.dataHoraCriado ?? 0).getTime();
             return aData - bData; // ordem crescente
@@ -152,7 +124,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
         //Mostra os clientes aguardando na ordem
         const renderAguardando = ordenados.map(item => ({
           ...item,
-          id: item.id || crypto.randomUUID(),
+          id: item.id || crypto.randomUUID(), // Gera um ID único se não houver
           status: (typeof item.status === "string" ? parseInt(item.status) : item.status) as StatusType || 1,
           tempo: item.tempo || "há 0 minutos",
           ticket: item.ticket || null,
@@ -170,7 +142,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
           dataHoraCriado: item.dataHoraCriado || new Date().toISOString(),
         }));
 
-        setAllClients([...renderAguardando, ...renderChamados]);
+        setAllClients([...renderAguardando, ...renderChamados]); // Atualiza o estado com os clientes aguardando e chamados
       } catch (error) {
         console.error("Erro ao carregar fila:", error);
       }
@@ -181,8 +153,8 @@ export function FilaProvider({ children }: { children: ReactNode }) {
 
   const updateClientStatus = (id: string, status: StatusType) => {
     setAllClients(prev =>
-      prev.map(client => client.id === id ? { ...client, status } : client)
-    );
+      prev.map(client => client.id === id ? { ...client, status } : client)  // usa o spread operator para copiar todos os dados do cliente e substitui apenas o campo status pelo novo status informado
+    ); 
   };
 
   const marcarComoAtendido = async (id: string) => {
@@ -209,7 +181,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
       });
 
       // Remove do estado local para sumir da tabela imediatamente
-      setChamadasData(prev => prev.filter(item => item.id !== id));
+      setChamadasData(prev => prev.filter(item => item.id !== id)); // Mantém só os itens cujo id é diferente do cliente removido.
       // se está em allClients:
       setAllClients(prev => prev.filter(item => item.id !== id));
 
@@ -240,18 +212,18 @@ export function FilaProvider({ children }: { children: ReactNode }) {
       "/empresas/filas/clientes/atualizar-clientes",
       { ids, acao: 2 }
     );
-    const clientesAtualizados = response.data?.clientesAtualizados ?? [];
+    const clientesAtualizados = response.data?.clientesAtualizados ?? []; // Resposta da API com os clientes atualizados
 
     setAllClients(prev => prev.map(client => {
-      if (ids.includes(client.id)) {
+      if (ids.includes(client.id)) { // Verifica se o cliente está na lista de IDs selecionados
         // Busca pelo cliente atualizado para pegar dataHoraCriado
-        const atualizado = clientesAtualizados.find((c: ClienteAtualizado) => c.id === client.id);
+        const atualizado = clientesAtualizados.find((c: ClienteAtualizado) => c.id === client.id); // busca o cliente atualizado pelo id | compara os ids
         const criado = atualizado?.dataHoraCriado
           ? parseISO(atualizado.dataHoraCriado)
-          : new Date();
+          : new Date(); // Se não houver dataHoraCriado, usa a data atual
 
         // Tempo relativo
-        const minutos = differenceInMinutes(new Date(), criado);
+        const minutos = differenceInMinutes(new Date(), criado); // Calcula a diferença em minutos entre a data atual e a data de criação
         return {
           ...client, //novo objeto com spread
           status: 2, // Garante atualização
@@ -262,7 +234,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
       return client;
     }));
 
-    setSelectedCount(0);
+    setContagemSelecionada(0);
   };
 
 
@@ -284,13 +256,13 @@ export function FilaProvider({ children }: { children: ReactNode }) {
 
       setAllClients((prev) =>
         prev.map((client) =>
-          clientesValidos.some((c) => c.id === client.id)
+          clientesValidos.some((c) => c.id === client.id) // retorna true se algum cliente em clientesValidos tem o mesmo id
             ? { ...client, status: 5 }
             : client
         )
       );
 
-      setSelectedCount(0);
+      setContagemSelecionada(0);
       setNotification(`${clientesValidos.length} cliente(s) removido(s)`);
       setTimeout(() => setNotification(null), 3000);
     } catch (error) {
@@ -355,45 +327,59 @@ export function FilaProvider({ children }: { children: ReactNode }) {
       await Api.post("/empresas/filas/clientes/adicionar-cliente", payload);
 
       // Sempre buscar a fila completa do backend
-      const filaAtualizada = await fetchFilaClientes();
-      setAllClients(prev => [
-        ...filaAtualizada.map(c => padraoCliente(c)),
-        ...prev.filter(c => c.status !== 1)
+      const filaAtualizada = await buscarClientesFila();
+      setAllClients(prev => [ // Atualiza o estado com os clientes da fila
+        ...filaAtualizada.map(c => padraoCliente(c)), // Padroniza os clientes
+        ...prev.filter(c => c.status !== 1) // Mantém os clientes que não estão aguardando
       ]);
     } catch (error) {
       console.error("Erro ao adicionar cliente:", error);
     }
   };
 
+  const editPerson = async (clienteCompleto: FilaItem) => {
+    try {      
+       await Api.put("/empresas/filas/clientes", clienteCompleto);
+
+      const filaAtualizada = await buscarClientesFila(); // Busca a fila atualizada do backend
+      setAllClients(prev => [ // Atualiza o estado com os clientes da fila
+        ...filaAtualizada.map(c => padraoCliente(c)), // Padroniza os clientes
+        ...prev.filter(c => c.status !== 1) // Mantém os clientes que não estão aguardando
+      ]);
+    } catch (error) {
+      console.error("Erro ao editar cliente:", error);
+    }
+  };
 
 
-  const setFilaData: Dispatch<SetStateAction<FilaItemExt[]>> = updater => {
-    setAllClients(prev => {
-      const fila = prev.filter(c => c.status === 1);
-      const chamadas = prev.filter(c => c.status !== 1);
-      let updated = typeof updater === "function" ? updater(fila as FilaItemExt[]) : updater;
+  const setFilaData: Dispatch<SetStateAction<FilaItemExt[]>> = updater => { // Atualiza a fila de clientes
+    setAllClients(prev => { // Atualiza o estado com os clientes da fila
+      const fila = prev.filter(c => c.status === 1); // Filtra os clientes com status 1 (aguardando)
+      const chamadas = prev.filter(c => c.status !== 1); // Filtra os clientes com status diferente de 1 (chamados)
+      let updated = typeof updater === "function" ? updater(fila as FilaItemExt[]) : updater; // Atualiza a fila com os novos dados
       updated = [...updated].sort((a, b) => {
         const aData = new Date(a.dataHoraOrdenacao ?? a.dataHoraCriado ?? 0).getTime();
         const bData = new Date(b.dataHoraOrdenacao ?? b.dataHoraCriado ?? 0).getTime();
         return aData - bData;
-      });
-      return [...updated, ...chamadas];
+      }); // Ordena a fila pela data de criação ou ordenação
+      return [...updated, ...chamadas]; // Retorna a nova lista de clientes, com os aguardando atualizados e os chamados inalterados
     });
   };
 
 
-  const setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>> = updater => {
+  const setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>> = updater => { // Atualiza a lista de chamados
     setAllClients(prev => {
       const fila = prev.filter(c => c.status === 1);
-      const chamadas = prev.filter(c => c.status !== 1);
+      const chamadas = prev.filter(c => c.status !== 1); // todos os clientes que não estão aguardando
       const updated = typeof updater === "function" ? updater(chamadas as ChamadaItem[]) : updater;
       return [...fila, ...updated];
     });
   };
 
+  // Obj do Contexto com todos os dados e funções que serão compartilhados
   const contextValue: FilaContextType = {
-    selectedCount,
-    setSelectedCount,
+    contagemSelecionada,
+    setContagemSelecionada,
     filaData,
     setFilaData,
     chamadasData,
@@ -401,6 +387,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     chamarSelecionados,
     removerSelecionados,
     addPerson,
+    editPerson,
     retornarParaFila,
     removerChamada,
     marcarComoAtendido,

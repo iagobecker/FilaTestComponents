@@ -28,6 +28,7 @@ export const Api = {
   get: (url: string, params?: any) => axiosInstance.get(url, { params }),
   post: (url: string, data?: any) => axiosInstance.post(url, data),
   put: (url: string, data?: any) => axiosInstance.put(url, data),
+  patch: (url: string, data?: any) => axiosInstance.patch(url, data),
   delete: (url: string) => axiosInstance.delete(url),
   refreshToken: () => axiosInstance.post('/auth/refresh-token'),
   setAuthorizationHeader, 

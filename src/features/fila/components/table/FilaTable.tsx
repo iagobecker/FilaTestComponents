@@ -4,14 +4,13 @@ import { useMemo, useState } from "react";
 import { ColumnDef, flexRender, getCoreRowModel, Row, useReactTable } from "@tanstack/react-table";
 import { Table, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Trash, PhoneCall, CircleArrowDown, CircleArrowUp, Clock, CheckCircle, Edit, Pencil, PencilLine } from "lucide-react";
+import { Trash, PhoneCall, CircleArrowDown, CircleArrowUp, Clock, CheckCircle, PencilLine } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FilaContainer } from "@/features/fila/components/table/FilaContainer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/Modal";
-import { Dispatch, SetStateAction } from 'react';
-import { useFila } from "../../provider/FilaProvider";
+import { useFilaContext } from "@/features/fila/provider/FilaProvider";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +36,8 @@ export function FilaTable({ data, }: FilaTableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const [editingClient, setEditingClient] = useState<FilaItem | null>(null);
+  const { editPerson } = useFilaContext();
+
 
 
   // Filtrar os dados com base no termo de busca
@@ -77,7 +78,7 @@ export function FilaTable({ data, }: FilaTableProps) {
     setFilaData,
     getStatusText,
     getStatusColor
-  } = useFila();
+  } = useFilaContext();
 
   const chamarItem = async (id: string) => {
     await chamarSelecionados([id]);
@@ -85,11 +86,6 @@ export function FilaTable({ data, }: FilaTableProps) {
   };
 
   const MobileRow = ({ row }: { row: Row<FilaItem> }) => {
-    const statusColors: Record<string, string> = {
-      "Em Atendimento": "border-green-400",
-      "Aguardando": "border-blue-400",
-      "Cancelado": "border-red-400",
-    }
 
     return (
       <div className="p-4 border-b border-gray-100">
@@ -103,7 +99,7 @@ export function FilaTable({ data, }: FilaTableProps) {
               className="flex-shrink-0"
             />
             <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-800 rounded-md whitespace-nowrap flex-shrink-0">
-              BS{String(row.index + 1).padStart(2, '0')}
+              {String(row.index + 1).padStart(2, '0')}
             </span>
             <span
               className="font-semibold text-[16px] cursor-pointer hover:text-blue-600 transition-colors whitespace-nowrap truncate flex-1"
@@ -127,7 +123,7 @@ export function FilaTable({ data, }: FilaTableProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1">
               <span
-                className={`px-2 py-1 rounded-sm text-xs font-medium border ${getStatusColor(Number(row.original.status))}`}
+                className={`px-2 py-1 rounded-sm text-xs font-medium ${getStatusColor(Number(row.original.status))}`}
               >
                 {getStatusText(Number(row.original.status))}
               </span>
@@ -256,8 +252,8 @@ export function FilaTable({ data, }: FilaTableProps) {
       header: "",
       cell: ({ row }: { row: Row<FilaItem> }) => (
         <div className="min-w-[50px] flex justify-start">
-          <span className="px-2 text-center font-bold py-1 text-[16px] text-blue-800  rounded-md">
-            BS - {String(row.original.posicao ?? row.index + 1).padStart(2, '0')}
+          <span className="px-2 text-center font-bold py-1 text-[15px] text-blue-800  rounded-md">
+            {String(row.original.posicao ?? row.index + 1).padStart(2, '0')}
           </span>
         </div>
       ),
@@ -315,7 +311,18 @@ export function FilaTable({ data, }: FilaTableProps) {
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{row.original.dataHoraCriado}</p>
+            <p>
+              {(() => {
+                const date = new Date(row.original.dataHoraCriado ?? Date.now());
+                const options: Intl.DateTimeFormatOptions = {
+                  weekday: 'long',
+                  month: 'long',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                };
+                return date.toLocaleDateString('pt-BR', options);
+              })()}
+            </p>
           </TooltipContent>
         </Tooltip>
       ),
@@ -329,7 +336,7 @@ export function FilaTable({ data, }: FilaTableProps) {
         return (
           <div className={`${isMobile ? 'mt-2' : ''} flex max-w-[60px] min-w-[120px] items-center gap-2`}>
             <span
-              className={`px-3 py-1 rounded-sm text-sm font-medium border ${getStatusColor(status)}`}
+              className={`px-3 py-1 rounded-sm text-sm font-medium ${getStatusColor(status)}`}
             >
               {getStatusText(status)}
             </span>
@@ -544,16 +551,18 @@ export function FilaTable({ data, }: FilaTableProps) {
             </DialogHeader>
             <EditClientForm
               client={editingClient}
-              onSave={(updatedClient) => {
-                setFilaData(prev => prev.map(item =>
-                  item.id === updatedClient.id ? updatedClient : item
-                ));
+              onSave={async (updatedFields) => {
+                const payload = {
+                  ...editingClient,     // todos os campos antigos
+                  ...updatedFields      // sobrescreve só os campos editados
+                };
+                await editPerson(payload);
                 setEditingClient(null);
                 setNotification("Cliente atualizado com sucesso!");
                 setTimeout(() => setNotification(null), 3000);
               }}
-
             />
+
           </DialogContent>
         </Dialog>
       )}

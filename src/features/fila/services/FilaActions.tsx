@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useFila } from "@/features/fila/provider/FilaProvider";
+import { useFilaContext } from "@/features/fila/provider/FilaProvider";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { DialogTitle } from "@/components/ui/dialog";
@@ -22,7 +22,7 @@ export function FilaActions({
   const [showModal, setShowModal] = useState(false);
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
-  const { removerSelecionados, chamarSelecionados, filaData, chamadasData } = useFila();
+  const { removerSelecionados, chamarSelecionados, filaData, chamadasData } = useFilaContext();
 
   const handleConfirmRemove = async () => {
     const todosClientes = [...filaData, ...chamadasData];

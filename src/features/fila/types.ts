@@ -3,6 +3,8 @@ export type FilaItem = {
     nome: string;
     telefone: string;
     observacao: string;
+    hash: string;
+    filaId: string;
     status: StatusType;
     tempo: string;
     ticket: string | null;
@@ -23,7 +25,37 @@ export type FilaItem = {
   }
   
   export type StatusType = Status;
+
+  export type BaseClientItem = {
+    id: string;
+    ticket: string | null;
+    nome: string;
+    telefone: string;
+    observacao: string;
+    tempo: string;
+    status: StatusType;
+    hash: string;
+    filaId: string;
+    posicao?: number;
+    dataHoraCriado?: string;
+    dataHoraOrdenacao?: string;
+    dataHoraChamada?: string | null;
+    dataHoraDeletado?: string | null;
+  };
   
+  // Define o tipo de cliente atualizado, que pode incluir propriedades adicionais para editar
+  export type ClienteAtualizado = {
+    id: string;
+    nome: string;
+    telefone: string;
+    status: StatusType;
+    observacao?: string;
+    ticket?: string | null;
+    tempo?: string;
+  };
+  
+  export type FilaItemExt = BaseClientItem;
+  export type ChamadaItem = BaseClientItem;
 
   export type ClienteDTO = {
     id: string;
