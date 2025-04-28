@@ -14,6 +14,7 @@ export type FilaItem = {
     dataHoraChamada?: string | null;
     dataHoraDeletado?: string | null;
     dataHoraEntrada?: string | null;
+    dataHoraAlterado?: string;
   };
 
   export enum Status {
@@ -52,6 +53,12 @@ export type FilaItem = {
     observacao?: string;
     ticket?: string | null;
     tempo?: string;
+  };
+
+  export type EditaCampos = {
+    nome?: string;
+    telefone?: string;
+    observacao?: string;
   };
   
   export type FilaItemExt = BaseClientItem;

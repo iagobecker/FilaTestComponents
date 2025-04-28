@@ -6,21 +6,23 @@ export function padraoCliente(cliente: any): FilaItem {
     const dataHoraCriado = cliente.dataHoraCriado ?? cliente.dataHoraOrdenacao ?? new Date().toISOString();
 
     return {
-        id: cliente.id,
-        nome: cliente.nome ?? "-",
-        telefone: cliente.telefone ?? "-",
-        observacao: cliente.observacao ?? "-",
         status: cliente.status as StatusType,
+        nome: cliente.nome ?? "-",
         ticket: cliente.ticket ?? null,
+        telefone: cliente.telefone ?? "-",
         posicao: cliente.posicao,
-        dataHoraCriado: cliente.dataHoraCriado,
+        observacao: cliente.observacao ?? "-",
+        filaId: cliente.filaId,
+        hash: cliente.hash,
         dataHoraOrdenacao: cliente.dataHoraOrdenacao,
         tempo: formatDistanceToNowStrict(parseISO(dataHoraCriado), {
             locale: ptBR,
             addSuffix: true,
         }),
         dataHoraChamada: cliente.dataHoraChamada ?? null,
-        dataHoraDeletado: cliente.dataHoraDeletado ?? null,
+        id: cliente.id,
+        dataHoraCriado: cliente.dataHoraCriado,
         dataHoraEntrada: cliente.dataHoraEntrada ?? null,
+        dataHoraDeletado: cliente.dataHoraDeletado ?? null,
     };
 }

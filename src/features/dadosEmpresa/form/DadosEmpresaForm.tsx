@@ -51,7 +51,6 @@ export default function DadosEmpresaForm() {
   }, [reset]);
 
   const onSubmit = (data: FormData) => {
-    console.log("Dados salvos:", data)
     // TODO: atualizar via Api.put('/empresas/', data)
   }
 

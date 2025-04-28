@@ -48,7 +48,6 @@ export function InscrevaseForm({ className, ...props }: React.ComponentPropsWith
 
     try {
       const res = await Api.post('/empresas/register', payload)
-      console.log('✅ Empresa registrada:', res.data)
 
       setSuccess(true)
       router.push('/fila')

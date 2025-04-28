@@ -16,6 +16,7 @@ type ChamadaItem = {
   tempo: string;
   status: number;
   observacao: string;
+  dataHoraCriado: string;
 };
 
 const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
@@ -24,7 +25,8 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
     removerChamada,
     marcarComoAtendido,
     getStatusText,
-    getStatusColor
+    getStatusColor,
+    calcularTempo,
   } = useFilaContext();
   const status = Number(row.original.status);
 
@@ -66,7 +68,7 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
             </span>
             <div className="flex items-center gap-1 mt-1">
               <Clock className="size-4 text-gray-400" strokeWidth={1.5} />
-              <span className="text-sm text-gray-500">{row.original.tempo}</span>
+              <span className="text-sm text-gray-500">{calcularTempo(row.original.dataHoraCriado)}</span>
             </div>
           </div>
         </div>
@@ -237,12 +239,18 @@ const columns: ColumnDef<ChamadaItem>[] = [
   {
     accessorKey: "tempo",
     header: "",
-    cell: ({ row }) => (
-      <div className="flex min-w-[120px] items-center justify-end gap-1">
-        <Clock className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
-        <span className="text-sm font-semibold text-gray-400">{row.original.tempo}</span>
-      </div>
-    ),
+    cell: ({ row }) => {
+      const { calcularTempo } = useFilaContext();
+      return (
+        <div className="flex min-w-[120px] items-center justify-end gap-1">
+          <Clock className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
+          <span className="text-sm font-semibold text-gray-400">
+            {calcularTempo(row.original.dataHoraCriado)}
+          </span>
+        </div>
+      );
+    },
+    
   },
   {
     accessorKey: "status",

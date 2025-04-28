@@ -20,8 +20,6 @@ export function criarWebSocketVinculacao(
       const text = typeof raw === 'string' ? raw : await raw.text()
       const data = JSON.parse(text)
 
-      console.log('📨 Mensagem recebida do WebSocket:', data)
-
       if (data.evento === 'codigo') {
         callbacks.onCodigo?.(data.data)
       }

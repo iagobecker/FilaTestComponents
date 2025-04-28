@@ -36,8 +36,19 @@ export function FilaTable({ data, }: FilaTableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const [editingClient, setEditingClient] = useState<FilaItem | null>(null);
-  const { editPerson } = useFilaContext();
+  const { filaData, chamadasData, editPerson } = useFilaContext();
 
+  const allClientes = useMemo(() => [...filaData, ...chamadasData], [filaData, chamadasData]);
+
+  const openEditClient = (id: string) => {
+    // Busca o objeto completo
+    const clientFull = allClientes.find(c => c.id === id);
+    if (clientFull) {
+      setEditingClient(clientFull);
+    } else {
+      console.warn("Cliente não encontrado no contexto!", id);
+    }
+  };
 
 
   // Filtrar os dados com base no termo de busca
@@ -75,7 +86,6 @@ export function FilaTable({ data, }: FilaTableProps) {
     chamarSelecionados,
     removerSelecionados,
     trocarPosicaoCliente,
-    setFilaData,
     getStatusText,
     getStatusColor
   } = useFilaContext();
@@ -103,7 +113,7 @@ export function FilaTable({ data, }: FilaTableProps) {
             </span>
             <span
               className="font-semibold text-[16px] cursor-pointer hover:text-blue-600 transition-colors whitespace-nowrap truncate flex-1"
-              onClick={() => setEditingClient(row.original)}
+              onClick={() => openEditClient(row.original.id)}
             >
               {row.original.nome}
             </span>
@@ -113,7 +123,7 @@ export function FilaTable({ data, }: FilaTableProps) {
             variant="ghost"
             size="icon"
             className="size-5 text-gray-500 hover:text-blue-600 cursor-pointer flex-shrink-0 ml-2"
-            onClick={() => setEditingClient(row.original)}
+            onClick={() => openEditClient(row.original.id)}
           >
             <PencilLine className="size-4" />
           </Button>
@@ -265,18 +275,18 @@ export function FilaTable({ data, }: FilaTableProps) {
         <div className=" min-w-[100px] flex flex-col">
           <div className="flex items-center gap-2">
             <span
-              className="font-semibold text-[16px] cursor-pointer hover:text-blue-600 transition-colors"
-              onClick={() => setEditingClient(row.original)}
+              className="font-semibold text-[16px] cursor-pointer hover:text-blue-600 transition-colors whitespace-nowrap truncate flex-1"
+              onClick={() => openEditClient(row.original.id)}
             >
-              {row.getValue("nome")}
+              {row.original.nome}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-5 w-5 text-gray-500 hover:text-blue-600 cursor-pointer"
-              onClick={() => setEditingClient(row.original)}
+              className="size-5 text-gray-500 hover:text-blue-600 cursor-pointer flex-shrink-0 ml-2"
+              onClick={() => openEditClient(row.original.id)}
             >
-              <PencilLine className="h-4 w-4 " />
+              <PencilLine className="size-4" />
             </Button>
           </div>
           <a
@@ -539,7 +549,7 @@ export function FilaTable({ data, }: FilaTableProps) {
       )}
 
       {/* Dialog de Edição */}
-      {editingClient && (
+      {editingClient && editingClient.filaId && editingClient.hash && (
         <Dialog
           open={!!editingClient}
           onOpenChange={(open) => !open && setEditingClient(null)}
@@ -554,9 +564,13 @@ export function FilaTable({ data, }: FilaTableProps) {
               onSave={async (updatedFields) => {
                 const payload = {
                   ...editingClient,     // todos os campos antigos
-                  ...updatedFields      // sobrescreve só os campos editados
+                  ...updatedFields,      // sobrescreve só os campos editados
+                  dataHoraAleterado: new Date().toISOString(),
                 };
-                await editPerson(payload);
+
+
+
+                await editPerson(editingClient, updatedFields);
                 setEditingClient(null);
                 setNotification("Cliente atualizado com sucesso!");
                 setTimeout(() => setNotification(null), 3000);

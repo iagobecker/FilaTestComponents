@@ -27,6 +27,7 @@ function FilaContent() {
       <TableStatusRecentes data={chamadasData.map((item) => ({
         ...item,
         status: Number(item.status),
+        dataHoraCriado: item.dataHoraCriado ?? "", 
       }))} />
     </>
   );

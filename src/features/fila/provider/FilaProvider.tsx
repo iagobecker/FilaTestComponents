@@ -10,7 +10,7 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import { ChamadaItem, ClienteAtualizado, FilaItem, FilaItemExt, StatusType } from "@/features/fila/types";
+import { ChamadaItem, ClienteAtualizado, ClienteDTO, EditaCampos, FilaItem, FilaItemExt, StatusType } from "@/features/fila/types";
 import { buscarClientesFila } from "../services/FilaService";
 import { Api, setAuthorizationHeader } from "@/api/api";
 import { parseCookies } from "nookies";// Utilitário para ler cookies
@@ -31,13 +31,15 @@ interface FilaContextType {
   removerSelecionados: (selectedIds: string[]) => Promise<void>;
   trocarPosicaoCliente: (id: string, direction: "up" | "down") => Promise<void>;
   addPerson: (nome: string, telefone: string, observacao: string) => void;
-  editPerson: (clienteCompleto: FilaItem) => void;
+  editPerson: (clienteCompleto: FilaItem, camposEditados: EditaCampos) => void;
   retornarParaFila: (id: string) => void;
   removerChamada: (id: string) => void;
   marcarComoAtendido: (id: string) => void;
   marcarComoNaoCompareceu: (id: string) => void;
   getStatusText: (status: StatusType) => string;
   getStatusColor: (status: StatusType) => string;
+  calcularTempo: (dataHoraCriado?: string) => string;
+  editPayload: (orig: FilaItem, edicao: EditaCampos) => FilaItem;
 }
 
 // Cria o contexto com um valor padrão indefinido
@@ -98,7 +100,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
       }
     } // percorre todos os clientes e adiciona ao mapa se o status for maior que 1
     return Array.from(mapa.values()) as ChamadaItem[];
-  }, [allClients]); 
+  }, [allClients]);
 
 
   useEffect(() => {
@@ -125,6 +127,8 @@ export function FilaProvider({ children }: { children: ReactNode }) {
         const renderAguardando = ordenados.map(item => ({
           ...item,
           id: item.id || crypto.randomUUID(), // Gera um ID único se não houver
+          filaId: item.filaId ?? "",
+          hash: item.hash ?? "",
           status: (typeof item.status === "string" ? parseInt(item.status) : item.status) as StatusType || 1,
           tempo: item.tempo || "há 0 minutos",
           ticket: item.ticket || null,
@@ -135,6 +139,8 @@ export function FilaProvider({ children }: { children: ReactNode }) {
         const renderChamados = chamados.map(item => ({
           ...item,
           id: item.id || crypto.randomUUID(),
+          filaId: item.filaId ?? "",
+          hash: item.hash ?? "",
           status: (typeof item.status === "string" ? parseInt(item.status) : item.status) as StatusType || 1,
           tempo: item.tempo || "há 0 minutos",
           ticket: item.ticket || null,
@@ -154,7 +160,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   const updateClientStatus = (id: string, status: StatusType) => {
     setAllClients(prev =>
       prev.map(client => client.id === id ? { ...client, status } : client)  // usa o spread operator para copiar todos os dados do cliente e substitui apenas o campo status pelo novo status informado
-    ); 
+    );
   };
 
   const marcarComoAtendido = async (id: string) => {
@@ -274,12 +280,12 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     const fila = allClients // lista todos os clientes do context
       .filter(c => c.status === 1) // filtra os clientes com status 1 (aguardando)
       .sort((a, b) => (a.posicao! - b.posicao!)); // Ordena pelo campo posicao, o ! é para garantir que não seja undefined
-  
+
     const index = fila.findIndex(c => c.id === id); // Encontra o índice do cliente na fila
     if (index === -1) return; // Se não encontrar, não faz nada
-  
+
     let novaPosicao = fila[index].posicao!; // inicializa a nova posição com a posição atual do cliente
-  
+
     if (direction === "up" && index > 0) { // Se a direção for "up" e não estiver no topo
       novaPosicao = fila[index].posicao! - 1; // Decrementa a posição (subindo na fila)
     } else if (direction === "down" && index < fila.length - 1) { // Se a direção for "down" e não estiver no final
@@ -288,13 +294,13 @@ export function FilaProvider({ children }: { children: ReactNode }) {
       // Está no topo ou base, não faz nada
       return;
     }
-  
+
     try {
       const res = await Api.post("/empresas/filas/trocar-posicao-cliente", { // Chama a API para trocar a posição
         id,
         novaPosicao,
       }); // Envia o id e a nova posição para a API
-  
+
       // Atualize seu estado local com o retorno da API
       const clientesAPI = res.data; // Resposta da API com os clientes atualizados
       setAllClients(prev => { // Atualiza o estado local
@@ -307,13 +313,13 @@ export function FilaProvider({ children }: { children: ReactNode }) {
           }));
         return [...aguardando, ...chamados]; // Retorna a nova lista de clientes, com os aguardando atualizados e os chamados inalterados
       });
-  
+
       toast.success("Posição alterada com sucesso!");
     } catch (err) {
       toast.error("Erro ao mover cliente");
     }
   };
-  
+
 
   const addPerson = async (nome: string, telefone: string, observacao: string) => {
     try {
@@ -337,20 +343,44 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const editPerson = async (clienteCompleto: FilaItem) => {
-    try {      
-       await Api.put("/empresas/filas/clientes", clienteCompleto);
+  const editPerson = async (clienteCompleto: FilaItem, camposEditados: EditaCampos) => {
+    const payload = editPayload(clienteCompleto, camposEditados);
 
-      const filaAtualizada = await buscarClientesFila(); // Busca a fila atualizada do backend
-      setAllClients(prev => [ // Atualiza o estado com os clientes da fila
-        ...filaAtualizada.map(c => padraoCliente(c)), // Padroniza os clientes
-        ...prev.filter(c => c.status !== 1) // Mantém os clientes que não estão aguardando
+    // Valide ANTES de enviar!
+    if (!payload.filaId || !payload.hash) {
+      console.error("Payload inválido: filaId e hash são obrigatórios.", payload);
+      return;
+    }
+
+    try {
+      await Api.put("/empresas/filas/clientes", payload);
+
+      const filaAtualizada = await buscarClientesFila();
+      setAllClients(prev => [
+        ...filaAtualizada.map(c => padraoCliente(c)),
+        ...prev.filter(c => c.status !== 1)
       ]);
     } catch (error) {
       console.error("Erro ao editar cliente:", error);
     }
   };
 
+  const editPayload = (orig: FilaItem, edicao: EditaCampos): FilaItem => {
+    return {
+      ...orig,
+      ...edicao,
+      dataHoraAlterado: new Date().toISOString(),
+      filaId: orig.filaId ?? "",
+      hash: orig.hash ?? "",
+      ticket: orig.ticket ?? null,
+      posicao: orig.posicao !== undefined ? orig.posicao : 0,
+      dataHoraCriado: orig.dataHoraCriado ?? new Date().toISOString(),
+      dataHoraOrdenacao: orig.dataHoraOrdenacao ?? orig.dataHoraCriado ?? new Date().toISOString(),
+      dataHoraChamada: orig.dataHoraChamada ?? null,
+      dataHoraDeletado: orig.dataHoraDeletado ?? null,
+      dataHoraEntrada: orig.dataHoraEntrada ?? null,
+    }
+  }
 
   const setFilaData: Dispatch<SetStateAction<FilaItemExt[]>> = updater => { // Atualiza a fila de clientes
     setAllClients(prev => { // Atualiza o estado com os clientes da fila
@@ -376,6 +406,16 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const calcularTempo = (dataHoraCriado?: string): string => {
+    if (!dataHoraCriado) return "";
+    const criado = typeof dataHoraCriado === "string" ? parseISO(dataHoraCriado) : dataHoraCriado;
+    const minutos = differenceInMinutes(new Date(), criado);
+    if (minutos < 1) return "Agora";
+    if (minutos < 60) return `há ${minutos} minutos`;
+    const horas = Math.floor(minutos / 60);
+    return `há ${horas}h${(minutos % 60).toString().padStart(2, "0")}`;
+  }
+
   // Obj do Contexto com todos os dados e funções que serão compartilhados
   const contextValue: FilaContextType = {
     contagemSelecionada,
@@ -395,6 +435,8 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     getStatusText,
     getStatusColor,
     trocarPosicaoCliente,
+    calcularTempo,
+    editPayload,
   };
 
   return (

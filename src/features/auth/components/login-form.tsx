@@ -63,7 +63,6 @@ export function LoginForm({
           const token = localStorage.getItem('token');
           if (token) {
             const decoded = jwtDecode<DecodedToken>(token);
-            console.log("🎯 Decoded JWT:", decoded);
           } else {
             console.error("Token not found");
           }
