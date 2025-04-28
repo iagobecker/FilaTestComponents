@@ -14,6 +14,7 @@ import { atualizarConfiguracao, criarConfiguracao } from "@/features/configuraco
 
 export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) => void }) {
     const [name, setName] = useState("");
+    const [endereco, setEndereco] = useState<string>("");
     const [logo, setLogo] = useState<File | null>(null);
     const [logoUrl, setLogoUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -153,6 +154,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
     useEffect(() => {
         if (config && firstLoad.current) {
             setName(config.nomeDisplay || "");
+            setEndereco(config.enderecoDisplay || "");
             setPrimaryColor(config.corPrimaria || DEFAULT_PRIMARY);
             setOverlayColor(config.corSobreposicao || DEFAULT_OVERLAY);
             setFontColor(config.corTexto || DEFAULT_FONT)
@@ -211,11 +213,18 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                             alt="Preview da logo"
                                             className="w-24 h-24 object-contain rounded-md border border-gray-300"
                                         />
+                                    ) : logoUrl ? (
+                                        <img
+                                            src={logoUrl}
+                                            alt="Logo atual"
+                                            className="w-24 h-24 object-contain rounded-md border border-gray-300"
+                                        />
                                     ) : (
                                         <div className="w-24 h-24 rounded-md bg-gray-100 border border-gray-300 flex items-center justify-center">
                                             <Image className="w-12 h-12 text-gray-400" />
                                         </div>
                                     )}
+
                                 </div>
                             </div>
 
@@ -228,6 +237,17 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="Nome da empresa"
                                     required
+                                    className="w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
+                                />
+                            </div>
+                            {/* Campo Endereço */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1 ">Endereço</label>
+                                <input
+                                    type="text"
+                                    value={endereco}
+                                    onChange={(e) => setEndereco(e.target.value)}
+                                    placeholder="Digite o endereço da empresa"
                                     className="w-full h-10 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm px-3"
                                 />
                             </div>
@@ -376,6 +396,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                                             fontColor={fontColor}
                                                             companyName={name || "Nome da empresa"}
                                                             companyLogo={logo ? URL.createObjectURL(logo) : logoUrl}
+                                                            companyAddress={endereco}
                                                             showOnly="monitor"
                                                         />
                                                     </div>
@@ -387,6 +408,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                                             fontColor={fontColor}
                                                             companyName={name || "Nome da empresa"}
                                                             companyLogo={logo ? URL.createObjectURL(logo) : logoUrl}
+                                                            companyAddress={endereco}
                                                             showOnly="app"
                                                         />
                                                     </div>
@@ -432,6 +454,7 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                 const payload = {
                                     ...config,
                                     nomeDisplay: name,
+                                    enderecoDisplay: endereco,
                                     corPrimaria: primaryColor,
                                     corSobreposicao: overlayColor,
                                     logoUrl: logoUrl,
@@ -473,7 +496,8 @@ export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) =>
                                 overlayColor={overlayColor}
                                 fontColor={fontColor}
                                 companyName={name || "Nome da empresa"}
-                                companyLogo={logo ? URL.createObjectURL(logo) : null}
+                                companyLogo={logo ? URL.createObjectURL(logo) : logoUrl}
+                                companyAddress={endereco}
                             />
                         </div>
                     </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/configuracoes";
 import { toast } from "sonner";
+import { ConfiguracaoType } from "@/features/configuracoes/types";
 
 // Função para transformar {nome} → <span data-variable="nome" />
 function convertVariablesToHtml(html: string): string {
@@ -42,20 +43,22 @@ function renderWithVariables(html: string, map: Record<string, string>): string 
 }
 
 export async function uploadLogo(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
+//   const formData = new FormData();
+//   formData.append("file", file);
 
-  // Altere "/api/upload" pelo seu endpoint real de upload!
-  const res = await fetch("/api/upload", { method: "POST", body: formData });
-  if (!res.ok) throw new Error("Erro no upload");
-  const data = await res.json();
-  return data.url; // backend deve retornar: { url: "https://..." }
+//   // Altere "/api/upload" pelo seu endpoint real de upload!
+//   const res = await fetch("/api/upload", { method: "POST", body: formData });
+//   if (!res.ok) throw new Error("Erro no upload");
+//   const data = await res.json();
+//   return data.url; // backend deve retornar: { url: "https://..." }
+// }
+
+return "https://img.freepik.com/vetores-premium/luxury-lcn-logo-design-elegante-letra-lcn-monograma-logo-minimalista-poligono-lcn-modelo-de-design-de-logotipo_1101554-79886.jpg?semt=ais_hybrid&w=740"
+
 }
-
-
 export function useConfigPreview(empresaId: string) {
   const [loading, setLoading] = useState(true);
-  const [config, setConfig] = useState<any>(null);
+  const [config, setConfig] = useState<ConfiguracaoType | null>(null);
   const [previews, setPreviews] = useState<string[]>(["", "", ""]);
   const [initialLoad, setInitialLoad] = useState(true);
 

@@ -7,6 +7,7 @@ interface CardMonitorProps {
   overlayColor: string;
   fontColor: string;
   companyName?: string;
+  companyAddress?: string;
   companyLogo?: string | null;
   showOnly?: "monitor" | "app";
 }
@@ -17,6 +18,7 @@ export default function CardMonitor({
   fontColor,
   companyName = "Nome da Empresa",
   companyLogo,
+  companyAddress = "Endereço da Empresa",
   showOnly
 }: CardMonitorProps) {
 
@@ -162,7 +164,10 @@ export default function CardMonitor({
                 <h1 className="text-md font-bold text-black">{companyName}</h1>
                 <div className="flex items-center">
                   <MapPin className="w-2.5 h-2.5 text-black opacity-80 mr-1" />
-                  <p className="text-[10px] text-black opacity-80">Av. Gastronômica, 123 - Centro</p>
+                  <p className="text-[10px] text-black opacity-80">
+                    {companyAddress || "Endereço da empresa"}
+                  </p>
+
                 </div>
               </div>
 
