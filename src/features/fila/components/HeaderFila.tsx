@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SectionTitle } from "../../../../components/ui/section-title";
+import { SectionTitle } from "../../../components/ui/section-title";
 import { CustomDialog } from "@/components/shared/CustomDialog";
 import { AddPersonForm } from "@/features/fila/components/form/AddPersonForm";
 
@@ -22,7 +22,7 @@ export function HeaderFila({
       </div>
 
       <div className="p-3 flex flex-col sm:flex-row sm:justify-end items-stretch sm:items-center gap-3 sm:gap-8 w-full">
-       
+
         {/* Botão Adicionar Pessoa */}
         <CustomDialog
           title="Adicionar pessoa na fila"
@@ -41,7 +41,7 @@ export function HeaderFila({
           <AddPersonForm addPerson={addPerson} onClose={() => setIsOpenAddPessoa(false)} />
         </CustomDialog>
 
-        
+
       </div>
     </>
   );
