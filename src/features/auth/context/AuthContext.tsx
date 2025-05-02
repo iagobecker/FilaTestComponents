@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { createContext, useEffect, useState } from 'react';
-import { setCookie, parseCookies, destroyCookie } from 'nookies';
-import { Api, initializeToken } from '@/api/api';
-import React from 'react';
-import axios from 'axios';
-import { useRouter } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode';
-
-
+import { createContext, useEffect, useState } from "react";
+import { setCookie, parseCookies, destroyCookie } from "nookies";
+import { Api, PublicApi, initializeToken } from "@/api/api";
+import React from "react";
+import axios from "axios";
+import { useRouter, usePathname } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import { fetchEmpresa } from "../components/services/empresaService";
 
 type User = {
   id: string;
   name: string;
   email: string;
+  empresaId: string;
   signOut: () => void;
 };
 
@@ -22,89 +22,99 @@ type DecodedToken = {
   name?: string;
   email?: string;
   [key: string]: any;
-}
-
+};
 
 type AuthContextType = {
   isAuthenticated: boolean;
   user: User | null;
-  signIn: (data: { email: string; senha: string }) => Promise<void>;
+  email: string;
+  setEmail: (email: string) => void;
   sendVerificationCode: (email: string) => Promise<void>;
+  verifyCode: (email: string, code: string) => Promise<void>;
   loading: boolean;
-  authStep: 'email' | 'senha' | 'authenticated';
-  setAuthStep: (step: 'email' | 'senha' | 'authenticated') => void;
+  authStep: "email" | "senha" | "authenticated";
+  setAuthStep: (step: "email" | "senha" | "authenticated") => void;
   signOut: () => void;
 };
 
-export const AuthContext = createContext({} as AuthContextType);
+export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [authStep, setAuthStep] = useState<'email' | 'senha' | 'authenticated'>('email');
+  const [email, setEmail] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [authStep, setAuthStep] = useState<"email" | "senha" | "authenticated">("email");
   const router = useRouter();
+  const pathname = usePathname();
   const isAuthenticated = !!user;
-
 
   useEffect(() => {
     async function loadUserFromCookies() {
-      if (typeof window === "undefined") return; // 👈 impede execução no SSR
-  
-      const { 'auth.token': token } = parseCookies();
-  
+      if (typeof window === "undefined") return;
+
+      const { "auth.token": token } = parseCookies();
+
       if (token) {
+        console.log("Token encontrado nos cookies:", token);
         initializeToken(token);
-  
         try {
           Api.setAuthorizationHeader(token);
           const decoded = jwtDecode<DecodedToken>(token);
           const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
           const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
           const name = decoded["name"] || "Administrador";
-  
-          if (!id || !decodedEmail) return;
-  
+
+          if (!id) return;
+
+          const empresa = await fetchEmpresa();
+          const empresaId = empresa.id;
+
           setUser({
             id,
             name,
-            email: decodedEmail,
+            email: decodedEmail || "",
+            empresaId,
             signOut,
           });
-  
           setAuthStep("authenticated");
-        } catch (error: any) {
-          if (axios.isAxiosError(error) && error.response?.status === 401) {
-            signOut();
+
+          // Redireciona para /fila apenas se estiver na página de login
+          if (pathname === "/login") {
+            console.log("Redirecionando para /fila após login");
+            router.push("/fila?fromLogin=true");
           }
+        } catch (error) {
+          console.error("Erro ao carregar usuário dos cookies:", error);
+          signOut();
         }
       }
-  
       setLoading(false);
     }
-  
+
     loadUserFromCookies();
-  }, []);
-  
-
-
+  }, [pathname]);
 
   async function sendVerificationCode(email: string) {
     try {
       setLoading(true);
-      const response = await axios.post('http://10.0.0.191:5135/api/empresas/autenticacao/login', {
-        email,
-      });
+      const response = await PublicApi.post("/autenticacao/gerar-codigo-acesso", { email });
+      console.log("Resposta de gerar-codigo-acesso:", response.data);
 
       if (response.status !== 200) {
-        throw new Error('Falha ao enviar código');
+        throw new Error("Falha ao enviar código");
       }
 
-      setAuthStep('senha');
+      setEmail(email);
+      setAuthStep("senha");
     } catch (error) {
-      let errorMessage = 'Erro ao enviar código';
+      let errorMessage = "Erro ao enviar código";
 
       if (axios.isAxiosError(error)) {
-        errorMessage = error.response?.data?.message || error.message || 'Erro desconhecido na requisição';
+        errorMessage = error.response?.data?.message || error.message || "Erro desconhecido na requisição";
+        if (error.response?.status === 404 && errorMessage.includes("E-mail não registrado")) {
+          router.push("/inscrevase");
+          return;
+        }
       }
 
       throw new Error(errorMessage);
@@ -113,16 +123,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function signIn({ email, senha }: { email: string; senha: string }) {
+  async function verifyCode(email: string, code: string) {
     try {
       setLoading(true);
+      console.log("Enviando requisição para /autenticacao/login com email:", email, "e código:", code);
+      const response = await Api.post("/autenticacao/login", { email, codigo: code });
+      console.log("Resposta da API /autenticacao/login:", response.data);
 
-      const response = await Api.post('/empresas/autenticacao/login', { email, senha });
-      const { accessToken } = response.data;
+      const { accessToken, refreshToken } = response.data;
 
-      setCookie(undefined, 'auth.token', accessToken, {
+      console.log("Salvando cookies...");
+      setCookie(undefined, "auth.token", accessToken, {
         maxAge: 60 * 60 * 24 * 7,
-        path: '/',
+        path: "/",
+      });
+
+      setCookie(undefined, "auth.refreshToken", refreshToken, {
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
       });
 
       Api.setAuthorizationHeader(accessToken);
@@ -130,26 +148,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const decoded = jwtDecode<DecodedToken>(accessToken);
       const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
       const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
-
       const name = decoded["name"] || "Administrador";
 
-      if (id && decodedEmail) {
-        setUser({
-          id,
-          name,
-          email: decodedEmail,
-          signOut,
-        });
-        setAuthStep('authenticated');
+      console.log("Token decodificado:", { id, decodedEmail, name });
+
+      if (id) {
+        try {
+          console.log("Buscando empresa...");
+          const empresa = await fetchEmpresa();
+          console.log("Empresa retornada:", empresa);
+          if (!empresa || !empresa.id) {
+            throw new Error("Empresa não encontrada");
+          }
+          const empresaId = empresa.id;
+
+          setUser({
+            id,
+            name,
+            email: decodedEmail || email,
+            empresaId,
+            signOut,
+          });
+          setAuthStep("authenticated");
+          console.log("Usuário definido e authStep atualizado para authenticated");
+        } catch (error) {
+          console.error("Erro ao buscar empresa:", error);
+          setUser({
+            id,
+            name,
+            email: decodedEmail || email,
+            empresaId: "",
+            signOut,
+          });
+          setAuthStep("authenticated");
+        }
       } else {
-        console.warn("Token válido, mas não contém id ou email.");
+        console.log("ID não encontrado no token decodificado");
+        throw new Error("Token inválido: ID não encontrado");
       }
-      router.push('/fila');
+
+      console.log("Redirecionando para /fila...");
+      router.push("/fila?fromLogin=true");
+      console.log("Redirecionamento chamado");
     } catch (error: any) {
-      let message = 'Erro ao fazer login';
+      console.error("Erro ao verificar código:", error);
+      let message = "Erro ao verificar código";
 
       if (axios.isAxiosError(error)) {
-        message = error.response?.data?.message || 'Credenciais inválidas';
+        message = error.response?.data?.message || "Código inválido";
       }
 
       throw new Error(message);
@@ -159,11 +205,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   function signOut() {
-    destroyCookie(undefined, 'auth.token', { path: '/' });
+    destroyCookie(undefined, "auth.token", { path: "/" });
+    destroyCookie(undefined, "auth.refreshToken", { path: "/" });
     Api.removeAuthorizationHeader();
     setUser(null);
-    setAuthStep('email');
-    router.push('/login');
+    setEmail("");
+    setAuthStep("email");
+    router.push("/login");
   }
 
   return (
@@ -171,8 +219,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isAuthenticated,
-        signIn,
+        email,
+        setEmail,
         sendVerificationCode,
+        verifyCode,
         authStep,
         setAuthStep,
         signOut,
@@ -187,7 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export const useAuth = () => {
   const context = React.useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
   }
   return context;
 };

@@ -47,7 +47,7 @@ export default function InputVinculacao({ empresa }: Props) {
 
             const now = new Date().toISOString()
 
-            await Api.post('/empresas/vincular-monitor', {
+            await Api.post('/vinculacoes', {
                 id: uuidv4(),
                 dataHoraCriado: now,
                 dataHoraAlterado: now,

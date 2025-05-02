@@ -1,25 +1,46 @@
-'use client';
-
 import { Api } from "@/api/api";
-import { FilaItem, FilaResponse, StatusType, ClienteAtualizado, EditaCampos } from "@/features/fila/components/types/types";
+import { FilaItem, FilaResponse, ClienteAtualizado, EditaCampos } from "@/features/fila/components/types/types";
 import { padraoCliente } from "@/lib/utils/padraoCliente";
 import { toast } from "sonner";
 import { parseISO } from "date-fns/parseISO";
 import { differenceInMinutes } from "date-fns/differenceInMinutes";
-import React, { Dispatch, SetStateAction } from "react"; // Adicionada a importação de React com Dispatch e SetStateAction
+import { useAuth } from "@/features/auth/context/AuthContext";
+import { fetchEmpresa, Fila } from "@/features/auth/components/services/empresaService";
 
-export async function buscarClientesFila(): Promise<FilaItem[]> {
-  const response = await Api.get("/empresas/filas/b36f453e-a763-4ee1-ae2d-6660c2740de5/pegar-dados-fila");
-  const filas: FilaResponse = response.data;
-  return filas.clientes.map(padraoCliente);
+export interface Empresa {
+  id: string;
+  filas: Fila[];
+}
+
+export async function getDefaultFilaId(empresaId: string): Promise<string> {
+  if (!empresaId) {
+    throw new Error("Nenhum empresaId encontrado.");
+  }
+  const empresa = await fetchEmpresa();
+  if (!empresa.filas || empresa.filas.length === 0) {
+    throw new Error("Nenhuma fila associada à empresa.");
+  }
+  return empresa.filas[0].id;
+}
+
+export async function buscarClientesFila(filaId: string): Promise<FilaItem[]> {
+  try {
+    const response = await Api.get(`/filas/${filaId}`);
+    const filas: FilaResponse = response.data;
+    return filas.clientes.map(padraoCliente);
+  } catch (error: any) {
+    toast.error(error?.response?.data?.message || "Erro ao buscar clientes da fila.");
+    throw error;
+  }
 }
 
 export const trocarPosicaoCliente = async (
   id: string,
   direction: "up" | "down",
-  setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void
+  setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void,
+  filaId: string
 ): Promise<void> => {
-  const fila = await buscarClientesFila()
+  const fila = await buscarClientesFila(filaId)
     .then(fila =>
       fila
         .filter(c => c.status === 1)
@@ -40,7 +61,7 @@ export const trocarPosicaoCliente = async (
   }
 
   try {
-    const res = await Api.post("/empresas/filas/trocar-posicao-cliente", {
+    const res = await Api.post("/clientes/trocar-posicao", {
       id,
       novaPosicao,
     });
@@ -61,6 +82,7 @@ export const trocarPosicaoCliente = async (
     toast.success("Posição alterada com sucesso!");
   } catch (err) {
     toast.error("Erro ao mover cliente");
+    throw err;
   }
 };
 
@@ -69,7 +91,7 @@ export const marcarComoAtendido = async (
   setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void
 ): Promise<void> => {
   try {
-    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+    await Api.post("/clientes/atualizar-status", {
       ids: [id],
       acao: 3, // AtenderClientes
     });
@@ -81,6 +103,7 @@ export const marcarComoAtendido = async (
     toast.success("Cliente marcado como atendido!");
   } catch (error: any) {
     toast.error(error?.response?.data?.message || "Erro ao marcar como atendido");
+    throw error;
   }
 };
 
@@ -89,7 +112,7 @@ export const marcarComoNaoCompareceu = async (
   setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void
 ): Promise<void> => {
   try {
-    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+    await Api.post("/clientes/atualizar-status", {
       ids: [id],
       acao: 5, // DesistirClientes
     });
@@ -101,16 +124,17 @@ export const marcarComoNaoCompareceu = async (
     toast.success("Cliente marcado como não compareceu!");
   } catch (error: any) {
     toast.error(error?.response?.data?.message || "Erro ao marcar como não compareceu");
+    throw error;
   }
 };
 
 export const removerChamada = async (
   id: string,
   setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void,
-  setChamadasData: Dispatch<SetStateAction<FilaItem[]>> // Corrigido o tipo com Dispatch de React
+  setChamadasData: React.Dispatch<React.SetStateAction<FilaItem[]>>
 ): Promise<void> => {
   try {
-    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+    await Api.post("/clientes/atualizar-status", {
       ids: [id],
       acao: 4, // RemoverClientes (soft delete)
     });
@@ -121,9 +145,9 @@ export const removerChamada = async (
     toast.success("Cliente removido com sucesso!");
   } catch (error: any) {
     toast.error(
-      error?.response?.data?.message ||
-      "Não foi possível remover o cliente"
+      error?.response?.data?.message || "Não foi possível remover o cliente"
     );
+    throw error;
   }
 };
 
@@ -132,7 +156,7 @@ export const retornarParaFila = async (
   setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void
 ): Promise<void> => {
   try {
-    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+    await Api.post("/clientes/atualizar-status", {
       ids: [id],
       acao: 6, // VoltarParaFilaClientes
     });
@@ -144,6 +168,7 @@ export const retornarParaFila = async (
     toast.success("Cliente retornou à fila!");
   } catch (error: any) {
     toast.error(error?.response?.data?.message || "Erro ao retornar cliente para a fila");
+    throw error;
   }
 };
 
@@ -154,7 +179,7 @@ export const chamarSelecionados = async (
 ): Promise<void> => {
   try {
     const response = await Api.post(
-      "/empresas/filas/clientes/atualizar-clientes",
+      "/clientes/atualizar-status",
       { ids, acao: 2 }
     );
     const clientesAtualizados = response.data?.clientesAtualizados ?? [];
@@ -181,6 +206,7 @@ export const chamarSelecionados = async (
     toast.success("Clientes chamados com sucesso!");
   } catch (error: any) {
     toast.error(error?.response?.data?.message || "Erro ao chamar clientes");
+    throw error;
   }
 };
 
@@ -200,7 +226,7 @@ export const removerSelecionados = async (
   }
 
   try {
-    await Api.post("/empresas/filas/clientes/atualizar-clientes", {
+    await Api.post("/clientes/atualizar-status", {
       ids: clientesValidos.map((c) => c.id),
       acao: 4, // RemoverClientes
     });
@@ -217,6 +243,7 @@ export const removerSelecionados = async (
     toast.success(`${clientesValidos.length} cliente(s) removido(s)`);
   } catch (error: any) {
     toast.error(error?.response?.data?.message || "Erro ao remover clientes");
+    throw error;
   }
 };
 
@@ -224,19 +251,20 @@ export const addPerson = async (
   nome: string,
   telefone: string,
   observacao: string,
-  setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void
+  setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void,
+  filaId: string
 ): Promise<void> => {
   try {
     const payload = {
       nome,
       telefone,
       observacao,
-      filaId: "b36f453e-a763-4ee1-ae2d-6660c2740de5",
+      filaId,
     };
+   
+    await Api.post("/clientes", payload);
 
-    await Api.post("/empresas/filas/clientes/adicionar-cliente", payload);
-
-    const filaAtualizada = await buscarClientesFila();
+    const filaAtualizada = await buscarClientesFila(filaId);
     setAllClients(prev => [
       ...filaAtualizada.map(c => padraoCliente(c)),
       ...prev.filter(c => c.status !== 1)
@@ -245,19 +273,21 @@ export const addPerson = async (
     toast.success("Cliente adicionado com sucesso!");
   } catch (error: any) {
     toast.error(error?.response?.data?.message || "Erro ao adicionar cliente");
+    throw error;
   }
 };
 
 export const editPerson = async (
   clienteCompleto: FilaItem,
   camposEditados: EditaCampos,
-  setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void
+  setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void,
+  filaId: string
 ): Promise<void> => {
   const payload = {
     ...clienteCompleto,
     ...camposEditados,
     dataHoraAlterado: new Date().toISOString(),
-    filaId: clienteCompleto.filaId ?? "",
+    filaId: clienteCompleto.filaId ?? filaId,
     hash: clienteCompleto.hash ?? "",
     ticket: clienteCompleto.ticket ?? null,
     posicao: clienteCompleto.posicao !== undefined ? clienteCompleto.posicao : 0,
@@ -270,13 +300,13 @@ export const editPerson = async (
 
   if (!payload.filaId || !payload.hash) {
     console.error("Payload inválido: filaId e hash são obrigatórios.", payload);
-    return;
+    throw new Error("Payload inválido: filaId e hash são obrigatórios.");
   }
 
   try {
-    await Api.put("/empresas/filas/clientes", payload);
+    await Api.put("/clientes", payload);
 
-    const filaAtualizada = await buscarClientesFila();
+    const filaAtualizada = await buscarClientesFila(payload.filaId);
     setAllClients(prev => [
       ...filaAtualizada.map(c => padraoCliente(c)),
       ...prev.filter(c => c.status !== 1)
@@ -285,5 +315,6 @@ export const editPerson = async (
     toast.success("Cliente editado com sucesso!");
   } catch (error: any) {
     toast.error(error?.response?.data?.message || "Erro ao editar cliente");
+    throw error;
   }
 };

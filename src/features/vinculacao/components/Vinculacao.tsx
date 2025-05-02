@@ -38,7 +38,7 @@ export default function Vinculacao() {
   useEffect(() => {
     async function fetchEmpresa() {
       try {
-        const res = await Api.get('/empresas/pegar-dados-empresa')
+        const res = await Api.get('/empresas')
         setEmpresa(res.data)
       } catch (err) {
         console.error('Erro ao buscar empresa:', err)
@@ -79,7 +79,7 @@ export default function Vinculacao() {
 
       const now = new Date().toISOString()
 
-      await Api.post('http://10.0.0.191:5135/api/empresas/vincular-monitor', {
+      await Api.post('http://10.0.0.191:5135/api/vinculacoes', {
         id: uuidv4(),
         dataHoraCriado: now,
         dataHoraAlterado: now,

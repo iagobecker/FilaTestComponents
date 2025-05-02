@@ -1,67 +1,31 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-//import { jwtDecode } from 'jwt-decode'
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { parseCookies } from 'nookies';
 
-// Rotas públicas
-const publicRoutes = ['/login', '/redefinir-senha']
-
-// Exportação nomeada (pode ser esta ou a default)
 export function middleware(request: NextRequest) {
-//   const token = request.cookies.get('access-token')?.value
-//   const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl;
+  const cookies = parseCookies({ req: request });
+  const token = cookies['auth.token'];
 
-  // Verifica se a rota é pública
- // const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+  // Rotas públicas que não requerem autenticação
+  const publicRoutes = ['/login', '/inscrevase'];
 
-  // Permite acesso a rotas públicas
-  //if (isPublicRoute) {
-    // Se já autenticado, redireciona para dashboard
-    // if (token && pathname === '/login') {
-    //   return NextResponse.redirect(new URL('/', request.url))
-    // }
-    // return NextResponse.next()
+  // Verifica se o redirecionamento é vindo do login (ignora a validação do token nesse caso)
+  const fromLogin = searchParams.get('fromLogin') === 'true';
+
+  // Se a rota é pública, permite o acesso sem redirecionar, mesmo com token
+  if (publicRoutes.includes(pathname)) {
+    return NextResponse.next(); // Permite acesso à rota pública sem redirecionar
   }
 
-  // Redireciona para login se não autenticado
-//   if (!token) {
-//     return NextResponse.redirect(new URL('/login', request.url))
-//   }
-
-  // Verifica token válido
-  try {
-   // const decoded = jwtDecode(token)
-   // const isExpired = decoded.exp && decoded.exp < Date.now() / 1000
-
-    // if (isExpired) {
-    //   const response = NextResponse.redirect(new URL('/login', request.url))
-    //   response.cookies.delete('access-token')
-    //   return response
-    // }
-  } catch (error) {
-    const response = NextResponse.redirect(new URL('/login',))
-    response.cookies.delete('access-token')
-     
+  // Para rotas protegidas, verifica autenticação
+  if (!token && !publicRoutes.includes(pathname) && !fromLogin) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
-//   } catch (error) {
-//     const response = NextResponse.redirect(new URL('/login', request.url))
-//     response.cookies.delete('access-token')
-//     return response
-//   }
 
-//   return NextResponse.next()
-// }
-
-// Configuração de quais rotas acionam o middleware
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images - .svg, .png, .jpg, etc.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  return NextResponse.next();
 }
-  
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+};

@@ -33,7 +33,7 @@ export default function DadosEmpresaForm() {
   useEffect(() => {
     async function fetchEmpresa() {
       try {
-        const res = await Api.get('/empresas/pegar-dados-empresa');
+        const res = await Api.get('/empresas');
         const empresa = res.data;
 
         reset({

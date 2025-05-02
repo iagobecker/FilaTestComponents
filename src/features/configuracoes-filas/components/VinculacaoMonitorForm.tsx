@@ -12,7 +12,7 @@ export default function VinculacaoMonitorForm() {
     useEffect(() => {
         async function buscarEmpresa() {
             try {
-                const res = await Api.get('/empresas/pegar-dados-empresa')
+                const res = await Api.get('/empresas')
                 setEmpresa(res.data)
             } catch (err) {
                 console.error('Erro ao buscar empresa:', err)
