@@ -25,7 +25,7 @@ interface FilaContextType {
   setFilaData: Dispatch<SetStateAction<FilaItemExt[]>>;
   chamadasData: ChamadaItem[];
   setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>>;
-  setAllClients: Dispatch<SetStateAction<(FilaItemExt | ChamadaItem)[]>>; 
+  setAllClients: Dispatch<SetStateAction<(FilaItemExt | ChamadaItem)[]>>;
   chamarSelecionados: (ids: string[]) => Promise<void>;
   removerSelecionados: (selectedIds: string[]) => Promise<void>;
   trocarPosicaoCliente: (id: string, direction: "up" | "down") => Promise<void>;
@@ -39,6 +39,7 @@ interface FilaContextType {
   getStatusColor: (status: StatusType) => string;
   calcularTempo: (dataHoraCriado?: string) => string;
   editPayload: (orig: FilaItem, edicao: EditaCampos) => FilaItem;
+  isSignalRConnected: boolean;
 }
 
 // Cria o contexto com um valor padrão indefinido
@@ -71,13 +72,14 @@ export function FilaProvider({ children }: { children: ReactNode }) {
 
 
   const chamadasData = useMemo(() => {
-    const mapa = new Map(); // estrutura de dados que armazena pares chave-valor únicos
+    const mapa = new Map();
     for (const client of allClients) {
       if (client.status > 1) {
         mapa.set(client.id, client);
       }
-    } // percorre todos os clientes e adiciona ao mapa se o status for maior que 1
-    return Array.from(mapa.values()) as ChamadaItem[];
+    }
+    const filtered = Array.from(mapa.values()) as ChamadaItem[];
+    return filtered;
   }, [allClients]);
 
 
@@ -223,6 +225,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     getStatusColor,
     calcularTempo,
     editPayload,
+    isSignalRConnected,
   };
 
   return (

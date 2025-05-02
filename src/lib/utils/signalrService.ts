@@ -1,6 +1,6 @@
 import * as signalR from "@microsoft/signalr";
 
-const HUB_URL = "http://localhost:5135/empresahub"; // URL do backend SignalR
+const HUB_URL = "http://10.0.0.191:5135/empresahub"; // URL do backend SignalR
 
 let connection: signalR.HubConnection | null = null;
 
@@ -20,7 +20,6 @@ export const startConnection = async () => {
 
   try {
     await connection.start();
-    console.log("Conectado ao SignalR");
   } catch (err) {
     console.error("Erro ao conectar ao SignalR:", err);
   }
@@ -29,7 +28,6 @@ export const startConnection = async () => {
 export const stopConnection = async () => {
   if (connection) {
     await connection.stop();
-    console.log("Conexão SignalR encerrada");
   }
 };
 

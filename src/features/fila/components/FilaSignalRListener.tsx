@@ -10,7 +10,6 @@ export const FilaSignalRListener = ({ setIsSignalRConnected }: FilaSignalRListen
   const { setAllClients } = useFilaContext();
   const { "auth.token": token } = parseCookies();
 
-  console.log("Token sendo usado para SignalR:", token || "Nenhum token encontrado");
 
   try {
     // Usar o hook para escutar eventos do SignalR

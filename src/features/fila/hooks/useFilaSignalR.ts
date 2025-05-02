@@ -24,12 +24,10 @@ export const useFilaSignalR = (
 
     // Listener para o evento 'connected' (enviado pelo backend)
     connection.on("connected", (message: string) => {
-      console.log("Evento 'connected' recebido:", message || "Conexão confirmada pelo servidor");
     });
 
     // Listener para evento de atualização de cliente
     connection.on("ClienteAtualizado", (updatedClient: FilaItem) => {
-      console.log("Cliente atualizado via SignalR:", updatedClient);
       setAllClients(prev => {
         const clientIndex = prev.findIndex(c => c.id === updatedClient.id);
         const normalizedClient = padraoCliente(updatedClient);
@@ -47,41 +45,98 @@ export const useFilaSignalR = (
 
     // Listener para evento de cliente removido
     connection.on("ClienteRemovido", (clientId: string) => {
-      console.log("Cliente removido via SignalR:", clientId);
       setAllClients(prev => prev.filter(c => c.id !== clientId));
     });
 
     // Listener para evento de cliente adicionado
     connection.on("ClienteAdicionado", (newClient: FilaItem) => {
-      console.log("Cliente adicionado via SignalR:", newClient);
       setAllClients(prev => {
         const normalizedClient = padraoCliente(newClient);
         return [...prev, normalizedClient];
       });
     });
 
+    // Listener para evento de desistência de clientes
+    connection.on("DesistirClientes", (payload: any) => {
+
+      // Processar o payload
+      let parsedPayload: any;
+      if (typeof payload === "string") {
+        try {
+          parsedPayload = JSON.parse(payload);
+        } catch (error) {
+          console.error("❌ Falha ao parsear o payload JSON (DesistirClientes):", error, "Payload:", payload);
+          return;
+        }
+      } else {
+        parsedPayload = payload;
+      }
+
+      if (!parsedPayload || typeof parsedPayload !== "object") {
+        console.warn("Payload inválido: não é um objeto (DesistirClientes):", parsedPayload);
+        return;
+      }
+
+      const clientes = parsedPayload.clientes;
+      if (!Array.isArray(clientes)) {
+        console.warn("Payload inválido: clientes não é um array (DesistirClientes):", clientes);
+        return;
+      }
+
+      const clientesMapeados = clientes.map((cliente: any) => {
+        const normalizedClient = padraoCliente(cliente);
+        return normalizedClient;
+      });
+
+      // Verificar se há um cliente atualizado específico no payload
+      const clienteAtualizado = parsedPayload?.clientesAtualizados;
+      if (clienteAtualizado && typeof clienteAtualizado === "object") {
+        const clienteAtualizadoPadronizado = padraoCliente(clienteAtualizado);
+        clientesMapeados.push(clienteAtualizadoPadronizado);
+      }
+
+      // Atualizar o estado allClients
+      setAllClients(prev => {
+        // Remover duplicatas e atualizar clientes
+        const novosIds = new Set(clientesMapeados.map((c: FilaItem) => c.id));
+        const clientesPreservados = prev.filter(c => !novosIds.has(c.id));
+        const updatedClients = [...clientesPreservados, ...clientesMapeados];
+
+        // Remover duplicatas finais
+        const uniqueClientsMap = new Map<string, FilaItem>();
+        updatedClients.forEach(client => uniqueClientsMap.set(client.id, client));
+        const uniqueClients = Array.from(uniqueClientsMap.values());
+
+        // Verificar e logar o status dos clientes atualizados
+        uniqueClients.forEach(client => {
+          if (client.status === 4) {
+          }
+        });
+
+        return uniqueClients;
+      });
+    });
+
     // Monitorar reconexão e desconexão
     connection.onreconnecting(() => {
-      console.log("SignalR Reconnecting...");
       setIsSignalRConnected(false);
     });
 
     connection.onreconnected(() => {
-      console.log("SignalR Reconnected!");
       setIsSignalRConnected(true);
     });
 
     connection.onclose(() => {
-      console.log("SignalR Disconnected!");
       setIsSignalRConnected(false);
     });
 
     // Limpar a conexão ao desmontar o componente
     return () => {
-      connection.off("connected"); // Remove o listener
+      connection.off("connected");
       connection.off("ClienteAtualizado");
       connection.off("ClienteRemovido");
       connection.off("ClienteAdicionado");
+      connection.off("DesistirClientes");
       connection.off("onreconnecting");
       connection.off("onreconnected");
       connection.off("onclose");

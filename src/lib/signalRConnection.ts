@@ -3,11 +3,10 @@ import * as signalR from "@microsoft/signalr";
 
 class SignalRConnection {
   private connection: signalR.HubConnection | null = null;
-  private baseUrl = "http://localhost:5135";
+  private baseUrl = "http://10.0.0.191:5135";
 
   async connect(token: string) {
     if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
-      console.log("✅ Já conectado ao SignalR");
       return;
     }
 
@@ -21,9 +20,8 @@ class SignalRConnection {
 
     try {
       await this.connection.start();
-      console.log("✅ Conectado ao SignalR");
     } catch (error) {
-      console.error("❌ Erro ao conectar ao SignalR:", error);
+      console.error(" Erro ao conectar ao SignalR:", error);
     }
   }
 
@@ -31,9 +29,8 @@ class SignalRConnection {
     if (this.connection && (this.connection.state === signalR.HubConnectionState.Connected || this.connection.state === signalR.HubConnectionState.Connecting)) {
       try {
         await this.connection.stop();
-        console.log("🔌 Desconectado do SignalR");
       } catch (error) {
-        console.error("❌ Erro ao desconectar SignalR:", error);
+        console.error(" Erro ao desconectar SignalR:", error);
       }
     }
     this.connection = null;
