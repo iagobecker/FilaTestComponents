@@ -10,7 +10,7 @@ import { FilaContainer } from "@/features/fila/components/table/FilaContainer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/Modal";
-import { useFilaContext } from "@/features/fila/provider/FilaProvider";
+import { useFilaContext } from "@/features/fila/context/FilaProvider";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { EditClientForm } from "../form/EditClientForm";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import { FilaItem, Status } from "@/features/fila/types"
+import { FilaItem, Status } from "@/features/fila/components/types/types"
 
 type FilaTableProps = {
   data: FilaItem[];

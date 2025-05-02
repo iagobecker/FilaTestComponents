@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useFilaContext } from "@/features/fila/provider/FilaProvider";
+import { useFilaContext } from "@/features/fila/context/FilaProvider";
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { DialogTitle } from "@/components/ui/dialog";

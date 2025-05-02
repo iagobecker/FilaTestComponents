@@ -1,7 +1,7 @@
 "use client";
 
 import { Users, Search } from "lucide-react";
-import { FilaActions } from "../../services/FilaActions";
+import { FilaActions } from "../actions/FilaActions";
 import { useEffect, useState } from "react";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 

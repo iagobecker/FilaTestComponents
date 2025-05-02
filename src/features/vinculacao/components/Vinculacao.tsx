@@ -79,7 +79,7 @@ export default function Vinculacao() {
 
       const now = new Date().toISOString()
 
-      await Api.post('http://10.0.0.191:5135/api/empresas/vincular-monitor', {
+      await Api.post('http://localhost:5135/api/empresas/vincular-monitor', {
         id: uuidv4(),
         dataHoraCriado: now,
         dataHoraAlterado: now,

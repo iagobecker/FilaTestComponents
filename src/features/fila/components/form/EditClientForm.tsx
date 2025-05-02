@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { FilaItem } from "@/features/fila/types"
+import { FilaItem } from "@/features/fila/components/types/types"
 import { useState } from "react";
 
 type EditClientFormProps = {

@@ -1,11 +1,9 @@
 "use client";
 
 import { Header } from "@/components/layout/Header";
-import { HeaderFila } from "@/features/fila/components/table/HeaderFila";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { FilaProvider, useFilaContext } from "../../features/fila/provider/FilaProvider";
-import { FilaTable } from "../../features/fila/components/table/FilaTable";
-import { TableStatusRecentes } from "../../features/fila/components/table-recentes/TableStatusRecentes";
+import { FilaProvider } from "../../features/fila/context/FilaProvider";
+import { FilaContent } from "@/features/fila/components/FilaContent";
 
 export default function FilaPage() {
   return (
@@ -15,20 +13,5 @@ export default function FilaPage() {
         <FilaContent />
       </PageContainer>
     </FilaProvider>
-  );
-}
-
-function FilaContent() {
-  const { filaData, setFilaData, chamadasData, addPerson } = useFilaContext();
-  return (
-    <>
-      <HeaderFila addPerson={addPerson} />
-      <FilaTable data={filaData} setData={setFilaData} />
-      <TableStatusRecentes data={chamadasData.map((item) => ({
-        ...item,
-        status: Number(item.status),
-        dataHoraCriado: item.dataHoraCriado ?? "", 
-      }))} />
-    </>
   );
 }

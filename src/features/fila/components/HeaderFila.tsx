@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SectionTitle } from "../../../../components/ui/section-title";
+import { SectionTitle } from "../../../components/ui/section-title";
 import { CustomDialog } from "@/components/shared/CustomDialog";
 import { AddPersonForm } from "@/features/fila/components/form/AddPersonForm";
 

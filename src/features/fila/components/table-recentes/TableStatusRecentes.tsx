@@ -4,7 +4,7 @@ import { ColumnDef, flexRender, getCoreRowModel, useReactTable, Row } from "@tan
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Clock, RotateCcw, CircleArrowLeft } from "lucide-react";
-import { useFilaContext } from "@/features/fila/provider/FilaProvider";
+import { useFilaContext } from "@/features/fila/context/FilaProvider";
 import { ChamadasContainer } from "../../../../components/layout/ChamadasContainer";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";

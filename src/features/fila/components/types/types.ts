@@ -71,6 +71,8 @@ export type FilaItem = {
     observacao: string;
     status: number;
     filaId: string;
+    tempo: string;
+    posicao?: number;
     dataHoraCriado: string;
     dataHoraEntrada: string;
     dataHoraAlterado: string;
