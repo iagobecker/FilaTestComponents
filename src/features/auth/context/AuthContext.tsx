@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, useCallback } from "react";
 import { setCookie, parseCookies, destroyCookie } from "nookies";
-import { Api, PublicApi, initializeToken } from "@/api/api";
+import { Api } from "@/api/api";
+import { PublicApi, initializeToken } from "@/api/api";
 import React from "react";
 import axios from "axios";
 import { useRouter, usePathname } from "next/navigation";
@@ -21,7 +22,13 @@ type DecodedToken = {
   sub?: string;
   name?: string;
   email?: string;
+  exp?: number;
   [key: string]: any;
+};
+
+type TokenResponse = {
+  accessToken: string;
+  refreshToken: string;
 };
 
 type AuthContextType = {
@@ -35,6 +42,7 @@ type AuthContextType = {
   authStep: "email" | "senha" | "authenticated";
   setAuthStep: (step: "email" | "senha" | "authenticated") => void;
   signOut: () => void;
+  refreshToken: () => Promise<TokenResponse>;
 };
 
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -48,51 +56,132 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthenticated = !!user;
 
+  const checkTokenValidity = useCallback(async () => {
+    const { "auth.token": token } = parseCookies();
+    if (token) {
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (decoded.exp && decoded.exp < currentTime) {
+          console.log("Token expirado, tentando renovar...");
+          await refreshToken();
+        } else if (!user) {
+          // Só define o usuário se ainda não estiver definido
+          const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+          const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+          const name = decoded["name"] || "Administrador";
+          let empresaId = "";
+          try {
+            const empresa = await fetchEmpresa();
+            empresaId = empresa.id;
+          } catch (error) {
+            console.error("Erro ao buscar empresa:", error);
+          }
+          if (id) {
+            setUser({
+              id,
+              name,
+              email: decodedEmail || "",
+              empresaId,
+              signOut,
+            });
+            setAuthStep("authenticated");
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao decodificar token:", error);
+        signOut();
+      }
+    } else if (pathname !== "/login" && pathname !== "/inscrevase" && !["/fila", "/configuracoes", "/customAparencia", "/ativaWhatsapp", "/customizarMensagem", "/vinculaMonitor"].includes(pathname)) {
+      console.log(`Token ausente e pathname inválido, redirecionando para /login desde ${pathname}`);
+      router.push("/login");
+    }
+  }, [pathname, router, user]);
+
+  const refreshToken = async (): Promise<TokenResponse> => {
+    const { "auth.refreshToken": refreshTokenValue } = parseCookies();
+    if (!refreshTokenValue) {
+      console.error("Refresh token ausente, redirecionando para login");
+      signOut();
+      throw new Error("Refresh token ausente");
+    }
+
+    try {
+      setLoading(true);
+      const response = await PublicApi.post("/api/autenticacao/refresh-token", {
+        refreshToken: refreshTokenValue,
+      });
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+      console.log("Token renovado com sucesso:", { accessToken, newRefreshToken });
+
+      setCookie(undefined, "auth.token", accessToken, {
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+        domain: "localhost",
+        secure: false,
+        sameSite: "lax",
+      });
+      setCookie(undefined, "auth.refreshToken", newRefreshToken, {
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
+        domain: "localhost",
+        secure: false,
+        sameSite: "lax",
+      });
+
+      Api.setAuthorizationHeader(accessToken);
+      initializeToken(accessToken);
+
+      const decoded = jwtDecode<DecodedToken>(accessToken);
+      const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+      const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+      const name = decoded["name"] || "Administrador";
+
+      if (id) {
+        let empresaId = "";
+        try {
+          const empresa = await fetchEmpresa();
+          empresaId = empresa.id;
+        } catch (error) {
+          console.error("Erro ao buscar empresa após refresh:", error);
+        }
+
+        setUser({
+          id,
+          name,
+          email: decodedEmail || "",
+          empresaId,
+          signOut,
+        });
+      }
+
+      return { accessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+      console.error("Erro ao renovar token:", error);
+      signOut();
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     async function loadUserFromCookies() {
       if (typeof window === "undefined") return;
 
-      const { "auth.token": token } = parseCookies();
-
-      if (token) {
-        console.log("Token encontrado nos cookies:", token);
-        initializeToken(token);
-        try {
-          Api.setAuthorizationHeader(token);
-          const decoded = jwtDecode<DecodedToken>(token);
-          const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-          const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
-          const name = decoded["name"] || "Administrador";
-
-          if (!id) return;
-
-          const empresa = await fetchEmpresa();
-          const empresaId = empresa.id;
-
-          setUser({
-            id,
-            name,
-            email: decodedEmail || "",
-            empresaId,
-            signOut,
-          });
-          setAuthStep("authenticated");
-
-          // Redireciona para /fila apenas se estiver na página de login
-          if (pathname === "/login") {
-            console.log("Redirecionando para /fila após login");
-            router.push("/fila?fromLogin=true");
-          }
-        } catch (error) {
-          console.error("Erro ao carregar usuário dos cookies:", error);
-          signOut();
-        }
-      }
+      await checkTokenValidity();
       setLoading(false);
     }
 
     loadUserFromCookies();
-  }, [pathname]);
+    const interval = setInterval(checkTokenValidity, 60000); // Verifica a cada 1 minuto
+    return () => clearInterval(interval);
+  }, [checkTokenValidity]);
+
+  useEffect(() => {
+    checkTokenValidity();
+  }, [pathname, checkTokenValidity]);
 
   async function sendVerificationCode(email: string) {
     try {
@@ -108,7 +197,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthStep("senha");
     } catch (error) {
       let errorMessage = "Erro ao enviar código";
-
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || error.message || "Erro desconhecido na requisição";
         if (error.response?.status === 404 && errorMessage.includes("E-mail não registrado")) {
@@ -116,7 +204,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
       }
-
       throw new Error(errorMessage);
     } finally {
       setLoading(false);
@@ -136,14 +223,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCookie(undefined, "auth.token", accessToken, {
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
+        domain: "localhost",
+        secure: false,
+        sameSite: "lax",
       });
-
       setCookie(undefined, "auth.refreshToken", refreshToken, {
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
+        domain: "localhost",
+        secure: false,
+        sameSite: "lax",
       });
 
       Api.setAuthorizationHeader(accessToken);
+      initializeToken(accessToken);
 
       const decoded = jwtDecode<DecodedToken>(accessToken);
       const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
@@ -187,17 +280,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Token inválido: ID não encontrado");
       }
 
-      console.log("Redirecionando para /fila...");
-      router.push("/fila?fromLogin=true");
-      console.log("Redirecionamento chamado");
+      const redirectTo = ["/login", "/inscrevase"].includes(pathname) ? "/fila?fromLogin=true" : pathname;
+      console.log(`Redirecionando para: ${redirectTo}`);
+      router.push(redirectTo);
     } catch (error: any) {
       console.error("Erro ao verificar código:", error);
       let message = "Erro ao verificar código";
-
       if (axios.isAxiosError(error)) {
         message = error.response?.data?.message || "Código inválido";
       }
-
       throw new Error(message);
     } finally {
       setLoading(false);
@@ -227,6 +318,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAuthStep,
         signOut,
         loading,
+        refreshToken,
       }}
     >
       {children}

@@ -3,7 +3,7 @@ import * as signalR from "@microsoft/signalr";
 
 class SignalRConnection {
   private connection: signalR.HubConnection | null = null;
-  private baseUrl = "http://10.0.0.191:5135";
+  private baseUrl = "http://localhost:5135";
 
   async connect(token: string) {
     if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {

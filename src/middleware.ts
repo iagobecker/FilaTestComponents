@@ -1,31 +1,51 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { parseCookies } from 'nookies';
+// import { NextResponse } from "next/server";
+// import type { NextRequest } from "next/server";
+
+// export function middleware(request: NextRequest) {
+//   const token = request.cookies.get("auth.token")?.value;
+
+//   // Lista de rotas públicas
+//   const publicRoutes = ["/login", "/inscrevase"];
+
+//   if (publicRoutes.includes(request.nextUrl.pathname)) {
+//     return NextResponse.next();
+//   }
+
+//   if (!token) {
+//     const loginUrl = new URL("/login", request.url);
+//     loginUrl.searchParams.set("from", request.nextUrl.pathname);
+//     return NextResponse.redirect(loginUrl);
+//   }
+
+//   return NextResponse.next();
+// }
+
+
+
+
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const { pathname, searchParams } = request.nextUrl;
-  const cookies = parseCookies({ req: request });
-  const token = cookies['auth.token'];
+  const { pathname } = request.nextUrl;
+  const token = request.cookies.get("auth.token")?.value;
 
-  // Rotas públicas que não requerem autenticação
-  const publicRoutes = ['/login', '/inscrevase'];
+  console.log(`Middleware - Acessando: ${pathname}, Token: ${token ? "Presente" : "Ausente"}`);
 
-  // Verifica se o redirecionamento é vindo do login (ignora a validação do token nesse caso)
-  const fromLogin = searchParams.get('fromLogin') === 'true';
-
-  // Se a rota é pública, permite o acesso sem redirecionar, mesmo com token
-  if (publicRoutes.includes(pathname)) {
-    return NextResponse.next(); // Permite acesso à rota pública sem redirecionar
+  if (pathname === "/login" || pathname === "/inscrevase") {
+    console.log(`Acessando rota pública: ${pathname}`);
+    return NextResponse.next();
   }
 
-  // Para rotas protegidas, verifica autenticação
-  if (!token && !publicRoutes.includes(pathname) && !fromLogin) {
-    return NextResponse.redirect(new URL('/login', request.url));
+  if (!token) {
+    console.log(`Usuário não autenticado ou token ausente, redirecionando para /login desde ${pathname}`);
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  console.log(`Acesso permitido para ${pathname} com token presente`);
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ["/", "/fila", "/configuracoes", "/customAparencia", "/ativaWhatsapp", "/customizarMensagem", "/vinculaMonitor"],
 };
