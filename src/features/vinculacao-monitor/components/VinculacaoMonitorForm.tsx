@@ -2,7 +2,7 @@
 
 import { Api } from "@/api/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import InputVinculacao from "@/features/configuracoes-filas/components/InputVinculacao"
+import InputVinculacao from "@/features/vinculacao-monitor/components/InputVinculacao"
 import { useEffect, useState } from "react";
 
 export default function VinculacaoMonitorForm() {

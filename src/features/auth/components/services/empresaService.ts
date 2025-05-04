@@ -72,22 +72,34 @@ export interface Configuracao {
   dataHoraDeletado?: string;
 }
 
-export async function fetchEmpresa(): Promise<Empresa> {
-  try {
-    const response = await Api.get("/empresas");
-    return response.data as Empresa;
-  } catch (error: any) {
-    toast.error(error?.response?.data?.message || "Erro ao buscar dados da empresa.");
-    throw error;
-  }
-}
+export const EmpresaService = {
+  async fetchEmpresa(): Promise<Empresa> {
+    try {
+      const response = await Api.get("/empresas");
+      const empresa = response.data as Empresa;
+      if (!empresa || !empresa.id) {
+        throw new Error("Dados da empresa inválidos");
+      }
+      return empresa;
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || "Erro ao buscar dados da empresa.";
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+  },
 
-export async function fetchFilaById(filaId: string): Promise<Fila> {
-  try {
-    const response = await Api.get(`/filas/${filaId}`);
-    return response.data as Fila;
-  } catch (error: any) {
-    toast.error(error?.response?.data?.message || "Erro ao buscar dados da fila.");
-    throw error;
-  }
-}
+  async fetchFilaById(filaId: string): Promise<Fila> {
+    try {
+      const response = await Api.get(`/filas/${filaId}`);
+      const fila = response.data as Fila;
+      if (!fila || !fila.id) {
+        throw new Error("Dados da fila inválidos");
+      }
+      return fila;
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || "Erro ao buscar dados da fila.";
+      toast.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+  },
+};

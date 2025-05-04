@@ -17,7 +17,7 @@ import { FaCamera, FaLaugh, FaMicrophone, FaPaperclip } from "react-icons/fa";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/configuracoes";
+import { atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/ConfiguracoesService";
 import { toast } from "sonner";
 import { useConfigPreview } from "@/lib/hooks/useConfigPreview"
 

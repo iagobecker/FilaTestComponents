@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Api } from "@/api/api"
-import { useAuth } from "@/features/auth/context/AuthContext"
 
 const formSchema = z.object({
   nomeEmpresa: z.string().min(1, "Nome da empresa é obrigatório"),

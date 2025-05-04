@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/configuracoes";
+import { getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/ConfiguracoesService";
 import { toast } from "sonner";
-import { ConfiguracaoType } from "@/features/configuracoes/types";
+import { ConfiguracaoType } from "@/features/configuracoes/types/configTypes";
 
 // Função para transformar {nome} → <span data-variable="nome" />
 function convertVariablesToHtml(html: string): string {

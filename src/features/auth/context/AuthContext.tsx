@@ -2,13 +2,12 @@
 
 import { createContext, useEffect, useState, useCallback } from "react";
 import { setCookie, parseCookies, destroyCookie } from "nookies";
-import { Api } from "@/api/api";
-import { PublicApi, initializeToken } from "@/api/api";
+import { Api, PublicApi, initializeToken } from "@/api/api";
 import React from "react";
 import axios from "axios";
 import { useRouter, usePathname } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
-import { fetchEmpresa } from "../components/services/empresaService";
+import { EmpresaService } from "@/features/auth/components/services/empresaService"; // Ajustado para usar EmpresaService
 
 type User = {
   id: string;
@@ -55,8 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = !!user;
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const checkTokenValidity = useCallback(async () => {
+    if (isRefreshing) return;
     const { "auth.token": token } = parseCookies();
     if (token) {
       try {
@@ -66,16 +67,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("Token expirado, tentando renovar...");
           await refreshToken();
         } else if (!user) {
-          // Só define o usuário se ainda não estiver definido
           const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
           const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
           const name = decoded["name"] || "Administrador";
           let empresaId = "";
           try {
-            const empresa = await fetchEmpresa();
-            empresaId = empresa.id;
+            const empresaData = await EmpresaService.fetchEmpresa(); // Ajustado para EmpresaService.fetchEmpresa
+            empresaId = empresaData?.id || "";
           } catch (error) {
-            console.error("Erro ao buscar empresa:", error);
+            console.error("Erro ao buscar empresa (não crítico):", error);
           }
           if (id) {
             setUser({
@@ -92,23 +92,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Erro ao decodificar token:", error);
         signOut();
       }
-    } else if (pathname !== "/login" && pathname !== "/inscrevase" && !["/fila", "/configuracoes", "/customAparencia", "/ativaWhatsapp", "/customizarMensagem", "/vinculaMonitor"].includes(pathname)) {
-      console.log(`Token ausente e pathname inválido, redirecionando para /login desde ${pathname}`);
-      router.push("/login");
+    } else if (
+      pathname &&
+      pathname !== "/login" &&
+      pathname !== "/inscrevase" &&
+      ![
+        "/fila",
+        "/configuracoes",
+        "/customAparencia",
+        "/ativaWhatsapp",
+        "/customizarMensagem",
+        "/vinculaMonitor",
+      ].includes(pathname)
+    ) {
+      console.log(`Token ausente, redirecionando para /login desde ${pathname}`);
+      if (!loading) {
+        router.push("/login");
+      }
     }
-  }, [pathname, router, user]);
+  }, [pathname, router, user, isRefreshing, loading]);
 
   const refreshToken = async (): Promise<TokenResponse> => {
-    const { "auth.refreshToken": refreshTokenValue } = parseCookies();
-    if (!refreshTokenValue) {
-      console.error("Refresh token ausente, redirecionando para login");
-      signOut();
-      throw new Error("Refresh token ausente");
+    if (isRefreshing) {
+      throw new Error("Já existe uma tentativa de refresh em andamento");
     }
-
+    setIsRefreshing(true);
     try {
+      const { "auth.refreshToken": refreshTokenValue } = parseCookies();
+      if (!refreshTokenValue) {
+        console.error("Refresh token ausente, redirecionando para login");
+        signOut();
+        throw new Error("Refresh token ausente");
+      }
+
       setLoading(true);
-      const response = await PublicApi.post("/api/autenticacao/refresh-token", {
+      const response = await PublicApi.post("/autenticacao/refresh-token", {
         refreshToken: refreshTokenValue,
       });
       const { accessToken, refreshToken: newRefreshToken } = response.data;
@@ -141,8 +159,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (id) {
         let empresaId = "";
         try {
-          const empresa = await fetchEmpresa();
-          empresaId = empresa.id;
+          const empresaData = await EmpresaService.fetchEmpresa(); // Ajustado para EmpresaService.fetchEmpresa
+          empresaId = empresaData?.id || "";
         } catch (error) {
           console.error("Erro ao buscar empresa após refresh:", error);
         }
@@ -163,39 +181,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error;
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
     async function loadUserFromCookies() {
       if (typeof window === "undefined") return;
-
       await checkTokenValidity();
       setLoading(false);
     }
-
     loadUserFromCookies();
-    const interval = setInterval(checkTokenValidity, 60000); // Verifica a cada 1 minuto
+    const interval = setInterval(checkTokenValidity, 300000);
     return () => clearInterval(interval);
   }, [checkTokenValidity]);
-
-  useEffect(() => {
-    checkTokenValidity();
-  }, [pathname, checkTokenValidity]);
 
   async function sendVerificationCode(email: string) {
     try {
       setLoading(true);
       const response = await PublicApi.post("/autenticacao/gerar-codigo-acesso", { email });
-      console.log("Resposta de gerar-codigo-acesso:", response.data);
-
       if (response.status !== 200) {
         throw new Error("Falha ao enviar código");
       }
-
       setEmail(email);
       setAuthStep("senha");
-    } catch (error) {
+    } catch (error: any) {
       let errorMessage = "Erro ao enviar código";
       if (axios.isAxiosError(error)) {
         errorMessage = error.response?.data?.message || error.message || "Erro desconhecido na requisição";
@@ -213,13 +223,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function verifyCode(email: string, code: string) {
     try {
       setLoading(true);
-      console.log("Enviando requisição para /autenticacao/login com email:", email, "e código:", code);
       const response = await Api.post("/autenticacao/login", { email, codigo: code });
-      console.log("Resposta da API /autenticacao/login:", response.data);
-
       const { accessToken, refreshToken } = response.data;
 
-      console.log("Salvando cookies...");
       setCookie(undefined, "auth.token", accessToken, {
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
@@ -243,53 +249,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
       const name = decoded["name"] || "Administrador";
 
-      console.log("Token decodificado:", { id, decodedEmail, name });
-
       if (id) {
+        let empresaId = "";
         try {
-          console.log("Buscando empresa...");
-          const empresa = await fetchEmpresa();
-          console.log("Empresa retornada:", empresa);
-          if (!empresa || !empresa.id) {
-            throw new Error("Empresa não encontrada");
-          }
-          const empresaId = empresa.id;
-
-          setUser({
-            id,
-            name,
-            email: decodedEmail || email,
-            empresaId,
-            signOut,
-          });
-          setAuthStep("authenticated");
-          console.log("Usuário definido e authStep atualizado para authenticated");
+          const empresaData = await EmpresaService.fetchEmpresa(); // Ajustado para EmpresaService.fetchEmpresa
+          empresaId = empresaData?.id || "";
         } catch (error) {
           console.error("Erro ao buscar empresa:", error);
-          setUser({
-            id,
-            name,
-            email: decodedEmail || email,
-            empresaId: "",
-            signOut,
-          });
-          setAuthStep("authenticated");
         }
+
+        setUser({
+          id,
+          name,
+          email: decodedEmail || email,
+          empresaId,
+          signOut,
+        });
+        setAuthStep("authenticated");
       } else {
-        console.log("ID não encontrado no token decodificado");
         throw new Error("Token inválido: ID não encontrado");
       }
 
       const redirectTo = ["/login", "/inscrevase"].includes(pathname) ? "/fila?fromLogin=true" : pathname;
-      console.log(`Redirecionando para: ${redirectTo}`);
-      router.push(redirectTo);
+      if (router) {
+        router.push(redirectTo);
+      }
     } catch (error: any) {
       console.error("Erro ao verificar código:", error);
-      let message = "Erro ao verificar código";
-      if (axios.isAxiosError(error)) {
-        message = error.response?.data?.message || "Código inválido";
-      }
-      throw new Error(message);
+      throw new Error(axios.isAxiosError(error) ? error.response?.data?.message || "Código inválido" : "Erro ao verificar código");
     } finally {
       setLoading(false);
     }
@@ -302,7 +289,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setEmail("");
     setAuthStep("email");
-    router.push("/login");
+    if (pathname !== "/login") {
+      router.push("/login");
+    }
   }
 
   return (

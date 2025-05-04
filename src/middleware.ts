@@ -34,6 +34,9 @@ export function middleware(request: NextRequest) {
 
   if (pathname === "/login" || pathname === "/inscrevase") {
     console.log(`Acessando rota pública: ${pathname}`);
+    if (token && pathname === "/login") {
+      return NextResponse.redirect(new URL("/fila", request.url));
+    }
     return NextResponse.next();
   }
 
@@ -43,6 +46,10 @@ export function middleware(request: NextRequest) {
   }
 
   console.log(`Acesso permitido para ${pathname} com token presente`);
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/fila", request.url));
+  }
+
   return NextResponse.next();
 }
 

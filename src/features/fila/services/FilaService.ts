@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { parseISO } from "date-fns/parseISO";
 import { differenceInMinutes } from "date-fns/differenceInMinutes";
 import { useAuth } from "@/features/auth/context/AuthContext";
-import { fetchEmpresa, Fila } from "@/features/auth/components/services/empresaService";
+import { EmpresaService, Fila } from "@/features/auth/components/services/empresaService";
 
 export interface Empresa {
   id: string;
@@ -16,7 +16,7 @@ export async function getDefaultFilaId(empresaId: string): Promise<string> {
   if (!empresaId) {
     throw new Error("Nenhum empresaId encontrado.");
   }
-  const empresa = await fetchEmpresa();
+  const empresa = await EmpresaService.fetchEmpresa();
   if (!empresa.filas || empresa.filas.length === 0) {
     throw new Error("Nenhuma fila associada à empresa.");
   }

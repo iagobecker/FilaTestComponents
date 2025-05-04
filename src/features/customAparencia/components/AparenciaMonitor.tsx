@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useDrag } from '@use-gesture/react';
 import { uploadLogo, useConfigPreview } from "@/lib/hooks/useConfigPreview";
 import { toast } from "sonner";
-import { atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/configuracoes";
+import { atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/ConfiguracoesService";
 
 
 export function AparenciaMonitor({ addEmpresa }: { addEmpresa: (nome: string) => void }) {

@@ -1,13 +1,10 @@
-import axios, { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig, AxiosHeaders } from "axios";
+import { parseCookies, setCookie } from "nookies";
 
-// Extending InternalAxiosRequestConfig to include _retry
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
-import { parseCookies, setCookie } from "nookies";
-import { useAuth } from "@/features/auth/context/AuthContext";
 
-// Instância para requisições autenticadas
 const axiosInstance = axios.create({
   baseURL: "http://localhost:5135/api",
   headers: {
@@ -15,7 +12,6 @@ const axiosInstance = axios.create({
   },
 });
 
-// Instância para requisições públicas (sem token)
 const axiosPublicInstance = axios.create({
   baseURL: "http://localhost:5135/api",
   headers: {
@@ -23,18 +19,18 @@ const axiosPublicInstance = axios.create({
   },
 });
 
-// Definindo o tipo personalizado para o objeto Api
-interface CustomApi {
-  get: (url: string, params?: any) => Promise<AxiosResponse>;
-  post: (url: string, data?: any) => Promise<AxiosResponse>;
-  put: (url: string, data?: any) => Promise<AxiosResponse>;
-  patch: (url: string, data?: any) => Promise<AxiosResponse>;
-  delete: (url: string) => Promise<AxiosResponse>;
-  setAuthorizationHeader: (token: string) => void;
-  removeAuthorizationHeader: () => void;
-}
+const refreshToken = async (): Promise<{ accessToken: string; refreshToken: string }> => {
+  const { "auth.refreshToken": refreshTokenValue } = parseCookies();
+  if (!refreshTokenValue) {
+    throw new Error("Refresh token ausente");
+  }
 
-// Interceptor para lidar com erros 401 e tentar refresh token
+  const response = await axiosPublicInstance.post("/autenticacao/refresh-token", {
+    refreshToken: refreshTokenValue,
+  });
+  return response.data as { accessToken: string; refreshToken: string };
+};
+
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
     console.log("Resposta recebida:", {
@@ -44,28 +40,40 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig | undefined;
-    if (error.response?.status === 401 && originalRequest && !(originalRequest as ExtendedAxiosRequestConfig)._retry) {
-      (originalRequest as ExtendedAxiosRequestConfig)._retry = true;
+    const originalRequest = error.config as ExtendedAxiosRequestConfig;
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      originalRequest._retry = true;
       try {
         console.log("Erro 401 detectado, tentando refresh token...");
-        const { accessToken } = await useAuth().refreshToken(); // Usa a função do AuthContext
+        const { accessToken, refreshToken: newRefreshToken } = await refreshToken();
         setAuthorizationHeader(accessToken);
 
-        // Cria uma nova configuração de requisição com base no originalRequest
+        setCookie(undefined, "auth.token", accessToken, {
+          maxAge: 60 * 60 * 24 * 7,
+          path: "/",
+          domain: "localhost",
+          secure: false,
+          sameSite: "lax",
+        });
+        setCookie(undefined, "auth.refreshToken", newRefreshToken, {
+          maxAge: 60 * 60 * 24 * 30,
+          path: "/",
+          domain: "localhost",
+          secure: false,
+          sameSite: "lax",
+        });
+
+        const headers = new AxiosHeaders(originalRequest.headers);
+        headers.set("Authorization", `Bearer ${accessToken}`);
+
         const retryConfig: InternalAxiosRequestConfig = {
           ...originalRequest,
-          headers: new axios.AxiosHeaders({
-            ...originalRequest.headers?.toJSON(),
-            Authorization: `Bearer ${accessToken}`,
-          }),
+          headers,
         };
 
         return axiosInstance(retryConfig);
       } catch (refreshError) {
         console.error("Erro ao tentar refresh token:", refreshError);
-        // Redireciona para o login se o refresh falhar
-        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }
@@ -78,7 +86,6 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-// Interceptor para logar requisições autenticadas
 axiosInstance.interceptors.request.use(
   (config) => {
     console.log("Requisição enviada:", {
@@ -94,27 +101,23 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// Adiciona o token JWT às requisições autenticadas
 export function setAuthorizationHeader(token: string) {
   console.log("Configurando cabeçalho de autorização com token:", token);
   axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 }
 
-// Remove o token JWT
 export function removeAuthorizationHeader() {
   console.log("Removendo cabeçalho de autorização");
   delete axiosInstance.defaults.headers.common["Authorization"];
 }
 
-// Atualiza o token inicial se existir nos cookies
 export function initializeToken(token?: string) {
   if (token) {
     setAuthorizationHeader(token);
   }
 }
 
-// Exporta o objeto Api com o tipo personalizado
-export const Api: CustomApi = {
+export const Api = {
   get: (url: string, params?: any) => axiosInstance.get(url, { params }),
   post: (url: string, data?: any) => axiosInstance.post(url, data),
   put: (url: string, data?: any) => axiosInstance.put(url, data),

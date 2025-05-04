@@ -1,23 +1,25 @@
 "use client";
 
-import { Header } from "@/components/layout/Header";
-import { ConfigCard } from "@/features/configuracoes/components/ConfigCard";
-import { Palette, MessageCircle, Clock, MessageSquare, Monitor } from "lucide-react";
-import { PageContainer } from "@/components/layout/PageContainer";
-import { HeaderConfiguracoes } from "@/features/configuracoes/components/HeaderConfiguracoes";
 import { useState, useEffect } from "react";
-import { DialogTempoMaximo } from "@/features/configuracoes/services/DialogTempoMaximo";
-import { fetchEmpresa } from "@/features/auth/components/services/empresaService";
-import { getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/configuracoes";
 import { useAuth } from "@/features/auth/context/AuthContext";
+
+import { ConfigCard } from "@/features/configuracoes/components/ConfigCard";
+import { HeaderConfiguracoes } from "@/features/configuracoes/components/HeaderConfiguracoes";
+
+import { Palette, MessageCircle, Clock, MessageSquare, Monitor } from "lucide-react";
+import { Configuracao, getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/ConfiguracoesService";
+import { Header } from "@/components/layout/Header";
+import { PageContainer } from "@/components/layout/PageContainer";
+import { DialogTempoMaximo } from "@/features/configuracoes/components/DialogTempoMaximo";
 
 export default function ConfiguracoesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [config, setConfig] = useState<Configuracao | null>(null);
   const { user, isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    async function loadEmpresaAndConfig() {
+    async function loadConfig() {
       if (!isAuthenticated || loading || !user?.empresaId) {
         console.log("Usuário não autenticado ou empresaId não encontrado");
         setError("Usuário não autenticado ou empresaId não encontrado.");
@@ -25,24 +27,21 @@ export default function ConfiguracoesPage() {
       }
 
       try {
-        console.log("Carregando dados da empresa...");
-        const empresa = await fetchEmpresa();
-        console.log("Dados da empresa carregados:", empresa);
-
         console.log("Carregando configurações...");
-        const config = await getConfiguracaoByEmpresaId(user.empresaId);
-        if (!config) {
+        const fetchedConfig = await getConfiguracaoByEmpresaId(user.empresaId);
+        if (!fetchedConfig) {
           setError("Nenhuma configuração encontrada para esta empresa.");
           return;
         }
-        console.log("Configurações carregadas:", config);
+        setConfig(fetchedConfig);
+        console.log("Configurações carregadas:", fetchedConfig);
       } catch (error: any) {
-        console.error("Erro ao carregar dados:", error);
-        setError(error.message || "Falha ao carregar dados. Tente novamente.");
+        console.error("Erro ao carregar configurações:", error);
+        setError(error.message || "Falha ao carregar configurações. Tente novamente.");
       }
     }
 
-    loadEmpresaAndConfig();
+    loadConfig();
   }, [isAuthenticated, loading, user?.empresaId]);
 
   if (loading) {
