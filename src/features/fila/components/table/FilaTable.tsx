@@ -615,9 +615,7 @@ import {
 } from "@/components/ui/dialog";
 import { EditClientForm } from "../form/EditClientForm";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import { FilaItem, Status } from "@/features/fila/components/types/filaTypes";
-import { getStatusColor, getStatusText } from "../utils/statusUtils";
-import { chamarClientesSelecionados } from "../../services/FilaService";
+import { FilaItem, Status } from "@/features/fila/components/types/types"
 
 type FilaTableProps = {
   data: FilaItem[];

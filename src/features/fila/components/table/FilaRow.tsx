@@ -3,7 +3,7 @@
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Phone, Trash, CircleArrowUp, CircleArrowDown } from "lucide-react";
-import { FilaItem } from "@/features/fila/components/types/filaTypes"
+import { FilaItem } from "@/features/fila/components/types/types"
 
 
 type BadgeVariant = "success" | "warning" | "danger" | "default";

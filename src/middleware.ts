@@ -1,67 +1,58 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-//import { jwtDecode } from 'jwt-decode'
+// import { NextResponse } from "next/server";
+// import type { NextRequest } from "next/server";
 
-// Rotas públicas
-const publicRoutes = ['/login', '/redefinir-senha']
+// export function middleware(request: NextRequest) {
+//   const token = request.cookies.get("auth.token")?.value;
 
-// Exportação nomeada (pode ser esta ou a default)
-export function middleware(request: NextRequest) {
-//   const token = request.cookies.get('access-token')?.value
-//   const { pathname } = request.nextUrl
+//   // Lista de rotas públicas
+//   const publicRoutes = ["/login", "/inscrevase"];
 
-  // Verifica se a rota é pública
- // const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))
+//   if (publicRoutes.includes(request.nextUrl.pathname)) {
+//     return NextResponse.next();
+//   }
 
-  // Permite acesso a rotas públicas
-  //if (isPublicRoute) {
-    // Se já autenticado, redireciona para dashboard
-    // if (token && pathname === '/login') {
-    //   return NextResponse.redirect(new URL('/', request.url))
-    // }
-    // return NextResponse.next()
-  }
-
-  // Redireciona para login se não autenticado
 //   if (!token) {
-//     return NextResponse.redirect(new URL('/login', request.url))
+//     const loginUrl = new URL("/login", request.url);
+//     loginUrl.searchParams.set("from", request.nextUrl.pathname);
+//     return NextResponse.redirect(loginUrl);
 //   }
 
-  // Verifica token válido
-  try {
-   // const decoded = jwtDecode(token)
-   // const isExpired = decoded.exp && decoded.exp < Date.now() / 1000
-
-    // if (isExpired) {
-    //   const response = NextResponse.redirect(new URL('/login', request.url))
-    //   response.cookies.delete('access-token')
-    //   return response
-    // }
-  } catch (error) {
-    const response = NextResponse.redirect(new URL('/login',))
-    response.cookies.delete('access-token')
-     
-  }
-//   } catch (error) {
-//     const response = NextResponse.redirect(new URL('/login', request.url))
-//     response.cookies.delete('access-token')
-//     return response
-//   }
-
-//   return NextResponse.next()
+//   return NextResponse.next();
 // }
 
-// Configuração de quais rotas acionam o middleware
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images - .svg, .png, .jpg, etc.
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+
+
+
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const token = request.cookies.get("auth.token")?.value;
+
+  console.log(`Middleware - Acessando: ${pathname}, Token: ${token ? "Presente" : "Ausente"}`);
+
+  if (pathname === "/login" || pathname === "/inscrevase") {
+    console.log(`Acessando rota pública: ${pathname}`);
+    if (token && pathname === "/login") {
+      return NextResponse.redirect(new URL("/fila", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  if (!token) {
+    console.log(`Usuário não autenticado ou token ausente, redirecionando para /login desde ${pathname}`);
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  console.log(`Acesso permitido para ${pathname} com token presente`);
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/fila", request.url));
+  }
+
+  return NextResponse.next();
 }
-  
+
+export const config = {
+  matcher: ["/", "/fila", "/configuracoes", "/customAparencia", "/ativaWhatsapp", "/customizarMensagem", "/vinculaMonitor"],
+};

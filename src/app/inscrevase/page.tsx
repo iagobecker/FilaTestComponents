@@ -1,4 +1,4 @@
-import { InscrevaseForm } from "@/components/layout/InscrevaseForm"
+import { InscrevaseForm } from "@/features/auth/components/form/inscrevase-form"
 
 export default function InscrevasePage() {
   return (

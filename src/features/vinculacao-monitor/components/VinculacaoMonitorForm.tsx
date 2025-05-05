@@ -2,7 +2,7 @@
 
 import { Api } from "@/api/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import InputVinculacao from "@/features/configuracoes-filas/components/InputVinculacao"
+import InputVinculacao from "@/features/vinculacao-monitor/components/InputVinculacao"
 import { useEffect, useState } from "react";
 
 export default function VinculacaoMonitorForm() {
@@ -12,7 +12,7 @@ export default function VinculacaoMonitorForm() {
     useEffect(() => {
         async function buscarEmpresa() {
             try {
-                const res = await Api.get('/empresas/pegar-dados-empresa')
+                const res = await Api.get('/empresas')
                 setEmpresa(res.data)
             } catch (err) {
                 console.error('Erro ao buscar empresa:', err)

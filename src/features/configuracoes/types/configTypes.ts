@@ -6,12 +6,12 @@ export type ConfiguracaoType = {
     mensagemEntrada?: string;
     mensagemChamada?: string;
     mensagemRemovido?: string;
-    logoUrl?: string;
+    logoUrl?: string | null;
     corPrimaria: string;
     corSobreposicao: string;
     corTexto: string;
     id?: string;
     dataHoraCriado?: string;
-    dataHoraAlterado?: string;
-    dataHoraDeletado?: string;
+    dataHoraAlterado?: string | null;
+    dataHoraDeletado?: string | null;
 };

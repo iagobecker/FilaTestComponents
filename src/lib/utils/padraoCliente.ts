@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FilaItem, StatusType, Status } from "@/features/fila/components/types/filaTypes";
+import { FilaItem, StatusType } from "@/features/fila/components/types/types";
 
 export function padraoCliente(cliente: any): FilaItem {
     // Validação de campos obrigatórios
