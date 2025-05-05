@@ -56,39 +56,139 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = !!user;
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    async function loadUserFromCookies() {
-      if (typeof window === "undefined") return; // 👈 impede execução no SSR
-  
-      const { 'auth.token': token } = parseCookies();
-  
-      if (token) {
-        initializeToken(token);
-  
-        try {
-          Api.setAuthorizationHeader(token);
-          const decoded = jwtDecode<DecodedToken>(token);
+  const checkTokenValidity = useCallback(async () => {
+    if (isRefreshing) return;
+    const { "auth.token": token } = parseCookies();
+    if (token) {
+      try {
+        const decoded = jwtDecode<DecodedToken>(token);
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (decoded.exp && decoded.exp < currentTime) {
+          console.log("Token expirado, tentando renovar...");
+          await refreshToken();
+        } else if (!user) {
           const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
           const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
           const name = decoded["name"] || "Administrador";
-  
-          if (!id || !decodedEmail) return;
-  
-          setUser({
-            id,
-            name,
-            email: decodedEmail,
-            signOut,
-          });
-  
-          setAuthStep("authenticated");
-        } catch (error: any) {
-          if (axios.isAxiosError(error) && error.response?.status === 401) {
-            signOut();
+          let empresaId = "";
+          try {
+            const empresaData = await EmpresaService.fetchEmpresa(); // Ajustado para EmpresaService.fetchEmpresa
+            empresaId = empresaData?.id || "";
+          } catch (error) {
+            console.error("Erro ao buscar empresa (não crítico):", error);
+          }
+          if (id) {
+            setUser({
+              id,
+              name,
+              email: decodedEmail || "",
+              empresaId,
+              signOut,
+            });
+            setAuthStep("authenticated");
           }
         }
+      } catch (error) {
+        console.error("Erro ao decodificar token:", error);
+        signOut();
       }
-  
+    } else if (
+      pathname &&
+      pathname !== "/login" &&
+      pathname !== "/inscrevase" &&
+      ![
+        "/fila",
+        "/configuracoes",
+        "/customAparencia",
+        "/ativaWhatsapp",
+        "/customizarMensagem",
+        "/vinculaMonitor",
+      ].includes(pathname)
+    ) {
+      console.log(`Token ausente, redirecionando para /login desde ${pathname}`);
+      if (!loading) {
+        router.push("/login");
+      }
+    }
+  }, [pathname, router, user, isRefreshing, loading]);
+
+  const refreshToken = async (): Promise<TokenResponse> => {
+    if (isRefreshing) {
+      throw new Error("Já existe uma tentativa de refresh em andamento");
+    }
+    setIsRefreshing(true);
+    try {
+      const { "auth.refreshToken": refreshTokenValue } = parseCookies();
+      if (!refreshTokenValue) {
+        console.error("Refresh token ausente, redirecionando para login");
+        signOut();
+        throw new Error("Refresh token ausente");
+      }
+
+      setLoading(true);
+      const response = await PublicApi.post("/autenticacao/refresh-token", {
+        refreshToken: refreshTokenValue,
+      });
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+
+      console.log("Token renovado com sucesso:", { accessToken, newRefreshToken });
+
+      setCookie(undefined, "auth.token", accessToken, {
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+        domain: "localhost",
+        secure: false,
+        sameSite: "lax",
+      });
+      setCookie(undefined, "auth.refreshToken", newRefreshToken, {
+        maxAge: 60 * 60 * 24 * 30,
+        path: "/",
+        domain: "localhost",
+        secure: false,
+        sameSite: "lax",
+      });
+
+      Api.setAuthorizationHeader(accessToken);
+      initializeToken(accessToken);
+
+      const decoded = jwtDecode<DecodedToken>(accessToken);
+      const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+      const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+      const name = decoded["name"] || "Administrador";
+
+      if (id) {
+        let empresaId = "";
+        try {
+          const empresaData = await EmpresaService.fetchEmpresa(); // Ajustado para EmpresaService.fetchEmpresa
+          empresaId = empresaData?.id || "";
+        } catch (error) {
+          console.error("Erro ao buscar empresa após refresh:", error);
+        }
+
+        setUser({
+          id,
+          name,
+          email: decodedEmail || "",
+          empresaId,
+          signOut,
+        });
+      }
+
+      return { accessToken, refreshToken: newRefreshToken };
+    } catch (error) {
+      console.error("Erro ao renovar token:", error);
+      signOut();
+      throw error;
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    async function loadUserFromCookies() {
+      if (typeof window === "undefined") return;
+      await checkTokenValidity();
       setLoading(false);
     }
     loadUserFromCookies();
