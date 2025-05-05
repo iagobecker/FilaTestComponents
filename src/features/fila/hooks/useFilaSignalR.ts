@@ -201,91 +201,97 @@ export const useFilaSignalR = (
           return;
         }
 
-        const registerListeners = () => {
-          console.log("📌 Registrando listener para 'atualizarFila'...");
-          connection.on("atualizarFila", (payload: any) => {
-            if (!isMounted) return;
+        // Função para lidar com o evento atualizarFila
+        const handleAtualizarFila = (payload: any) => {
+          if (!isMounted) return;
 
-            console.log("📩 Evento 'atualizarFila' recebido:", JSON.stringify(payload, null, 2));
+          console.log("📩 Evento 'atualizarFila' recebido:", JSON.stringify(payload, null, 2));
 
-            let parsedPayload: any;
-            if (typeof payload === "string") {
-              try {
-                parsedPayload = JSON.parse(payload);
-                console.log("✅ Payload parseado com sucesso:", parsedPayload);
-              } catch (error) {
-                console.error("❌ Falha ao parsear payload JSON (atualizarFila):", error, payload);
-                return;
-              }
-            } else {
-              parsedPayload = payload;
-            }
-
-            const fila = parsedPayload.fila;
-            if (!fila || typeof fila !== "object" || !Array.isArray(fila.clientes)) {
-              console.warn("⚠️ Payload inválido: propriedade 'fila.clientes' ausente ou inválida:", parsedPayload);
+          let parsedPayload: any;
+          if (typeof payload === "string") {
+            try {
+              parsedPayload = JSON.parse(payload);
+              console.log("✅ Payload parseado com sucesso:", parsedPayload);
+            } catch (error) {
+              console.error("❌ Falha ao parsear payload JSON (atualizarFila):", error, payload);
               return;
             }
+          } else {
+            parsedPayload = payload;
+          }
 
-            const clientesMapeados = fila.clientes.map(padraoCliente);
-            setAllClients(() => {
-              const map = new Map<string, FilaItem>();
-              clientesMapeados.forEach((c: FilaItem) => c.id && map.set(c.id, c));
-              return Array.from(map.values());
-            });
+          const fila = parsedPayload.fila;
+          if (!fila || typeof fila !== "object" || !Array.isArray(fila.clientes)) {
+            console.warn("⚠️ Payload inválido: propriedade 'fila.clientes' ausente ou inválida:", parsedPayload);
+            return;
+          }
+
+          const clientesMapeados = fila.clientes.map(padraoCliente);
+          setAllClients(() => {
+            const map = new Map<string, FilaItem>();
+            clientesMapeados.forEach((c: FilaItem) => c.id && map.set(c.id, c));
+            return Array.from(map.values());
           });
+        };
+
+        // Função para lidar com o evento clienteDesistir
+        const handleClienteDesistir = (payload: any) => {
+          if (!isMounted) return;
+
+          console.log("📩 Evento 'clienteDesistir' recebido:", JSON.stringify(payload, null, 2));
+
+          let parsedPayload: any;
+          if (typeof payload === "string") {
+            try {
+              parsedPayload = JSON.parse(payload);
+              console.log("✅ Payload parseado com sucesso (clienteDesistir):", parsedPayload);
+            } catch (err) {
+              console.error("❌ Erro ao parsear 'clienteDesistir':", err);
+              return;
+            }
+          } else {
+            parsedPayload = payload;
+          }
+
+          const clientes = parsedPayload.clientes;
+          if (!Array.isArray(clientes)) {
+            console.warn("⚠️ Payload inválido em 'clienteDesistir':", parsedPayload);
+            return;
+          }
+
+          const clientesMapeados = clientes.map(padraoCliente);
+          setAllClients((prevClients) => {
+            const map = new Map<string, FilaItemExt | ChamadaItem>(prevClients.map(c => [c.id, c]));
+            clientesMapeados.forEach((c: FilaItem) => {
+              if (c.id) {
+                map.set(c.id, { ...c, status: 4 }); // Força o status como 4 (Desistente)
+              }
+            });
+            const updatedClients = Array.from(map.values());
+            console.log("📋 Clientes atualizados após 'clienteDesistir':", updatedClients);
+            return updatedClients;
+          });
+        };
+
+        const registerListeners = () => {
+          console.log("📌 Registrando listener para 'atualizarFila'...");
+          connection.on("atualizarFila", handleAtualizarFila);
 
           console.log("📌 Registrando listener para 'atualizarfila' (fallback)...");
           connection.on("atualizarfila", (payload: any) => {
             if (!isMounted) return;
             console.log("📩 Evento 'atualizarfila' (fallback) recebido:", JSON.stringify(payload, null, 2));
-            connection.invoke("atualizarFila", payload); // Redireciona para o listener principal
+            handleAtualizarFila(payload); // Chama a função diretamente, sem invoke
           });
 
           console.log("📌 Registrando listener para 'clienteDesistir'...");
-          connection.on("clienteDesistir", (payload: any) => {
-            if (!isMounted) return;
-
-            console.log("📩 Evento 'clienteDesistir' recebido:", JSON.stringify(payload, null, 2));
-
-            let parsedPayload: any;
-            if (typeof payload === "string") {
-              try {
-                parsedPayload = JSON.parse(payload);
-                console.log("✅ Payload parseado com sucesso (clienteDesistir):", parsedPayload);
-              } catch (err) {
-                console.error("❌ Erro ao parsear 'clienteDesistir':", err);
-                return;
-              }
-            } else {
-              parsedPayload = payload;
-            }
-
-            const clientes = parsedPayload.clientes;
-            if (!Array.isArray(clientes)) {
-              console.warn("⚠️ Payload inválido em 'clienteDesistir':", parsedPayload);
-              return;
-            }
-
-            const clientesMapeados = clientes.map(padraoCliente);
-            setAllClients((prevClients) => {
-              const map = new Map<string, FilaItemExt | ChamadaItem>(prevClients.map(c => [c.id, c]));
-              clientesMapeados.forEach((c: FilaItem) => {
-                if (c.id) {
-                  map.set(c.id, { ...c, status: 4 }); // Força o status como 4 (Desistente)
-                }
-              });
-              const updatedClients = Array.from(map.values());
-              console.log("📋 Clientes atualizados após 'clienteDesistir':", updatedClients);
-              return updatedClients;
-            });
-          });
+          connection.on("clienteDesistir", handleClienteDesistir);
 
           console.log("📌 Registrando listener para 'clientedesistir' (fallback)...");
           connection.on("clientedesistir", (payload: any) => {
             if (!isMounted) return;
             console.log("📩 Evento 'clientedesistir' (fallback) recebido:", JSON.stringify(payload, null, 2));
-            connection.invoke("clienteDesistir", payload); // Redireciona para o listener principal
+            handleClienteDesistir(payload); // Chama a função diretamente, sem invoke
           });
         };
 
@@ -303,12 +309,11 @@ export const useFilaSignalR = (
             setIsSignalRConnected(true);
             console.log("🔄 SignalR reconectado com sucesso!");
             console.log("📌 Reaplicando listeners após reconexão...");
-            // Remove listeners antigos para evitar duplicatas
             connection.off("atualizarFila");
             connection.off("atualizarfila");
             connection.off("clienteDesistir");
             connection.off("clientedesistir");
-            registerListeners(); // Reaplica os listeners
+            registerListeners();
           }
         });
 

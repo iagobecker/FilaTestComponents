@@ -6,14 +6,14 @@ interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
 }
 
 const axiosInstance = axios.create({
-  baseURL: "http://10.0.0.191:5135/api",
+  baseURL: "http://localhost:5135/api",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 const axiosPublicInstance = axios.create({
-  baseURL: "http://10.0.0.191:5135/api",
+  baseURL: "http://localhost:5135/api",
   headers: {
     "Content-Type": "application/json",
   },

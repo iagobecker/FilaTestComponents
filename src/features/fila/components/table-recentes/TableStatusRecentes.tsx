@@ -75,82 +75,64 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
 
         {/* Ações tela mobile */}
         <div className="flex flex-col p-2 pt-15 items-end gap-2">
-          <div className="flex gap-1">
-            {status === 2 ? (
-              // Status Chamado: Mostra os 3 ícones
-              <>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => marcarComoAtendido(row.original.id)}
-                        className="cursor-pointer"
-                      >
-                        <CheckCircle className="!w-5.5 !h-5.5 text-green-500" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Atender</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => retornarParaFila(row.original.id)}
-                        className="cursor-pointer"
-                      >
-                        <CircleArrowLeft className="!w-5.5 !h-5.5 text-blue-500" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Voltar para fila</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removerChamada(row.original.id)}
-                        className="cursor-pointer"
-                      >
-                        <XCircle className="!w-5.5 !h-5.5 text-red-500" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Remover</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </>
-            ) : (
+          {status === 2 && (
+            <div className="flex gap-1">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => marcarComoDesistente(row.original.id)} // Usa marcarComoDesistente para status != 2
+                      onClick={() => marcarComoAtendido(row.original.id)}
+                      className="cursor-pointer"
+                    >
+                      <CheckCircle className="!w-5.5 !h-5.5 text-green-500" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Atender</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => retornarParaFila(row.original.id)}
+                      className="cursor-pointer"
+                    >
+                      <CircleArrowLeft className="!w-5.5 !h-5.5 text-blue-500" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Voltar para fila</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removerChamada(row.original.id)}
                       className="cursor-pointer"
                     >
                       <XCircle className="!w-5.5 !h-5.5 text-red-500" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Desistiu</p>
+                    <p>Remover</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            )}
-          </div>
+            </div>
+          )}
+
         </div>
       </div>
     </div>
@@ -271,87 +253,69 @@ const columns: ColumnDef<ChamadaItem>[] = [
     id: "acoes",
     header: "",
     cell: ({ row }) => {
-      const { retornarParaFila, removerChamada, marcarComoAtendido, marcarComoDesistente } = useFilaContext();
+      const { retornarParaFila, removerChamada, marcarComoAtendido } = useFilaContext();
       const status = Number(row.original.status);
+
+      if (status !== 2) return null; // ⛔️ Apenas exibe ações se status for 'Chamado'
 
       return (
         <div className="w-[80px] flex justify-end items-center gap-1">
-          {status === 2 ? (
-            // Status Chamado: mostra os 3 ícones
-            <>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => marcarComoAtendido(row.original.id)}
-                      className="cursor-pointer"
-                    >
-                      <CheckCircle className="!w-5.5 !h-5.5 text-green-500" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Atender</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => retornarParaFila(row.original.id)}
-                      className="cursor-pointer"
-                    >
-                      <CircleArrowLeft className="!w-5.5 !h-5.5 text-blue-500" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Voltar para fila</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removerChamada(row.original.id)}
-                      className="cursor-pointer"
-                    >
-                      <XCircle className="!w-5.5 !h-5.5 text-red-500" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Remover</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => marcarComoDesistente(row.original.id)} // Usa marcarComoDesistente
-                    className="cursor-pointer"
-                  >
-                    <XCircle className="!w-5.5 !h-5.5 text-red-500" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Desistiu</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => marcarComoAtendido(row.original.id)}
+                  className="cursor-pointer"
+                >
+                  <CheckCircle className="!w-5.5 !h-5.5 text-green-500" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Atender</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => retornarParaFila(row.original.id)}
+                  className="cursor-pointer"
+                >
+                  <CircleArrowLeft className="!w-5.5 !h-5.5 text-blue-500" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Voltar para fila</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removerChamada(row.original.id)}
+                  className="cursor-pointer"
+                >
+                  <XCircle className="!w-5.5 !h-5.5 text-red-500" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Remover</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       );
     },
   }
+
 ];
