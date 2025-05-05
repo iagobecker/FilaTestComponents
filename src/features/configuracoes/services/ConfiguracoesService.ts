@@ -1,30 +1,11 @@
 import { Api } from "@/api/api";
+import { ConfiguracaoType } from "../types/configTypes";
 
-// Definindo o tipo Configuracao para melhor tipagem
-export interface Configuracao {
-  id: string;
-  empresaId: string;
-  whatsappAtivo: boolean;
-  nomeDisplay: string;
-  enderecoDisplay: string;
-  mensagemEntrada: string;
-  mensagemChamada: string;
-  mensagemRemovido: string;
-  logoUrl: string;
-  corPrimaria: string;
-  corSobreposicao: string;
-  corTexto: string;
-  dataHoraCriado?: string;
-  dataHoraAlterado?: string;
-  dataHoraDeletado?: string;
-}
-
-export async function getConfiguracaoByEmpresaId(empresaId: string): Promise<Configuracao | null> {
+export async function getConfiguracaoByEmpresaId(empresaId: string): Promise<ConfiguracaoType | null> {
   try {
     const res = await Api.get("/configuracoes");
-    const config = res.data as Configuracao;
+    const config = res.data as ConfiguracaoType;
 
-    // Verifica se o objeto retornado tem empresaId e se corresponde ao empresaId fornecido
     if (!config || !config.empresaId) {
       console.error("Configuração inválida ou sem empresaId:", config);
       return null;
@@ -42,10 +23,11 @@ export async function getConfiguracaoByEmpresaId(empresaId: string): Promise<Con
   }
 }
 
-export async function criarConfiguracao(config: any) {
+export async function criarConfiguracao(config: ConfiguracaoType) {
   return Api.post("/configuracoes", config);
 }
 
-export async function atualizarConfiguracao(config: any) {
-  return Api.put("/configuracoes", config);
+export async function atualizarConfiguracao(config: ConfiguracaoType) {
+  const response = await Api.put("/configuracoes", config);
+  return response.data; 
 }

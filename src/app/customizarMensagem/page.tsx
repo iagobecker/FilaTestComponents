@@ -3,7 +3,7 @@
 import { Header } from "@/components/layout/Header";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { VoltarButton } from "@/components/VoltarButton";
-import { HeaderCustomMesage } from "@/features/customizarMensagem/components/HeaderCustomMesage";
+import { HeaderCustomMessage } from "@/features/customizarMensagem/components/HeaderCustomMesage";
 import RichEditor from "@/features/customizarMensagem/components/RichEditor";
 
 export default function CustomizarMensagem() {
@@ -12,7 +12,7 @@ export default function CustomizarMensagem() {
             <Header />
             <PageContainer>
                 <VoltarButton />
-                <HeaderCustomMesage />
+                <HeaderCustomMessage />
                 <RichEditor />
             </PageContainer>
         </>
