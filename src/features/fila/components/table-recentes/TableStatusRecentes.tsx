@@ -24,6 +24,7 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
     retornarParaFila,
     removerChamada,
     marcarComoAtendido,
+    marcarComoDesistente,
     getStatusText,
     getStatusColor,
     calcularTempo,
@@ -36,7 +37,6 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
         {/* Cabeçalho com código e nome */}
         <div>
           <div className="flex items-center gap-2">
-
             <span className="px-2 text-center font-bold text-[15px] py-1 text-gray-800 rounded-md">
               {String(row.index + 1).padStart(2, '0')}
             </span>
@@ -46,12 +46,12 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
           </div>
 
           <div className="flex items-center gap-1 mt-1">
-          <span
-            className={`px-2 py-1 rounded-sm text-sm font-medium  text-gray-500 ${getStatusColor(status)}`}
-          >
-            {getStatusText(status)}
-          </span>
-          </div> 
+            <span
+              className={`px-2 py-1 rounded-sm text-sm font-medium text-gray-500 ${getStatusColor(status)}`}
+            >
+              {getStatusText(status)}
+            </span>
+          </div>
 
           <a
             href={`https://wa.me/${encodeURIComponent(row.original.telefone)}`}
@@ -130,31 +130,28 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                
               </>
             ) : (
-
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => removerChamada(row.original.id)}
+                      onClick={() => marcarComoDesistente(row.original.id)} // Usa marcarComoDesistente para status != 2
                       className="cursor-pointer"
                     >
                       <XCircle className="!w-5.5 !h-5.5 text-red-500" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Remover</p>
+                    <p>Desistiu</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -169,6 +166,7 @@ export function TableStatusRecentes({ data }: { data: ChamadaItem[] }) {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  console.log("📋 Renderizando TableStatusRecentes com data:", data);
   return (
     <div className="border-none bg-white p-1 overflow-x-auto mt-4">
       <ChamadasContainer>
@@ -180,7 +178,7 @@ export function TableStatusRecentes({ data }: { data: ChamadaItem[] }) {
             ))}
           </div>
         ) : (
-          <div className={`overflow-x-auto ${data.length >=4 ? "max-h-[360px] overflow-y-auto" : ""}`}>
+          <div className={`overflow-x-auto ${data.length >= 4 ? "max-h-[360px] overflow-y-auto" : ""}`}>
             <Table>
               <TableBody>
                 {table.getRowModel().rows.map((row, index) => (
@@ -221,7 +219,7 @@ const columns: ColumnDef<ChamadaItem>[] = [
     accessorKey: "nome",
     header: "",
     cell: ({ row }) => (
-      <div className="w-[500px]  min-w-[180px] flex flex-col">
+      <div className="w-[500px] min-w-[180px] flex flex-col">
         <span className="font-semibold">{row.getValue("nome")}</span>
         <span className="text-sm text-gray-500 underline">{row.original.telefone}</span>
       </div>
@@ -231,7 +229,7 @@ const columns: ColumnDef<ChamadaItem>[] = [
     accessorKey: "observacao",
     header: "",
     cell: ({ row }) => (
-      <div className=" min-w-[80px] flex justify-start">
+      <div className="min-w-[80px] flex justify-start">
         <span className="text-sm font-semibold text-gray-400">{row.original.observacao}</span>
       </div>
     ),
@@ -250,7 +248,6 @@ const columns: ColumnDef<ChamadaItem>[] = [
         </div>
       );
     },
-    
   },
   {
     accessorKey: "status",
@@ -262,7 +259,7 @@ const columns: ColumnDef<ChamadaItem>[] = [
       return (
         <div className="flex min-w-[90px] max-w-[100px] items-center gap-1">
           <span
-            className={`px-2 py-1 rounded-sm text-sm font-medium  text-gray-500 ${getStatusColor(status)}`}
+            className={`px-2 py-1 rounded-sm text-sm font-medium text-gray-500 ${getStatusColor(status)}`}
           >
             {getStatusText(status)}
           </span>
@@ -270,13 +267,11 @@ const columns: ColumnDef<ChamadaItem>[] = [
       );
     },
   },
-
-  // Ações tela desktop
   {
     id: "acoes",
     header: "",
     cell: ({ row }) => {
-      const { retornarParaFila, removerChamada, marcarComoAtendido } = useFilaContext();
+      const { retornarParaFila, removerChamada, marcarComoAtendido, marcarComoDesistente } = useFilaContext();
       const status = Number(row.original.status);
 
       return (
@@ -331,27 +326,26 @@ const columns: ColumnDef<ChamadaItem>[] = [
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Desistiu</p>
+                    <p>Remover</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-             
             </>
           ) : (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {/* <Button
+                  <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => removerChamada(row.original.id)}
+                    onClick={() => marcarComoDesistente(row.original.id)} // Usa marcarComoDesistente
                     className="cursor-pointer"
                   >
                     <XCircle className="!w-5.5 !h-5.5 text-red-500" />
-                  </Button> */}
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Remover</p>
+                  <p>Desistiu</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -360,6 +354,4 @@ const columns: ColumnDef<ChamadaItem>[] = [
       );
     },
   }
-
 ];
-

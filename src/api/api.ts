@@ -22,18 +22,22 @@ const axiosPublicInstance = axios.create({
 const refreshToken = async (): Promise<{ accessToken: string; refreshToken: string }> => {
   const { "auth.refreshToken": refreshTokenValue } = parseCookies();
   if (!refreshTokenValue) {
+    console.error("❌ Refresh token ausente nos cookies.");
     throw new Error("Refresh token ausente");
   }
 
+  console.log("🔄 Tentando renovar token com refresh token:", refreshTokenValue.slice(0, 10) + "...");
   const response = await axiosPublicInstance.post("/autenticacao/refresh-token", {
     refreshToken: refreshTokenValue,
   });
-  return response.data as { accessToken: string; refreshToken: string };
+  const { accessToken, refreshToken: newRefreshToken } = response.data as { accessToken: string; refreshToken: string };
+  console.log("✅ Token renovado com sucesso:", { accessToken: accessToken.slice(0, 10) + "...", newRefreshToken: newRefreshToken.slice(0, 10) + "..." });
+  return { accessToken, refreshToken: newRefreshToken };
 };
 
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log("Resposta recebida:", {
+    console.log("✅ Resposta recebida:", {
       url: response.config.url,
       status: response.status,
     });
@@ -43,8 +47,8 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config as ExtendedAxiosRequestConfig;
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
+      console.log("❌ Erro 401 detectado em:", error.config?.url ?? "URL desconhecida", "Tentando renovar token...");
       try {
-        console.log("Erro 401 detectado, tentando refresh token...");
         const { accessToken, refreshToken: newRefreshToken } = await refreshToken();
         setAuthorizationHeader(accessToken);
 
@@ -69,10 +73,12 @@ axiosInstance.interceptors.response.use(
           headers,
         };
 
+        console.log("🔄 Reenviando requisição com novo token:", retryConfig.url);
         return axiosInstance(retryConfig);
       } catch (refreshError: any) {
-        console.error("Erro ao tentar refresh token:", refreshError);
+        console.error("❌ Erro ao tentar renovar token:", refreshError);
         if (refreshError.response?.data?.message === "Refresh token revogado") {
+          console.log("🔒 Refresh token revogado, redirecionando para login...");
           destroyCookie(undefined, "auth.token", { path: "/" });
           destroyCookie(undefined, "auth.refreshToken", { path: "/" });
           removeAuthorizationHeader();
@@ -81,7 +87,7 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(refreshError);
       }
     }
-    console.error("Erro na resposta:", {
+    console.error("❌ Erro na resposta:", {
       url: error.config?.url,
       status: error.response?.status,
       data: error.response?.data,
@@ -92,7 +98,7 @@ axiosInstance.interceptors.response.use(
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    console.log("Requisição enviada:", {
+    console.log("📤 Requisição enviada:", {
       url: config.url,
       method: config.method,
       headers: config.headers,
@@ -100,18 +106,18 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error("Erro no interceptor de requisição:", error);
+    console.error("❌ Erro no interceptor de requisição:", error);
     return Promise.reject(error);
   }
 );
 
 export function setAuthorizationHeader(token: string) {
-  console.log("Configurando cabeçalho de autorização com token:", token);
+  console.log("🔑 Configurando cabeçalho de autorização com token:", token.slice(0, 10) + "...");
   axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 }
 
 export function removeAuthorizationHeader() {
-  console.log("Removendo cabeçalho de autorização");
+  console.log("🔑 Removendo cabeçalho de autorização");
   delete axiosInstance.defaults.headers.common["Authorization"];
 }
 

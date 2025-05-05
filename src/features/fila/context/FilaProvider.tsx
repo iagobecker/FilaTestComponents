@@ -1,5 +1,3 @@
-"use client";
-
 import {
   createContext,
   useContext,
@@ -29,7 +27,7 @@ import { parseCookies } from "nookies";
 import { calcularTempo, editPayload, getStatusColor, getStatusText } from "../components/utils/filaUtils";
 import { FilaSignalRListener } from "@/features/fila/components/FilaSignalRListener";
 import { useAuth } from "@/features/auth/context/AuthContext";
-import { usePathname } from "next/navigation"; // Para verificar a rota atual
+import { usePathname } from "next/navigation";
 
 interface FilaContextType {
   contagemSelecionada: number;
@@ -48,11 +46,13 @@ interface FilaContextType {
   removerChamada: (id: string) => void;
   marcarComoAtendido: (id: string) => void;
   marcarComoNaoCompareceu: (id: string) => void;
+  marcarComoDesistente: (id: string) => Promise<void>; // Nova função para desistência
   getStatusText: (status: StatusType) => string;
   getStatusColor: (status: StatusType) => string;
   calcularTempo: (dataHoraCriado?: string) => string;
   editPayload: (orig: FilaItem, edicao: EditaCampos) => FilaItem;
   isSignalRConnected: boolean;
+  refreshFila: () => Promise<void>; // Função para recarregar a fila
 }
 
 const FilaContext = createContext<FilaContextType | undefined>(undefined);
@@ -66,108 +66,92 @@ export const useFilaContext = () => {
 };
 
 export function FilaProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, loading: authLoading, user } = useAuth();
-  const pathname = usePathname(); // Obtém a rota atual
+  const { isAuthenticated, loading: authLoading, user, onTokenUpdated } = useAuth();
+  const pathname = usePathname();
   const [contagemSelecionada, setContagemSelecionada] = useState(0);
   const [allClients, setAllClients] = useState<(FilaItemExt | ChamadaItem)[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
   const [isSignalRConnected, setIsSignalRConnected] = useState(false);
 
   const filaData = useMemo(() => {
-    return allClients
+    const filtered = allClients
       .filter(client => client.status === 1)
       .sort((a, b) => {
         const aData = new Date(a.dataHoraOrdenacao ?? a.dataHoraCriado ?? 0).getTime();
         const bData = new Date(b.dataHoraOrdenacao ?? b.dataHoraCriado ?? 0).getTime();
         return aData - bData;
       });
+    console.log("📊 filaData atualizado:", filtered);
+    return filtered;
   }, [allClients]);
 
   const chamadasData = useMemo(() => {
     const mapa = new Map();
     for (const client of allClients) {
-      if (client.status > 1) {
+      if (client.status > 1 && client.status <= 5) {
         mapa.set(client.id, client);
       }
     }
-    const filtered = Array.from(mapa.values()) as ChamadaItem[];
-    return filtered;
+    const updatedChamadas = Array.from(mapa.values()) as ChamadaItem[];
+    console.log("📊 chamadasData atualizado:", updatedChamadas);
+    return updatedChamadas;
   }, [allClients]);
 
-  useEffect(() => {
-    async function loadFila() {
-      try {
-        // Só carrega os dados da fila se estiver na página /fila
-        if (pathname !== "/fila" || !isAuthenticated || authLoading || !user?.empresaId) {
-          console.log("Não carregando dados da fila - Condição não atendida:", {
-            pathname,
-            isAuthenticated,
-            authLoading,
-            empresaId: user?.empresaId,
-          });
-          return;
-        }
+  const loadFila = async () => {
+    if (pathname !== "/fila" || !isAuthenticated || authLoading || !user?.empresaId) return;
 
-        const { "auth.token": token } = parseCookies();
-        if (!token) {
-          console.error("Token não encontrado nos cookies");
-          return;
-        }
-
-        console.log("Token encontrado:", token);
-        setAuthorizationHeader(token);
-
-        const filaId = await getDefaultFilaId(user.empresaId);
-        if (!filaId) {
-          console.error("Nenhum filaId encontrado");
-          return;
-        }
-
-        console.log("Carregando dados da fila com filaId:", filaId);
-        const fila = await buscarClientesFila(filaId);
-
-        const ordenados = [...fila]
-          .filter(item => item.status === 1)
-          .sort((a, b) => {
-            const aData = new Date(a.dataHoraOrdenacao ?? a.dataHoraCriado ?? 0).getTime();
-            const bData = new Date(b.dataHoraOrdenacao ?? b.dataHoraCriado ?? 0).getTime();
-            return aData - bData;
-          });
-
-        const chamados = fila.filter(item => item.status !== 1);
-
-        const renderAguardando = ordenados.map(item => ({
-          ...item,
-          id: item.id || crypto.randomUUID(),
-          filaId: item.filaId ?? "",
-          hash: item.hash ?? "",
-          status: (typeof item.status === "string" ? parseInt(item.status) : item.status) as StatusType || 1,
-          tempo: item.tempo || "há 0 minutos",
-          ticket: item.ticket || null,
-          observacao: item.observacao || "",
-          dataHoraCriado: item.dataHoraCriado || new Date().toISOString(),
-        }));
-
-        const renderChamados = chamados.map(item => ({
-          ...item,
-          id: item.id || crypto.randomUUID(),
-          filaId: item.filaId ?? "",
-          hash: item.hash ?? "",
-          status: (typeof item.status === "string" ? parseInt(item.status) : item.status) as StatusType || 1,
-          tempo: item.tempo || "há 0 minutos",
-          ticket: item.ticket || null,
-          observacao: item.observacao || "",
-          dataHoraCriado: item.dataHoraCriado || new Date().toISOString(),
-        }));
-
-        setAllClients([...renderAguardando, ...renderChamados]);
-      } catch (error) {
-        console.error("Erro ao carregar fila:", error);
-      }
+    const { "auth.token": token } = parseCookies();
+    if (!token) {
+      console.error("❌ Token não encontrado nos cookies");
+      return;
     }
 
+    setAuthorizationHeader(token);
+
+    const filaId = await getDefaultFilaId(user.empresaId);
+    if (!filaId) {
+      console.error("❌ Nenhum filaId encontrado");
+      return;
+    }
+
+    const fila = await buscarClientesFila(filaId);
+    const formattedClients = fila.map(item => ({
+      ...item,
+      id: item.id || crypto.randomUUID(),
+      filaId: item.filaId ?? "",
+      hash: item.hash ?? "",
+      status: (typeof item.status === "string" ? parseInt(item.status) : item.status) as StatusType || 1,
+      tempo: item.tempo || calcularTempo(item.dataHoraCriado),
+      ticket: item.ticket || null,
+      observacao: item.observacao || "",
+      dataHoraCriado: item.dataHoraCriado || new Date().toISOString(),
+    }));
+
+    setAllClients(formattedClients);
+  };
+
+  useEffect(() => {
     loadFila();
   }, [pathname, isAuthenticated, authLoading, user?.empresaId]);
+
+  useEffect(() => {
+    const handleTokenUpdate = (event: Event) => {
+      const newToken = (event as CustomEvent).detail;
+      if (newToken) {
+        console.log("🔄 Atualizando SignalR com novo token:", newToken.slice(0, 10) + "...");
+        setIsSignalRConnected(false);
+        setTimeout(() => {
+          const { "auth.token": token } = parseCookies();
+          if (token) {
+            setAuthorizationHeader(token);
+          }
+        }, 100);
+      }
+    };
+
+    window.addEventListener("tokenUpdated", handleTokenUpdate);
+    return () => window.removeEventListener("tokenUpdated", handleTokenUpdate);
+  }, []);
 
   const handleMarcarComoAtendido = async (id: string) => {
     await marcarComoAtendido(id, setAllClients);
@@ -175,10 +159,12 @@ export function FilaProvider({ children }: { children: ReactNode }) {
 
   const handleMarcarComoNaoCompareceu = async (id: string) => {
     await marcarComoNaoCompareceu(id, setAllClients);
+    await loadFila();
   };
 
   const handleRemoverChamada = async (id: string) => {
     await removerChamada(id, setAllClients, setChamadasData);
+    await loadFila();
   };
 
   const handleRetornarParaFila = async (id: string) => {
@@ -195,6 +181,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     await removerSelecionados(ids, allClients, setAllClients, setContagemSelecionada);
     setNotification(`${ids.length} cliente(s) removido(s)`);
     setTimeout(() => setNotification(null), 3000);
+    await loadFila();
   };
 
   const handleTrocarPosicaoCliente = async (id: string, direction: "up" | "down") => {
@@ -207,13 +194,25 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     await addPerson(nome, telefone, observacao, setAllClients, filaId);
   };
 
-  const handleEditPerson = async (clienteCompleto: FilaItem, camposEditados: any) => {
+  const handleEditPerson = async (clienteCompleto: FilaItem, camposEditados: EditaCampos) => {
     const filaId = allClients.length > 0 ? allClients[0].filaId : await getDefaultFilaId(user?.empresaId || "");
     await editPerson(clienteCompleto, camposEditados, setAllClients, filaId);
   };
 
-  const setFilaData: Dispatch<SetStateAction<FilaItemExt[]>> = updater => {
-    setAllClients(prev => {
+  const handleMarcarComoDesistente = async (id: string) => {
+    // Simula a lógica de marcar como desistente (pode ser ajustada para chamar uma API no backend)
+    setAllClients(prevClients => {
+      const updatedClients = prevClients.map(client =>
+        client.id === id ? { ...client, status: 4 } : client
+      );
+      console.log("📋 Clientes atualizados após marcar como desistente:", updatedClients);
+      return updatedClients;
+    });
+    await loadFila(); // Força a atualização da UI
+  };
+
+  const setFilaData: Dispatch<SetStateAction<FilaItemExt[]>> = (updater) => {
+    setAllClients((prev) => {
       const fila = prev.filter(c => c.status === 1);
       const chamadas = prev.filter(c => c.status !== 1);
       let updated = typeof updater === "function" ? updater(fila as FilaItemExt[]) : updater;
@@ -226,8 +225,8 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>> = updater => {
-    setAllClients(prev => {
+  const setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>> = (updater) => {
+    setAllClients((prev) => {
       const fila = prev.filter(c => c.status === 1);
       const chamadas = prev.filter(c => c.status !== 1);
       const updated = typeof updater === "function" ? updater(chamadas as ChamadaItem[]) : updater;
@@ -252,11 +251,13 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     removerChamada: handleRemoverChamada,
     marcarComoAtendido: handleMarcarComoAtendido,
     marcarComoNaoCompareceu: handleMarcarComoNaoCompareceu,
+    marcarComoDesistente: handleMarcarComoDesistente, // Adiciona a nova função
     getStatusText,
     getStatusColor,
     calcularTempo,
     editPayload,
     isSignalRConnected,
+    refreshFila: loadFila,
   };
 
   return (

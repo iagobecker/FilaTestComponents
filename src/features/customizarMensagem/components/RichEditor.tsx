@@ -511,7 +511,7 @@ export default function RichEditor() {
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="max-w-[200px] bg-blue-400 text-white hover:bg-blue-600"
+                  className="max-w-[200px] bg-white text-black hover:bg-gray-200"
                 >
                   Visualizar Preview
                 </Button>

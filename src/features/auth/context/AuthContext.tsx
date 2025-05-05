@@ -49,6 +49,7 @@ type AuthContextType = {
   setAuthStep: (step: "email" | "senha" | "authenticated") => void;
   signOut: () => void;
   refreshToken: () => Promise<TokenResponse>;
+  onTokenUpdated: (newToken: string) => void;
 };
 
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -74,19 +75,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log("Token expirado, tentando renovar...");
           await refreshToken();
         } else if (!user) {
-          const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-          const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
-          const name = decoded["name"] || "Administrador";
           let empresaId = "";
           let empresaData = null;
           try {
             empresaData = await EmpresaService.fetchEmpresa();
             empresaId = empresaData?.id || "";
-          } catch (error) {
+          } catch (error: any) {
+            if (error.response?.status === 401) {
+              console.error("❌ Token inválido ou expirado ao buscar empresa, redirecionando para login...");
+              signOut();
+              return;
+            }
             console.error("Erro ao buscar empresa (não crítico):", error);
-            signOut();
             return;
           }
+          const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+          const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
+          const name = decoded["name"] || "Administrador";
           if (id) {
             setUser({
               id,
@@ -135,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { "auth.refreshToken": refreshTokenValue } = parseCookies();
       if (!refreshTokenValue) {
-        console.error("Refresh token ausente, redirecionando para login");
+        console.error("❌ Refresh token ausente, redirecionando para login");
         signOut();
         throw new Error("Refresh token ausente");
       }
@@ -146,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-      console.log("Token renovado com sucesso:", { accessToken, newRefreshToken });
+      console.log("✅ Token renovado com sucesso:", { accessToken: accessToken.slice(0, 10) + "...", newRefreshToken: newRefreshToken.slice(0, 10) + "..." });
 
       setCookie(undefined, "auth.token", accessToken, {
         maxAge: 60 * 60 * 24 * 7,
@@ -194,15 +199,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
+      onTokenUpdated(accessToken);
+
       return { accessToken, refreshToken: newRefreshToken };
     } catch (error) {
-      console.error("Erro ao renovar token:", error);
+      console.error("❌ Erro ao renovar token:", error);
       signOut();
       throw error;
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
+  };
+
+  const onTokenUpdated = (newToken: string) => {
+    console.log("🔑 Token atualizado:", newToken.slice(0, 10) + "...");
+    // Notificação para outros componentes (ex.: FilaProvider) para reiniciar SignalR
+    const event = new CustomEvent("tokenUpdated", { detail: newToken });
+    window.dispatchEvent(event);
   };
 
   useEffect(() => {
@@ -212,14 +226,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     }
     loadUserFromCookies();
-    const interval = setInterval(checkTokenValidity, 300000);
+    const interval = setInterval(async () => {
+      const { "auth.token": token } = parseCookies();
+      if (token) {
+        const decoded = jwtDecode<DecodedToken>(token);
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (decoded.exp && decoded.exp < currentTime + 300) {
+          console.log("Token perto de expirar, renovando...");
+          await refreshToken();
+        }
+      }
+    }, 60000);
     return () => clearInterval(interval);
   }, [checkTokenValidity]);
 
   async function sendVerificationCode(email: string) {
     try {
       setLoading(true);
-      const response = await PublicApi.post("/autenticacao/gerar-codigo-acesso", { email });
+      const response = await PublicApi.post("/autenticacao/codigo-acesso", { email });
       if (response.status !== 200) {
         throw new Error("Falha ao enviar código");
       }
@@ -299,6 +323,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (router) {
         router.push(redirectTo);
       }
+
+      onTokenUpdated(accessToken);
     } catch (error: any) {
       console.error("Erro ao verificar código:", error);
       throw new Error(axios.isAxiosError(error) ? error.response?.data?.message || "Código inválido" : "Erro ao verificar código");
@@ -333,6 +359,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
         loading,
         refreshToken,
+        onTokenUpdated,
       }}
     >
       {children}

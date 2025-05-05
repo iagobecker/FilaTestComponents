@@ -13,8 +13,6 @@ export function HeaderFila({
 }) {
   const [isOpenAddPessoa, setIsOpenAddPessoa] = useState(false);
 
-  const filaId = "b36f453e-a763-4ee1-ae2d-6660c2740de5";
-
   return (
     <>
       <div className="flex justify-start items-center md:flex-row mb-3">
@@ -29,7 +27,7 @@ export function HeaderFila({
           description="Coloque as informações do cliente para adicioná-lo à fila"
           trigger={
             <Button
-              className="bg-white border border-gray-400 text-black shadow hover:bg-blue-400 cursor-pointer px-2 py-2 rounded-md"
+              className="bg-white border border-gray-400 text-black shadow hover:bg-blue-400 cursor-pointer px-2 py-2 rounded-md w-full sm:w-auto text-sm sm:text-base"
               onClick={() => setIsOpenAddPessoa(true)}
             >
               + Adicionar à fila
