@@ -4,16 +4,23 @@ import { createContext, useEffect, useState, useCallback } from "react";
 import { setCookie, parseCookies, destroyCookie } from "nookies";
 import { Api, PublicApi, initializeToken } from "@/api/api";
 import React from "react";
-import axios from "axios";
 import { useRouter, usePathname } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
-import { EmpresaService } from "@/features/auth/components/services/empresaService"; // Ajustado para usar EmpresaService
+import { EmpresaService } from "@/features/auth/components/services/empresaService";
+import axios from "axios";
+
+type Empresa = {
+  nome: string;
+  email: string;
+  cpfCnpj: string;
+};
 
 type User = {
   id: string;
   name: string;
   email: string;
   empresaId: string;
+  empresa: Empresa;
   signOut: () => void;
 };
 
@@ -71,11 +78,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
           const name = decoded["name"] || "Administrador";
           let empresaId = "";
+          let empresaData = null;
           try {
-            const empresaData = await EmpresaService.fetchEmpresa(); // Ajustado para EmpresaService.fetchEmpresa
+            empresaData = await EmpresaService.fetchEmpresa();
             empresaId = empresaData?.id || "";
           } catch (error) {
             console.error("Erro ao buscar empresa (não crítico):", error);
+            signOut();
+            return;
           }
           if (id) {
             setUser({
@@ -83,6 +93,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               name,
               email: decodedEmail || "",
               empresaId,
+              empresa: {
+                nome: empresaData.nome,
+                email: empresaData.email,
+                cpfCnpj: empresaData.cpfCnpj,
+              },
               signOut,
             });
             setAuthStep("authenticated");
@@ -136,14 +151,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCookie(undefined, "auth.token", accessToken, {
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
-        domain: "localhost",
         secure: false,
         sameSite: "lax",
       });
       setCookie(undefined, "auth.refreshToken", newRefreshToken, {
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
-        domain: "localhost",
         secure: false,
         sameSite: "lax",
       });
@@ -155,21 +168,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
       const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
       const name = decoded["name"] || "Administrador";
+      let empresaId = "";
+      let empresaData = null;
+      try {
+        empresaData = await EmpresaService.fetchEmpresa();
+        empresaId = empresaData?.id || "";
+      } catch (error) {
+        console.error("Erro ao buscar empresa após refresh:", error);
+        signOut();
+        throw error;
+      }
 
       if (id) {
-        let empresaId = "";
-        try {
-          const empresaData = await EmpresaService.fetchEmpresa(); // Ajustado para EmpresaService.fetchEmpresa
-          empresaId = empresaData?.id || "";
-        } catch (error) {
-          console.error("Erro ao buscar empresa após refresh:", error);
-        }
-
         setUser({
           id,
           name,
           email: decodedEmail || "",
           empresaId,
+          empresa: {
+            nome: empresaData.nome,
+            email: empresaData.email,
+            cpfCnpj: empresaData.cpfCnpj,
+          },
           signOut,
         });
       }
@@ -229,14 +249,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCookie(undefined, "auth.token", accessToken, {
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
-        domain: "localhost",
         secure: false,
         sameSite: "lax",
       });
       setCookie(undefined, "auth.refreshToken", refreshToken, {
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
-        domain: "localhost",
         secure: false,
         sameSite: "lax",
       });
@@ -248,21 +266,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
       const decodedEmail = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"];
       const name = decoded["name"] || "Administrador";
+      let empresaId = "";
+      let empresaData = null;
+      try {
+        empresaData = await EmpresaService.fetchEmpresa();
+        empresaId = empresaData?.id || "";
+      } catch (error) {
+        console.error("Erro ao buscar empresa:", error);
+        signOut();
+        throw error;
+      }
 
       if (id) {
-        let empresaId = "";
-        try {
-          const empresaData = await EmpresaService.fetchEmpresa(); // Ajustado para EmpresaService.fetchEmpresa
-          empresaId = empresaData?.id || "";
-        } catch (error) {
-          console.error("Erro ao buscar empresa:", error);
-        }
-
         setUser({
           id,
           name,
           email: decodedEmail || email,
           empresaId,
+          empresa: {
+            nome: empresaData.nome,
+            email: empresaData.email,
+            cpfCnpj: empresaData.cpfCnpj,
+          },
           signOut,
         });
         setAuthStep("authenticated");

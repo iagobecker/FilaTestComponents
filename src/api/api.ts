@@ -1,19 +1,19 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig, AxiosHeaders } from "axios";
-import { parseCookies, setCookie } from "nookies";
+import { parseCookies, setCookie, destroyCookie } from "nookies";
 
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5135/api",
+  baseURL: "http://10.0.0.191:5135/api",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 const axiosPublicInstance = axios.create({
-  baseURL: "http://localhost:5135/api",
+  baseURL: "http://10.0.0.191:5135/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -51,14 +51,12 @@ axiosInstance.interceptors.response.use(
         setCookie(undefined, "auth.token", accessToken, {
           maxAge: 60 * 60 * 24 * 7,
           path: "/",
-          domain: "localhost",
           secure: false,
           sameSite: "lax",
         });
         setCookie(undefined, "auth.refreshToken", newRefreshToken, {
           maxAge: 60 * 60 * 24 * 30,
           path: "/",
-          domain: "localhost",
           secure: false,
           sameSite: "lax",
         });
@@ -72,8 +70,14 @@ axiosInstance.interceptors.response.use(
         };
 
         return axiosInstance(retryConfig);
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         console.error("Erro ao tentar refresh token:", refreshError);
+        if (refreshError.response?.data?.message === "Refresh token revogado") {
+          destroyCookie(undefined, "auth.token", { path: "/" });
+          destroyCookie(undefined, "auth.refreshToken", { path: "/" });
+          removeAuthorizationHeader();
+          window.location.href = "/login";
+        }
         return Promise.reject(refreshError);
       }
     }

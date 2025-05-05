@@ -11,7 +11,9 @@ export default function DadosEmpresa() {
             <PageContainer>
                 <VoltarButton />
                 <HeaderDadosEmpresa />
-                <DadosEmpresaForm/>
+                <div className="flex items-center justify-center min-h-[calc(80vh-120px)]">
+                    <DadosEmpresaForm />
+                </div>
             </PageContainer>
 
         </>

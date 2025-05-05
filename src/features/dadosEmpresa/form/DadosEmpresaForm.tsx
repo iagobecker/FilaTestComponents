@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useContext } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Api } from "@/api/api"
+import { AuthContext } from "@/features/auth/context/AuthContext"
 
 const formSchema = z.object({
   nomeEmpresa: z.string().min(1, "Nome da empresa é obrigatório"),
@@ -19,6 +19,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 export default function DadosEmpresaForm() {
+  const { user, loading } = useContext(AuthContext);
   const {
     register,
     handleSubmit,
@@ -28,35 +29,36 @@ export default function DadosEmpresaForm() {
     resolver: zodResolver(formSchema),
   })
 
-
   useEffect(() => {
-    async function fetchEmpresa() {
-      try {
-        const res = await Api.get('/empresas');
-        const empresa = res.data;
-
-        reset({
-          nomeEmpresa: empresa.nome,
-          email: empresa.email,
-          cpfCnpj: empresa.cpfCnpj,
-          redefinirEmail: empresa.email,
-        });
-      } catch (err) {
-        console.error("Erro ao buscar dados da empresa autenticada:", err);
-      }
+    if (!loading && user?.empresa) {
+      reset({
+        nomeEmpresa: user.empresa.nome || "",
+        email: user.empresa.email || "",
+        cpfCnpj: user.empresa.cpfCnpj || "",
+        redefinirEmail: user.empresa.email || "",
+      });
+    } else if (!loading) {
+      reset({
+        nomeEmpresa: "",
+        email: "",
+        cpfCnpj: "",
+        redefinirEmail: "",
+      });
     }
-
-    fetchEmpresa();
-  }, [reset]);
+  }, [user, loading, reset]);
 
   const onSubmit = (data: FormData) => {
     // TODO: atualizar via Api.put('/empresas/', data)
   }
 
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-md space-y-4 p-4"
+      className="w-full max-w-md space-y-4 p-4 bg-white rounded-lg shadow-md"
     >
       <div className="space-y-1">
         <Label>Nome da empresa</Label>
@@ -80,10 +82,10 @@ export default function DadosEmpresaForm() {
         {errors.cpfCnpj && (
           <p className="text-sm text-red-500">{errors.cpfCnpj.message}</p>
         )}
-      </div>    
+      </div>
 
       <div className="pt-4">
-        <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+        <Button type="submit" className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white">
           Salvar
         </Button>
       </div>

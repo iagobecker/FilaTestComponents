@@ -10,15 +10,18 @@ export const FilaSignalRListener = ({ setIsSignalRConnected }: FilaSignalRListen
   const { setAllClients } = useFilaContext();
   const { "auth.token": token } = parseCookies();
 
+  if (!token) {
+    console.error("Token ausente, não é possível iniciar o SignalR.");
+    setIsSignalRConnected(false);
+    return null;
+  }
 
   try {
-    // Usar o hook para escutar eventos do SignalR
-    useFilaSignalR(setAllClients, setIsSignalRConnected, token || "");
+    useFilaSignalR(setAllClients, setIsSignalRConnected, token);
   } catch (error) {
     console.error("Erro ao iniciar o SignalR no FilaSignalRListener:", error);
     setIsSignalRConnected(false);
   }
 
-  // Este componente não renderiza nada, apenas escuta eventos
   return null;
 };

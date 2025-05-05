@@ -195,7 +195,7 @@ export const chamarSelecionados = async (
         return {
           ...client,
           status: 2,
-          tempo: minutos < 1 ? "Agora" : `há ${minutos} min`,
+          tempo: atualizado?.dataHoraCriado ?? client.tempo,
           ...(atualizado ? atualizado : {}),
         };
       }

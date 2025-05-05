@@ -6,10 +6,10 @@ export const calcularTempo = (dataHoraCriado?: string): string => {
   if (!dataHoraCriado) return "";
   const criado = typeof dataHoraCriado === "string" ? parseISO(dataHoraCriado) : dataHoraCriado;
   const minutos = differenceInMinutes(new Date(), criado);
-  if (minutos < 1) return "Agora";
+  if (minutos < 1) return criado.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   if (minutos < 60) return `há ${minutos} minutos`;
   const horas = Math.floor(minutos / 60);
-  return `há ${horas}h${(minutos % 60).toString().padStart(2, "0")}`;
+  return ` ${horas}h${(minutos % 60).toString().padStart(2, "0")}`;
 };
 
 export const getStatusText = (status: StatusType): string => {

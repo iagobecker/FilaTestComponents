@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/features/auth/context/AuthContext";
-
 import { ConfigCard } from "@/features/configuracoes/components/ConfigCard";
 import { HeaderConfiguracoes } from "@/features/configuracoes/components/HeaderConfiguracoes";
-
 import { Palette, MessageCircle, Clock, MessageSquare, Monitor } from "lucide-react";
-import { Configuracao, getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/ConfiguracoesService";
+import { getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/ConfiguracoesService";
 import { Header } from "@/components/layout/Header";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { DialogTempoMaximo } from "@/features/configuracoes/components/DialogTempoMaximo";
+import { Configuracao } from "@/features/auth/components/services/empresaService";
 
 export default function ConfiguracoesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -33,7 +32,11 @@ export default function ConfiguracoesPage() {
           setError("Nenhuma configuração encontrada para esta empresa.");
           return;
         }
-        setConfig(fetchedConfig);
+        if (fetchedConfig.id) {
+          setConfig(fetchedConfig as Configuracao);
+        } else {
+          setError("Configuração inválida: ID ausente.");
+        }
         console.log("Configurações carregadas:", fetchedConfig);
       } catch (error: any) {
         console.error("Erro ao carregar configurações:", error);
@@ -81,12 +84,31 @@ export default function ConfiguracoesPage() {
           />
 
           <ConfigCard
+            title="Customizar mensagem"
+            description="Crie mensagens personalizadas no WhatsApp para diferentes situações e melhore a comunicação com seus clientes."
+            icon={<MessageSquare className="size-6 text-purple-600" />}
+            bgColor="bg-purple-100"
+            borderColor="border-purple-200"
+            href="/customizarMensagem"
+          />
+
+          <ConfigCard
             title="Ativar WhatsApp"
             description="Vincule seu número para enviar notificações e atualizações da fila diretamente para os clientes."
             icon={<MessageCircle className="size-6 text-green-600" />}
             bgColor="bg-green-100"
             borderColor="border-green-200"
             href="/ativaWhatsapp"
+          />
+
+
+          <ConfigCard
+            title="Ativar Monitor"
+            description="Crie mensagens personalizadas no WhatsApp para diferentes situações e melhore a comunicação com seus clientes."
+            icon={<Monitor className="size-6 text-cyan-600" />}
+            bgColor="bg-cyan-100"
+            borderColor="border-cyan-500"
+            href="/vinculaMonitor"
           />
 
           <ConfigCard
@@ -98,23 +120,6 @@ export default function ConfiguracoesPage() {
             onClick={() => setIsDialogOpen(true)}
           />
 
-          <ConfigCard
-            title="Customizar mensagem"
-            description="Crie mensagens personalizadas no WhatsApp para diferentes situações e melhore a comunicação com seus clientes."
-            icon={<MessageSquare className="size-6 text-purple-600" />}
-            bgColor="bg-purple-100"
-            borderColor="border-purple-200"
-            href="/customizarMensagem"
-          />
-
-          <ConfigCard
-            title="Ativar Monitor"
-            description="Crie mensagens personalizadas no WhatsApp para diferentes situações e melhore a comunicação com seus clientes."
-            icon={<Monitor className="size-6 text-cyan-600" />}
-            bgColor="bg-cyan-100"
-            borderColor="border-cyan-500"
-            href="/vinculaMonitor"
-          />
         </div>
       </PageContainer>
 
