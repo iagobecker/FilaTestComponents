@@ -13,7 +13,7 @@ export default function CustomAparenciaPage() {
             <PageContainer>
                 <VoltarButton />
                 <HeaderCustomAparencia />
-                <AparenciaMonitor addEmpresa={(nome: string) => console.log(`Empresa adicionada: ${nome}`)} />
+                <AparenciaMonitor />
             </PageContainer>
         </>
     )
