@@ -1,18 +1,15 @@
 "use client";
 
 import { Editor } from "@tiptap/react";
-import {
-  FaBold,
-  FaItalic,
-  FaUnderline,
-  FaUndo,
-  FaRedo,
-} from "react-icons/fa";
+import { FaBold, FaItalic, FaUnderline, FaUndo, FaRedo } from "react-icons/fa";
 
-export default function MenuBar({ editor }: { editor: Editor }) {
+interface MenuBarProps {
+  editor: Editor;
+}
 
+export function MenuBar({ editor }: MenuBarProps) {
   if (!editor) return null;
-  // .chain() → inicia uma cadeia de comandos / .focus() → foca o editor / .toggleBold() → ativa ou desativa o negrito / .run() → executa a cadeia de comandos
+
   return (
     <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
       <div className="flex gap-2">
@@ -57,7 +54,3 @@ export default function MenuBar({ editor }: { editor: Editor }) {
     </div>
   );
 }
-
-
-
-

@@ -1,24 +1,49 @@
 import { useState, useEffect } from "react";
-import { useMediaQuery } from "@/lib/hooks/use-media-query";
-import { useConfigPreview } from "@/lib/hooks/useConfigPreview";
-import { toast } from "sonner";
-import {  getConfiguracaoByEmpresaId, atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/ConfiguracoesService";
-import { ConfiguracaoType } from "@/features/configuracoes/types/configTypes";
 
-export function useCustomMensagem(empresaId: string) {
+import { toast } from "sonner";
+import { getConfiguracaoByEmpresaId, atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/ConfiguracoesService";
+import { ConfiguracaoType } from "@/features/configuracoes/types/configTypes";
+import { EmpresaService } from "@/features/auth/components/services/empresaService";
+import { useConfigPreview } from "@/lib/hooks/useConfigPreview";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
+
+export function useCustomMensagem(empresaId: string, filaId: string) {
+  const [isValidFila, setIsValidFila] = useState<boolean>(false);
+  const [loadingFila, setLoadingFila] = useState(true);
   const {
     config,
     previews,
     setPreviews,
-    loading,
-    convertHtmlToVariablesString,
-    renderWithVariables,
+    loading: loadingConfig,
     updatePreviewsAfterSave,
   } = useConfigPreview(empresaId);
   const isSmallScreen = useMediaQuery("(max-width: 1190px)");
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
-  const variablesMap = {
+  useEffect(() => {
+    const validateFila = async () => {
+      try {
+        setLoadingFila(true);
+        const fila = await EmpresaService.fetchFilaById(filaId);
+        if (fila.empresaId === empresaId) {
+          setIsValidFila(true);
+        } else {
+          throw new Error("A fila não pertence à empresa especificada.");
+        }
+      } catch (error: any) {
+        toast.error(error.message || "Erro ao validar a fila.");
+        setIsValidFila(false);
+      } finally {
+        setLoadingFila(false);
+      }
+    };
+
+    if (empresaId && filaId) {
+      validateFila();
+    }
+  }, [empresaId, filaId]);
+
+  const variablesMap: Record<string, string> = {
     nome: "João Silva",
     link: `<a href='https://example.com/cliente-fila' class='font-bold underline text-blue-600' target='_blank'>https://example.com/cliente-fila</a>`,
   };
@@ -34,14 +59,14 @@ export function useCustomMensagem(empresaId: string) {
   };
 
   const saveMessages = async () => {
-    if (!config) return;
+    if (!config || !isValidFila) return;
 
     const payload: ConfiguracaoType = {
       ...config,
       nomeDisplay: config.nomeDisplay ?? "",
-      mensagemEntrada: previews[0] ?? "", // Usar valor bruto de previews
-      mensagemChamada: previews[1] ?? "", // Usar valor bruto de previews
-      mensagemRemovido: previews[2] ?? "", // Usar valor bruto de previews
+      mensagemEntrada: previews[0] ?? "",
+      mensagemChamada: previews[1] ?? "",
+      mensagemRemovido: previews[2] ?? "",
       corPrimaria: config.corPrimaria ?? "#000000",
       corSobreposicao: config.corSobreposicao ?? "#FFFFFF",
       whatsappAtivo: config.whatsappAtivo ?? false,
@@ -61,7 +86,6 @@ export function useCustomMensagem(empresaId: string) {
         response = await criarConfiguracao(payload);
       }
 
-      // Recarregar a configuração após salvar para garantir sincronia
       const updatedConfig = await getConfiguracaoByEmpresaId(empresaId);
       if (updatedConfig) {
         updatePreviewsAfterSave(updatedConfig);
@@ -75,6 +99,8 @@ export function useCustomMensagem(empresaId: string) {
     }
   };
 
+  const loading = loadingConfig || loadingFila;
+
   return {
     isSmallScreen,
     showPreviewModal,
@@ -86,8 +112,8 @@ export function useCustomMensagem(empresaId: string) {
     updatePreview,
     variablesMap,
     sectionTitles,
-    convertHtmlToVariablesString,
-    renderWithVariables,
     saveMessages,
+    filaId,
+    isValidFila,
   };
 }

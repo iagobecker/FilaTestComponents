@@ -9,7 +9,6 @@ interface WhatsAppPreviewProps {
 export function WhatsAppPreview({ previews, renderWithVariables, variablesMap }: WhatsAppPreviewProps) {
   return (
     <div className="w-[300px] h-[600px] rounded-[30px] overflow-hidden shadow-xl bg-[#ece5dd] flex flex-col border-[6px] border-black relative">
-      {/* Top bar */}
       <div className="h-[50px] bg-[#075e54] text-white flex items-center px-3">
         <div className="size-6 bg-gray-300 rounded-full mr-2"></div>
         <div className="flex flex-col text-sm">
@@ -20,7 +19,6 @@ export function WhatsAppPreview({ previews, renderWithVariables, variablesMap }:
         </div>
       </div>
 
-      {/* Mensagens */}
       <div className="p-3 flex-1 overflow-y-auto space-y-4 text-sm">
         {previews.map((html, idx) => (
           <div key={idx}>
@@ -34,7 +32,6 @@ export function WhatsAppPreview({ previews, renderWithVariables, variablesMap }:
         ))}
       </div>
 
-      {/* Campo de digitação */}
       <div className="bg-[#e5ddd5] px-3 py-2">
         <div className="flex items-center gap-2">
           <div className="flex items-center px-3 py-2 bg-white rounded-full shadow w-[210px]">

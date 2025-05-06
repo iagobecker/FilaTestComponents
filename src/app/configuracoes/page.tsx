@@ -9,16 +9,17 @@ import { getConfiguracaoByEmpresaId } from "@/features/configuracoes/services/Co
 import { Header } from "@/components/layout/Header";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { DialogTempoMaximo } from "@/features/configuracoes/components/DialogTempoMaximo";
-import { Configuracao } from "@/features/auth/components/services/empresaService";
+import { Configuracao, EmpresaService, Fila } from "@/features/auth/components/services/empresaService";
 
 export default function ConfiguracoesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<Configuracao | null>(null);
+  const [filas, setFilas] = useState<Fila[]>([]);
   const { user, isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    async function loadConfig() {
+    async function loadConfigAndFilas() {
       if (!isAuthenticated || loading || !user?.empresaId) {
         console.log("Usuário não autenticado ou empresaId não encontrado");
         setError("Usuário não autenticado ou empresaId não encontrado.");
@@ -38,13 +39,22 @@ export default function ConfiguracoesPage() {
           setError("Configuração inválida: ID ausente.");
         }
         console.log("Configurações carregadas:", fetchedConfig);
+
+        const empresa = await EmpresaService.fetchEmpresa();
+        if (empresa.filas && empresa.filas.length > 0) {
+          setFilas(empresa.filas);
+          console.log("Filas carregadas:", empresa.filas);
+        } else {
+          setError("Nenhuma fila encontrada para esta empresa.");
+          console.log("Nenhuma fila encontrada.");
+        }
       } catch (error: any) {
-        console.error("Erro ao carregar configurações:", error);
-        setError(error.message || "Falha ao carregar configurações. Tente novamente.");
+        console.error("Erro ao carregar configurações ou filas:", error);
+        setError(error.message || "Falha ao carregar dados. Tente novamente.");
       }
     }
 
-    loadConfig();
+    loadConfigAndFilas();
   }, [isAuthenticated, loading, user?.empresaId]);
 
   if (loading) {
@@ -67,6 +77,8 @@ export default function ConfiguracoesPage() {
     );
   }
 
+  const filaId = filas.length > 0 ? filas[0].id : null;
+
   return (
     <>
       <Header />
@@ -80,7 +92,7 @@ export default function ConfiguracoesPage() {
             icon={<Palette className="size-6 text-blue-600" />}
             bgColor="bg-blue-100"
             borderColor="border-blue-200"
-            href="/customAparencia"
+            href={user?.empresaId ? `/customAparencia/${user.empresaId}` : "#"}
           />
 
           <ConfigCard
@@ -89,7 +101,12 @@ export default function ConfiguracoesPage() {
             icon={<MessageSquare className="size-6 text-purple-600" />}
             bgColor="bg-purple-100"
             borderColor="border-purple-200"
-            href="/customizarMensagem"
+            href={
+              user?.empresaId && filaId
+                ? `/customizar-mensagem/${user.empresaId}/${filaId}`
+                : "#"
+            }
+            disabled={!filaId}
           />
 
           <ConfigCard
@@ -100,7 +117,6 @@ export default function ConfiguracoesPage() {
             borderColor="border-green-200"
             href="/ativaWhatsapp"
           />
-
 
           <ConfigCard
             title="Ativar Monitor"
@@ -119,7 +135,6 @@ export default function ConfiguracoesPage() {
             borderColor="border-orange-200"
             onClick={() => setIsDialogOpen(true)}
           />
-
         </div>
       </PageContainer>
 
