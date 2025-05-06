@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronDown, LogOut, Settings, User } from "lucide-react";
@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useAuth } from "@/features/auth/context/AuthContext";
 
 export function UserMenu() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
 
   return (
     <DropdownMenu>
@@ -39,22 +39,20 @@ export function UserMenu() {
         align="end"
         className="w-48 sm:w-56 shadow-md rounded-md"
       >
-        <Link href="/dadosEmpresa" passHref>
+        <Link href={`/dados-empresa/${user?.empresaId}`} passHref>
           <DropdownMenuItem
             className="cursor-pointer flex items-center gap-2 px-3 py-2 
-               data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
+                       data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
           >
             <User className="w-4 h-4 text-blue-600" />
             <span>Dados da empresa</span>
           </DropdownMenuItem>
         </Link>
 
-
-
         <Link href="/configuracoes" passHref>
           <DropdownMenuItem
             className="cursor-pointer flex items-center gap-2 px-3 py-2 
-                     data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
+                       data-[highlighted]:bg-blue-100 data-[highlighted]:text-blue-600 transition"
           >
             <Settings className="w-4 h-4 text-blue-600" />
             <span>Configurações</span>

@@ -18,55 +18,54 @@ export default function InputVinculacao({ empresa }: Props) {
 
     const handleVincular = async () => {
         if (!empresa) {
-            setResposta('Empresa não carregada ainda.')
-            return
+          setResposta("Empresa não carregada ainda.");
+          return;
         }
-
+      
         try {
-            const payload = {
-                Aplicativo: 2,
-                Codigo: digitado,
-                CpfCnpj: empresa.cpfCnpj,
-                NomeEmpresa: empresa.nome,
-                AplicativoVinculado: 4,
-                Host: null,
-                Porta: null,
-                IdCliente: 0,
-                Detalhes: {}
-            }
-
-            const resultado = await vincularAplicativo(payload)
-            const idVinculacaoAplicativo = resultado?.idVinculacaoAplicativo
-            const empresaId = empresa.id
-            const filaId = empresa.filas?.[0]?.id
-
-            if (!idVinculacaoAplicativo || !empresaId || !filaId) {
-                setResposta('Faltam dados para vincular o monitor.')
-                return
-            }
-
-            const now = new Date().toISOString()
-
-            await Api.post('/vinculacoes', {
-                id: uuidv4(),
-                dataHoraCriado: now,
-                dataHoraAlterado: now,
-                dataHoraDeletado: null,
-                idVinculacao: idVinculacaoAplicativo,
-                empresaId,
-                filaId
-            })
-
-            setResposta('Vinculado com sucesso!!')
-            setTimeout(() => {
-                router.push('/customAparencia')
-            }, 2500)
-
+          const payload = {
+            Aplicativo: 2,
+            Codigo: digitado,
+            CpfCnpj: empresa.cpfCnpj,
+            NomeEmpresa: empresa.nome,
+            AplicativoVinculado: 4,
+            Host: null,
+            Porta: null,
+            IdCliente: 0,
+            Detalhes: {},
+          };
+      
+          const resultado = await vincularAplicativo(payload);
+          const idVinculacaoAplicativo = resultado?.idVinculacaoAplicativo;
+          const empresaId = empresa.id;
+          const filaId = empresa.filas?.[0]?.id;
+      
+          if (!idVinculacaoAplicativo || !empresaId || !filaId) {
+            setResposta("Faltam dados para vincular o monitor.");
+            return;
+          }
+      
+          const now = new Date().toISOString();
+      
+          await Api.post("/vinculacoes", {
+            id: uuidv4(),
+            dataHoraCriado: now,
+            dataHoraAlterado: now,
+            dataHoraDeletado: null,
+            idVinculacao: idVinculacaoAplicativo,
+            empresaId,
+            filaId,
+          });
+      
+          setResposta("Vinculado!");
+          setTimeout(() => {
+            router.push(`/customAparencia/${empresaId}`);
+          }, 2500);
         } catch (err) {
-            console.error(err)
-            setResposta('Erro ao Vincular.')
+          console.error(err);
+          setResposta("Erro ao Vincular.");
         }
-    }
+      };
 
     return (
         <div className="flex gap-2 p-2 items-center mt-2">

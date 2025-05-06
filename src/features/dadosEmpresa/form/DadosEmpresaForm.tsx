@@ -1,58 +1,27 @@
-"use client"
+"use client";
 
-import { useEffect, useContext } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { AuthContext } from "@/features/auth/context/AuthContext"
+import { useDadosEmpresaForm } from "../hooks/useDadosEmpresaForm";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const formSchema = z.object({
-  nomeEmpresa: z.string().min(1, "Nome da empresa é obrigatório"),
-  email: z.string().email("E-mail inválido"),
-  cpfCnpj: z.string().min(11, "CPF/CNPJ inválido"),
-  redefinirEmail: z.string().email("E-mail inválido para redefinição"),
-})
+interface DadosEmpresaFormProps {
+  empresaId: string;
+}
 
-type FormData = z.infer<typeof formSchema>
-
-export default function DadosEmpresaForm() {
-  const { user, loading } = useContext(AuthContext);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-  })
-
-  useEffect(() => {
-    if (!loading && user?.empresa) {
-      reset({
-        nomeEmpresa: user.empresa.nome || "",
-        email: user.empresa.email || "",
-        cpfCnpj: user.empresa.cpfCnpj || "",
-        redefinirEmail: user.empresa.email || "",
-      });
-    } else if (!loading) {
-      reset({
-        nomeEmpresa: "",
-        email: "",
-        cpfCnpj: "",
-        redefinirEmail: "",
-      });
-    }
-  }, [user, loading, reset]);
-
-  const onSubmit = (data: FormData) => {
-    // TODO: atualizar via Api.put('/empresas/', data)
-  }
+export default function DadosEmpresaForm({ empresaId }: DadosEmpresaFormProps) {
+  const { register, handleSubmit, errors, loading, onSubmit, isValidEmpresa } = useDadosEmpresaForm(empresaId);
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return <div className="flex justify-center items-center h-screen">Carregando...</div>;
+  }
+
+  if (!isValidEmpresa) {
+    return (
+      <div className="flex justify-center items-center h-screen text-red-500">
+        Empresa inválida ou não encontrada.
+      </div>
+    );
   }
 
   return (
@@ -71,24 +40,24 @@ export default function DadosEmpresaForm() {
       <div className="space-y-1">
         <Label>Email</Label>
         <Input type="email" placeholder="email@exemplo.com" {...register("email")} />
-        {errors.email && (
-          <p className="text-sm text-red-500">{errors.email.message}</p>
-        )}
+        {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
       </div>
 
       <div className="space-y-1">
         <Label>CPF/CNPJ</Label>
         <Input placeholder="Digite o CPF ou CNPJ" {...register("cpfCnpj")} />
-        {errors.cpfCnpj && (
-          <p className="text-sm text-red-500">{errors.cpfCnpj.message}</p>
-        )}
+        {errors.cpfCnpj && <p className="text-sm text-red-500">{errors.cpfCnpj.message}</p>}
       </div>
 
       <div className="pt-4">
-        <Button type="submit" className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white">
-          Salvar
+        <Button
+          type="submit"
+          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white"
+          disabled={loading}
+        >
+          {loading ? "Carregando..." : "Salvar"}
         </Button>
       </div>
     </form>
-  )
+  );
 }

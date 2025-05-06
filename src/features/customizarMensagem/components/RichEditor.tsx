@@ -28,7 +28,7 @@ const extensions = [
 
 const variables = [
   { label: "{nome}", value: "João Silva" },
-  { label: "{link}", value: "https://example.com/rastreio" },
+  { label: "{link}", value: "https://example.com/monitorFila" },
 ];
 
 function RichTextBlock({

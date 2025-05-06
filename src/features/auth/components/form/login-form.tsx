@@ -188,7 +188,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                 disabled={loading || !email}
                 aria-busy={loading}
               >
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading && <Loader2 className="md: col-auto mr-2 h-4 w-4 animate-spin" />}
                 Verificar código
               </Button>
             </div>
