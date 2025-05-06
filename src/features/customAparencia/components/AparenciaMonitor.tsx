@@ -4,9 +4,13 @@ import CardMonitor from "./CardMonitor";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Eye, Image, Upload } from "lucide-react";
 import { useCustomAparencia } from "../hooks/useCustomAparencia";
-import { SketchPicker } from "react-color"
+import { SketchPicker } from "react-color";
 
-export function AparenciaMonitor() {
+interface AparenciaMonitorProps {
+  empresaId: string;
+}
+
+export function AparenciaMonitor({ empresaId }: AparenciaMonitorProps) {
   const {
     name,
     setName,
@@ -36,7 +40,7 @@ export function AparenciaMonitor() {
     saveConfig,
     config,
     loading,
-  } = useCustomAparencia("2251881f-386b-402d-a1f2-e364706ef9c2");
+  } = useCustomAparencia(empresaId);
 
   if (loading) {
     return <div className="flex justify-center items-center h-screen">Carregando...</div>;
@@ -197,13 +201,19 @@ export function AparenciaMonitor() {
               </div>
             </div>
             <CardFooter className="flex justify-between border-t m-3 border-blue-200 pt-0">
-              <Button className="max-w-[150px] border bg-white cursor-pointer text-black hover:bg-gray-200" onClick={resetColors}>
+              <Button
+                className="max-w-[150px] border bg-white cursor-pointer text-black hover:bg-gray-200"
+                onClick={resetColors}
+              >
                 Redefinir cores
               </Button>
               {isSmallScreen && (
                 <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="max-w-[150px] bg-white text-black hover:bg-gray-200 cursor-pointer flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      className="max-w-[150px] bg-white text-black hover:bg-gray-200 cursor-pointer flex items-center gap-2"
+                    >
                       <Eye className="size-5" />
                       Preview
                     </Button>
@@ -223,7 +233,10 @@ export function AparenciaMonitor() {
                       >
                         <ChevronLeft className="h-6 w-6" />
                       </Button>
-                      <div {...bind()} className="h-full w-full flex items-center justify-center p-4 touch-pan-x">
+                      <div
+                        {...bind()}
+                        className="h-full w-full flex items-center justify-center p-4 touch-pan-x"
+                      >
                         {currentPreview === "monitor" ? (
                           <div className="scale-[0.5] md:scale-[0.9]">
                             <CardMonitor

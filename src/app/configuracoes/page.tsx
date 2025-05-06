@@ -92,7 +92,7 @@ export default function ConfiguracoesPage() {
             icon={<Palette className="size-6 text-blue-600" />}
             bgColor="bg-blue-100"
             borderColor="border-blue-200"
-            href={user?.empresaId ? `/customAparencia/${user.empresaId}` : "#"}
+            href={user?.empresaId ? `/customizar-aparencia/${user.empresaId}` : "#"}
           />
 
           <ConfigCard
