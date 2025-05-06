@@ -1,47 +1,49 @@
-'use client'
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export function AddPersonForm({
   addPerson,
-  onClose
+  onClose,
 }: {
-  addPerson: (nome: string, telefone: string, observacao: string) => void
-  onClose: () => void
+  addPerson: (nome: string, telefone: string, observacao: string) => void;
+  onClose: () => void;
 }) {
-  const [name, setName] = useState("")
-  const [phone, setPhone] = useState("")
-  const [observation, setObservation] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [observation, setObservation] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const formatPhone = (value: string) => {
-    let phoneNumber = value.replace(/\D/g, "")
-    if (phoneNumber.length > 11) phoneNumber = phoneNumber.slice(0, 11)
+    let phoneNumber = value.replace(/\D/g, "");
+    if (phoneNumber.length > 11) phoneNumber = phoneNumber.slice(0, 11);
 
-    if (phoneNumber.length <= 10) {
-      return phoneNumber.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3")
+    if (phoneNumber.length <= 6) {
+      return phoneNumber.replace(/(\d{0,2})/, "($1");
+    } else if (phoneNumber.length <= 10) {
+      return phoneNumber.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
     } else {
-      return phoneNumber.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3")
+      return phoneNumber.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const phoneDigits = phone.replace(/\D/g, "");
-  
-    if (!name || phoneDigits.length !== 11) {
-      setError("Telefone inválido! Digite um número completo.");
+
+    if (!name) {
+      setError("Nome é obrigatório.");
       return;
     }
-  
+
     setError("");
     setIsLoading(true);
-  
+
     try {
-      await addPerson(name, phoneDigits, observation); 
+      await addPerson(name, phoneDigits || "", observation); // Envia vazio se não houver telefone
       toast.success("Cliente adicionado com sucesso!");
       onClose();
     } catch (err: any) {
@@ -54,7 +56,6 @@ export function AddPersonForm({
       setIsLoading(false);
     }
   };
-  
 
   return (
     <form onSubmit={handleSubmit} className="space-y-0.5 p-0.5">
@@ -102,5 +103,5 @@ export function AddPersonForm({
         </Button>
       </div>
     </form>
-  )
+  );
 }

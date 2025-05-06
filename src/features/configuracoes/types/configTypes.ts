@@ -15,3 +15,12 @@ export type ConfiguracaoType = {
     dataHoraAlterado?: string | null;
     dataHoraDeletado?: string | null;
 };
+export interface Configuracao {
+    id: string;
+    [key: string]: any;
+  }
+  
+  export interface Fila {
+    id: string;
+    [key: string]: any;
+  }

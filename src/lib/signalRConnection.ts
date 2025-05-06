@@ -2,7 +2,7 @@ import * as signalR from "@microsoft/signalr";
 
 class SignalRConnection {
   private connection: signalR.HubConnection;
-  private baseUrl = "http://localhost:5135";
+  private baseUrl = "http://10.0.0.191:5135";
   private isConnecting: boolean = false;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 10;
