@@ -11,11 +11,12 @@ import VinculacaoMonitorForm from "@/features/vinculacao-monitor/components/Vinc
 export default function AtivarMonitor() {
   const params = useParams();
   const empresaId = params.empresaId as string;
+  const filaId = params.filaId as string
 
-  if (!empresaId) {
+  if (!empresaId || !filaId) {
     return (
       <div className="flex justify-center items-center h-screen text-red-500">
-        Parâmetro empresaId inválido na URL.
+        Empresa ou fila não encontrada.
       </div>
     );
   }
@@ -26,7 +27,7 @@ export default function AtivarMonitor() {
       <PageContainer>
         <VoltarButton />
         <HeaderConfiguracoesFilas />
-        <VinculacaoMonitorForm empresaId={empresaId} />
+        <VinculacaoMonitorForm empresaId={empresaId} filaId={filaId} />
       </PageContainer>
     </>
   );

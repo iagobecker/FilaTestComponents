@@ -22,11 +22,7 @@ export interface Empresa {
   }
   
   export interface VinculacaoData {
-    id: string;
-    dataHoraCriado: string;
-    dataHoraAlterado: string;
-    dataHoraDeletado: string | null;
-    idVinculacao: string;
-    empresaId: string;
+    Codigo: string;
     filaId: string;
+    observacao: string | null;
   }

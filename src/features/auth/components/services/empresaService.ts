@@ -2,6 +2,7 @@ import { Api } from "@/api/api";
 import { toast } from "sonner";
 
 export interface Empresa {
+  filaId: any;
   id: string;
   nome: string;
   cpfCnpj: string;

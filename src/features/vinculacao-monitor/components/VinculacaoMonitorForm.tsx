@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 interface VinculacaoMonitorFormProps {
     empresaId: string;
+    filaId: string;
   }
   
-  export default function VinculacaoMonitorForm({ empresaId }: VinculacaoMonitorFormProps) {
-    const { empresa, loading } = useVinculacaoMonitor(empresaId);
+  export default function VinculacaoMonitorForm({ empresaId, filaId }: VinculacaoMonitorFormProps) {
+    const { empresa, loading } = useVinculacaoMonitor(empresaId, filaId);
   
     if (loading) {
       return <div className="flex justify-center items-center h-screen">Carregando...</div>;
@@ -59,7 +60,7 @@ interface VinculacaoMonitorFormProps {
                         <strong>3.</strong> Insira o código de 4 dígitos gerado pelo monitor:
                       </span>
                       <div className="w-full sm:w-auto">
-                        <InputVinculacao empresaId={empresaId} />
+                        <InputVinculacao empresaId={empresaId} filaId={filaId} />
                       </div>
                     </li>
                   </ul>

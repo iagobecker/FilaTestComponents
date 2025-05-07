@@ -124,7 +124,7 @@ export default function ConfiguracoesPage() {
             icon={<Monitor className="size-6 text-cyan-600" />}
             bgColor="bg-cyan-100"
             borderColor="border-cyan-500"
-            href={user?.empresaId ? `/vinculaMonitor/${user.empresaId}` : "#"}
+            href={user?.empresaId ? `/vinculaMonitor/${user.empresaId}/${filaId}` : "#"}
           />
 
           <ConfigCard

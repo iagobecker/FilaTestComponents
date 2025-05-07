@@ -43,6 +43,7 @@ type AuthContextType = {
   email: string;
   setEmail: (email: string) => void;
   sendVerificationCode: (email: string) => Promise<void>;
+  sendRegistrationCode: (email: string) => Promise<void>;
   verifyCode: (email: string, code: string) => Promise<void>;
   loading: boolean;
   authStep: "email" | "senha" | "authenticated";
@@ -50,6 +51,8 @@ type AuthContextType = {
   signOut: () => void;
   refreshToken: () => Promise<TokenResponse>;
   onTokenUpdated: (newToken: string) => void;
+  resetAuthState: () => void;
+  token: string | null; // Adiciona o token ao contexto
 };
 
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -57,6 +60,7 @@ export const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [email, setEmail] = useState<string>("");
+  const [token, setToken] = useState<string | null>(null); // Estado para armazenar o token
   const [loading, setLoading] = useState(true);
   const [authStep, setAuthStep] = useState<"email" | "senha" | "authenticated">("email");
   const router = useRouter();
@@ -66,10 +70,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkTokenValidity = useCallback(async () => {
     if (isRefreshing) return;
-    const { "auth.token": token } = parseCookies();
-    if (token) {
+    const { "auth.token": storedToken } = parseCookies();
+    if (storedToken) {
       try {
-        const decoded = jwtDecode<DecodedToken>(token);
+        setToken(storedToken); // Atualiza o token no estado
+        const decoded = jwtDecode<DecodedToken>(storedToken);
         const currentTime = Math.floor(Date.now() / 1000);
         if (decoded.exp && decoded.exp < currentTime) {
           console.log("Token expirado, tentando renovar...");
@@ -168,6 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       Api.setAuthorizationHeader(accessToken);
       initializeToken(accessToken);
+      setToken(accessToken); // Atualiza o token no estado
 
       const decoded = jwtDecode<DecodedToken>(accessToken);
       const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
@@ -227,9 +233,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     loadUserFromCookies();
     const interval = setInterval(async () => {
-      const { "auth.token": token } = parseCookies();
-      if (token) {
-        const decoded = jwtDecode<DecodedToken>(token);
+      const { "auth.token": storedToken } = parseCookies();
+      if (storedToken) {
+        const decoded = jwtDecode<DecodedToken>(storedToken);
         const currentTime = Math.floor(Date.now() / 1000);
         if (decoded.exp && decoded.exp < currentTime + 300) {
           console.log("Token perto de expirar, renovando...");
@@ -264,10 +270,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function sendRegistrationCode(email: string) {
+    try {
+      setLoading(true);
+      const response = await PublicApi.post("/autenticacao/codigo-cadastro", { email });
+      if (response.status !== 200) {
+        throw new Error("Falha ao enviar código de cadastro");
+      }
+      setEmail(email);
+      setAuthStep("senha");
+    } catch (error: any) {
+      let errorMessage = "Erro ao enviar código de cadastro";
+      if (axios.isAxiosError(error)) {
+        errorMessage = error.response?.data?.message || error.message || "Erro desconhecido na requisição";
+      }
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function verifyCode(email: string, code: string) {
     try {
       setLoading(true);
-      const response = await Api.post("/autenticacao/login", { email, codigo: code });
+      const response = await PublicApi.post("/autenticacao/login", { email, codigo: code });
       const { accessToken, refreshToken } = response.data;
 
       setCookie(undefined, "auth.token", accessToken, {
@@ -285,6 +311,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       Api.setAuthorizationHeader(accessToken);
       initializeToken(accessToken);
+      setToken(accessToken); // Atualiza o token no estado
 
       const decoded = jwtDecode<DecodedToken>(accessToken);
       const id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
@@ -339,10 +366,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     Api.removeAuthorizationHeader();
     setUser(null);
     setEmail("");
+    setToken(null); // Limpa o token no estado
     setAuthStep("email");
     if (pathname !== "/login") {
       router.push("/login");
     }
+  }
+
+  function resetAuthState() {
+    setEmail("");
+    setToken(null); // Limpa o token no estado
+    setAuthStep("email");
   }
 
   return (
@@ -353,13 +387,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         setEmail,
         sendVerificationCode,
+        sendRegistrationCode,
         verifyCode,
+        loading,
         authStep,
         setAuthStep,
         signOut,
-        loading,
         refreshToken,
         onTokenUpdated,
+        resetAuthState,
+        token,
       }}
     >
       {children}

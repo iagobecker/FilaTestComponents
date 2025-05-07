@@ -27,7 +27,7 @@ export function HeaderFila({
           description="Coloque as informações do cliente para adicioná-lo à fila"
           trigger={
             <Button
-              className="bg-white border border-gray-400 text-black shadow hover:bg-blue-400 cursor-pointer px-2 py-2 rounded-md w-full sm:w-auto text-sm sm:text-base"
+              className="bg-white border border-gray-400 text-black shadow hover:bg-blue-500 hover:text-white cursor-pointer px-2 py-2 rounded-md w-full sm:w-auto text-sm sm:text-base"
               onClick={() => setIsOpenAddPessoa(true)}
             >
               + Adicionar à fila

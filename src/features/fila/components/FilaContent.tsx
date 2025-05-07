@@ -3,8 +3,7 @@
 import { useFilaContext } from "../context/FilaProvider";
 import { HeaderFila } from "./HeaderFila";
 import { TableStatusRecentes } from "./table-recentes/TableStatusRecentes";
-import { FilaTable } from "./table/FilaTable";
-
+import { FilaTable } from "@/features/fila/components/table/FilaTable";
 
 
 export function FilaContent() {

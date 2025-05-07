@@ -584,4 +584,3 @@ export function FilaTable({ data, }: FilaTableProps) {
     </TooltipProvider>
   );
 }
-

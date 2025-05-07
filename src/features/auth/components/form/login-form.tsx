@@ -86,7 +86,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
           </div>
           <span className="sr-only">Controle de fila</span>
         </div>
-        <h1 className="text-xl font-bold">Bem vindo(a) ao Controla de Fila</h1>
+        <h1 className="text-xl font-bold">Bem vindo(a) ao Controle de Fila</h1>
       </div>
 
       {authStep === 'email' && (
@@ -116,7 +116,6 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               <Button
                 type="submit"
                 className="w-full"
-                //disabled={loading || !emailForm.formState.isValid}
                 aria-busy={loading}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -176,7 +175,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full sm:w-auto"
                 onClick={() => setAuthStep('email')}
                 disabled={loading}
               >
@@ -184,7 +183,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               </Button>
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full sm:w-auto"
                 disabled={loading || !email}
                 aria-busy={loading}
               >
@@ -201,7 +200,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
                   setCountdown(30);
                 }}
                 disabled={loading || !email}
-                className="w-full"
+                className="w-full sm:w-auto"
               >
                 Reenviar código
               </Button>
