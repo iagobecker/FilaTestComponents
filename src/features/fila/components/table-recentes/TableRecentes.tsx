@@ -140,7 +140,7 @@ const MobileRow = ({ row }: { row: Row<ChamadaItem> }) => {
 };
 
 // Componente da tabela de chamadas recentes
-export function TableStatusRecentes({ data }: { data: ChamadaItem[] }) {
+export function TableRecentes({ data }: { data: ChamadaItem[] }) {
   const isMobile = useMediaQuery("(max-width: 1060px)");
   const table = useReactTable({
     data,
@@ -155,9 +155,9 @@ export function TableStatusRecentes({ data }: { data: ChamadaItem[] }) {
         <h2 className="text-lg font-semibold mb-3 px-4">Recentes</h2>
         {isMobile ? (
           <div className="space-y-2">
-            {table.getRowModel().rows.map((row) => (
+            {/* {table.getRowModel().rows.map((row) => (
               <MobileRow key={row.id} row={row} />
-            ))}
+            ))} */}
           </div>
         ) : (
           <div className={`overflow-x-auto ${data.length >= 4 ? "max-h-[360px] overflow-y-auto" : ""}`}>

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { FilaItem, FilaItemExt, ChamadaItem } from "@/features/fila/components/types/types";
 import signalRConnection from "@/lib/signalRConnection";
 import { padraoCliente } from "@/lib/utils/padraoCliente";
+import { normalizeKeys } from "@/lib/utils/normalizeKeys";
 
 export const useFilaSignalR = (
   setAllClients: (updater: (prev: (FilaItemExt | ChamadaItem)[]) => (FilaItemExt | ChamadaItem)[]) => void,
@@ -34,6 +35,8 @@ export const useFilaSignalR = (
           return;
         }
 
+
+
         // Função para lidar com o evento atualizarFila
         const handleAtualizarFila = (payload: any) => {
           if (!isMounted) return;
@@ -52,6 +55,9 @@ export const useFilaSignalR = (
           } else {
             parsedPayload = payload;
           }
+
+          // Normalizar as chaves do payload
+          parsedPayload = normalizeKeys(parsedPayload);
 
           const fila = parsedPayload.fila;
           if (!fila || typeof fila !== "object" || !Array.isArray(fila.clientes)) {
@@ -86,6 +92,9 @@ export const useFilaSignalR = (
             parsedPayload = payload;
           }
 
+          // Normalizar as chaves do payload
+          parsedPayload = normalizeKeys(parsedPayload);
+
           const clientes = parsedPayload.clientes;
           if (!Array.isArray(clientes)) {
             console.warn("⚠️ Payload inválido em 'clienteDesistir':", parsedPayload);
@@ -97,7 +106,7 @@ export const useFilaSignalR = (
             const map = new Map<string, FilaItemExt | ChamadaItem>(prevClients.map(c => [c.id, c]));
             clientesMapeados.forEach((c: FilaItem) => {
               if (c.id) {
-                map.set(c.id, { ...c, status: 4 }); // Força o status como 4 (Desistente)
+                map.set(c.id, { ...c, status: 4 });
               }
             });
             const updatedClients = Array.from(map.values());

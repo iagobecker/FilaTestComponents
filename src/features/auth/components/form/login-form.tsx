@@ -115,7 +115,7 @@ export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRe
               />
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full cursor-pointer"
                 aria-busy={loading}
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

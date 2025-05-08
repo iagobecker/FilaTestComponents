@@ -116,7 +116,7 @@ export const marcarComoNaoCompareceu = async (
 export const removerChamada = async (
   id: string,
   setAllClients: (updater: (prev: FilaItem[]) => FilaItem[]) => void,
-  setChamadasData: React.Dispatch<React.SetStateAction<FilaItem[]>>
+  setclientesRecentes: React.Dispatch<React.SetStateAction<FilaItem[]>>
 ): Promise<void> => {
   try {
     const response = await Api.post("/clientes/atualizar-status", {
@@ -126,7 +126,7 @@ export const removerChamada = async (
     const clientesAtualizados = response.data.clientes.map(padraoCliente);
 
     setAllClients(() => [...clientesAtualizados]);
-    setChamadasData(prev => prev.filter(item => item.id !== id));
+    setclientesRecentes(prev => prev.filter(item => item.id !== id));
 
     toast.success("Cliente removido com sucesso!");
   } catch (error: any) {

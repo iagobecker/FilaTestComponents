@@ -2,18 +2,18 @@
 
 import { useFilaContext } from "../context/FilaProvider";
 import { HeaderFila } from "./HeaderFila";
-import { TableStatusRecentes } from "./table-recentes/TableStatusRecentes";
+import { TableRecentes } from "./table-recentes/TableRecentes";
 import { FilaTable } from "@/features/fila/components/table/FilaTable";
 
 
 export function FilaContent() {
-  const { filaData, setFilaData, chamadasData, addPerson } = useFilaContext();
+  const { clientesAguardando, setclientesAguardando, clientesRecentes, addPerson } = useFilaContext();
   return (
     <>
       <HeaderFila addPerson={addPerson} />
-      <FilaTable data={filaData} setData={setFilaData} />
-      <TableStatusRecentes
-        data={chamadasData.map((item) => ({
+      <FilaTable data={clientesAguardando} setData={setclientesAguardando} />
+      <TableRecentes
+        data={clientesRecentes.map((item) => ({
           ...item,
           status: Number(item.status),
           dataHoraCriado: item.dataHoraCriado ?? "",

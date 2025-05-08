@@ -32,10 +32,10 @@ import { usePathname } from "next/navigation";
 interface FilaContextType {
   contagemSelecionada: number;
   setContagemSelecionada: (count: number) => void;
-  filaData: FilaItemExt[];
-  setFilaData: Dispatch<SetStateAction<FilaItemExt[]>>;
-  chamadasData: ChamadaItem[];
-  setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>>;
+  clientesAguardando: FilaItemExt[];
+  setclientesAguardando: Dispatch<SetStateAction<FilaItemExt[]>>;
+  clientesRecentes: ChamadaItem[];
+  setclientesRecentes: Dispatch<SetStateAction<ChamadaItem[]>>;
   setAllClients: Dispatch<SetStateAction<(FilaItemExt | ChamadaItem)[]>>;
   chamarSelecionados: (ids: string[]) => Promise<void>;
   removerSelecionados: (selectedIds: string[]) => Promise<void>;
@@ -73,61 +73,59 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   const [notification, setNotification] = useState<string | null>(null);
   const [isSignalRConnected, setIsSignalRConnected] = useState(false);
 
-  const filaData = useMemo(() => {
+  const clientesAguardando = useMemo(() => {
     const filtered = allClients
       .filter(client => client.status === 1)
       .sort((a, b) => {
-        const aData = new Date(a.dataHoraOrdenacao ?? a.dataHoraCriado ?? 0).getTime();
-        const bData = new Date(b.dataHoraOrdenacao ?? b.dataHoraCriado ?? 0).getTime();
-        return aData - bData;
+        const posA = a.posicao ?? Infinity;
+        const posB = b.posicao ?? Infinity;
+        return posA - posB;
       });
-    console.log("📊 filaData atualizado:", filtered);
     return filtered;
   }, [allClients]);
 
-  const chamadasData = useMemo(() => {
-    const mapa = new Map();
-    for (const client of allClients) {
-      if (client.status > 1 && client.status <= 5) {
-        mapa.set(client.id, client);
-      }
-    }
-    const updatedChamadas = Array.from(mapa.values()) as ChamadaItem[];
-    console.log("📊 chamadasData atualizado:", updatedChamadas);
-    return updatedChamadas;
+  const clientesRecentes = useMemo(() => {
+    const filtered = allClients
+      .filter(client => client.status > 1 && client.status <= 5)
+      .sort((a, b) => {
+        const aData = a.dataHoraAlterado ? new Date(a.dataHoraAlterado).getTime() : 0;
+        const bData = b.dataHoraAlterado ? new Date(b.dataHoraAlterado).getTime() : 0;
+        return bData - aData; // Ordem mais recente primeiro 
+      });
+    return filtered;    
   }, [allClients]);
 
   const loadFila = async () => {
     if (pathname !== "/fila" || !isAuthenticated || authLoading || !user?.empresaId) return;
-
+  
     const { "auth.token": token } = parseCookies();
     if (!token) {
-      console.error("❌ Token não encontrado nos cookies");
+      setNotification("Erro: Token não encontrado nos cookies");
+      setTimeout(() => setNotification(null), 3000);
       return;
     }
-
+  
     setAuthorizationHeader(token);
-
-    const filaId = await getDefaultFilaId(user.empresaId);
-    if (!filaId) {
-      console.error("❌ Nenhum filaId encontrado");
-      return;
+  
+    try {
+      const filaId = await getDefaultFilaId(user.empresaId);
+      if (!filaId) {
+        setNotification("Erro: Nenhuma fila encontrada");
+        setTimeout(() => setNotification(null), 3000);
+        return;
+      }
+  
+      const fila = await buscarClientesFila(filaId);
+      const formattedClients = fila.map(item => ({
+        ...item,
+        tempo: item.tempo || calcularTempo(item.dataHoraCriado),
+      }));
+  
+      setAllClients(formattedClients);
+    } catch (error: any) {
+      setNotification(error.message || "Erro ao carregar fila");
+      setTimeout(() => setNotification(null), 3000);
     }
-
-    const fila = await buscarClientesFila(filaId);
-    const formattedClients = fila.map(item => ({
-      ...item,
-      id: item.id || crypto.randomUUID(),
-      filaId: item.filaId ?? "",
-      hash: item.hash ?? "",
-      status: (typeof item.status === "string" ? parseInt(item.status) : item.status) as StatusType || 1,
-      tempo: item.tempo || calcularTempo(item.dataHoraCriado),
-      ticket: item.ticket || null,
-      observacao: item.observacao || "",
-      dataHoraCriado: item.dataHoraCriado || new Date().toISOString(),
-    }));
-
-    setAllClients(formattedClients);
   };
 
   useEffect(() => {
@@ -163,7 +161,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   };
 
   const handleRemoverChamada = async (id: string) => {
-    await removerChamada(id, setAllClients, setChamadasData);
+    await removerChamada(id, setAllClients, setclientesRecentes);
     await loadFila();
   };
 
@@ -211,25 +209,41 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     await loadFila(); // Força a atualização da UI
   };
 
-  const setFilaData: Dispatch<SetStateAction<FilaItemExt[]>> = (updater) => {
+  const setclientesAguardando: Dispatch<SetStateAction<FilaItemExt[]>> = (updater) => {
     setAllClients((prev) => {
       const fila = prev.filter(c => c.status === 1);
       const chamadas = prev.filter(c => c.status !== 1);
       let updated = typeof updater === "function" ? updater(fila as FilaItemExt[]) : updater;
-      updated = [...updated].sort((a, b) => {
-        const aData = new Date(a.dataHoraOrdenacao ?? a.dataHoraCriado ?? 0).getTime();
-        const bData = new Date(b.dataHoraOrdenacao ?? b.dataHoraCriado ?? 0).getTime();
-        return aData - bData;
-      });
+
+      if (!Array.isArray(updated)) {
+        console.error("setclientesAguardando: updater não é um array:", updated)
+        return prev; // Retorna o estado anterior se o updater não for um array
+      }
+      updated = updated.sort((a, b) => {
+        const posA = a.posicao ?? Infinity;
+        const posB = b.posicao ?? Infinity;
+        return posA - posB;
+      })
       return [...updated, ...chamadas];
     });
   };
 
-  const setChamadasData: Dispatch<SetStateAction<ChamadaItem[]>> = (updater) => {
+  const setclientesRecentes: Dispatch<SetStateAction<ChamadaItem[]>> = (updater) => {
     setAllClients((prev) => {
       const fila = prev.filter(c => c.status === 1);
       const chamadas = prev.filter(c => c.status !== 1);
-      const updated = typeof updater === "function" ? updater(chamadas as ChamadaItem[]) : updater;
+      let updated = typeof updater === "function" ? updater(chamadas as ChamadaItem[]) : updater;
+
+      if (!Array.isArray(updated)) {
+        console.error("setclientesRecentes: updater não é um array:", updated)
+        return prev; // Retorna o estado anterior se o updater não for um array
+      }
+      // ordenar por dataHoraAlterado
+      updated = updated.sort((a, b) => {
+        const aData = a.dataHoraAlterado ? new Date(a.dataHoraAlterado).getTime() : 0;
+        const bData = b.dataHoraAlterado ? new Date(b.dataHoraAlterado).getTime() : 0;
+        return bData - aData; // Ordem mais recente primeiro 
+      });
       return [...fila, ...updated];
     });
   };
@@ -237,11 +251,11 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   const contextValue: FilaContextType = {
     contagemSelecionada,
     setContagemSelecionada,
-    filaData,
-    setFilaData,
-    chamadasData,
+    clientesAguardando,
+    setclientesAguardando,
+    clientesRecentes,
     setAllClients,
-    setChamadasData,
+    setclientesRecentes,
     chamarSelecionados: handleChamarSelecionados,
     removerSelecionados: handleRemoverSelecionados,
     trocarPosicaoCliente: handleTrocarPosicaoCliente,

@@ -13,13 +13,11 @@ export const FilaSignalRListener = ({ setIsSignalRConnected }: FilaSignalRListen
   console.log("Token sendo usado para SignalR:", token || "Nenhum token encontrado");
 
   try {
-    // Usar o hook para escutar eventos do SignalR
     useFilaSignalR(setAllClients, setIsSignalRConnected, token || "");
   } catch (error) {
     console.error("Erro ao iniciar o SignalR no FilaSignalRListener:", error);
     setIsSignalRConnected(false);
   }
 
-  // Este componente não renderiza nada, apenas escuta eventos
   return null;
 };

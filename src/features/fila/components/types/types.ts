@@ -21,7 +21,7 @@ export type FilaItem = {
     Aguardando = 1,
     Chamado = 2,
     Atendido = 3,
-    NaoCompareceu = 4,
+    Desistente = 4,
     Removido = 5,
   }
   
@@ -39,6 +39,7 @@ export type FilaItem = {
     filaId: string;
     posicao?: number;
     dataHoraCriado?: string;
+    dataHoraAlterado?: string;
     dataHoraOrdenacao?: string;
     dataHoraChamada?: string | null;
     dataHoraDeletado?: string | null;

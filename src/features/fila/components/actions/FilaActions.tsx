@@ -22,10 +22,10 @@ export function FilaActions({
   const [showModal, setShowModal] = useState(false);
   const handleOpenModal = () => setShowModal(true);
   const handleCloseModal = () => setShowModal(false);
-  const { removerSelecionados, chamarSelecionados, filaData, chamadasData } = useFilaContext();
+  const { removerSelecionados, chamarSelecionados, clientesAguardando, clientesRecentes } = useFilaContext();
 
   const handleConfirmRemove = async () => {
-    const todosClientes = [...filaData, ...chamadasData];
+    const todosClientes = [...clientesAguardando, ...clientesRecentes];
     const idsValidos = selectedIds.filter(id => {
       const cliente = todosClientes.find(c => c.id === id);
       return cliente && (cliente.status === 1 || cliente.status === 2);

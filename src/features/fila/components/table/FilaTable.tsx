@@ -36,9 +36,9 @@ export function FilaTable({ data, }: FilaTableProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const [editingClient, setEditingClient] = useState<FilaItem | null>(null);
-  const { filaData, chamadasData, editPerson } = useFilaContext();
+  const { clientesAguardando, clientesRecentes, editPerson } = useFilaContext();
 
-  const allClientes = useMemo(() => [...filaData, ...chamadasData], [filaData, chamadasData]);
+  const allClientes = useMemo(() => [...clientesAguardando, ...clientesRecentes], [clientesAguardando, clientesRecentes]);
 
   const openEditClient = (id: string) => {
     // Busca o objeto completo
