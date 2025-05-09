@@ -1,6 +1,6 @@
 import { Api } from "@/api/api";
 import { toast } from "sonner";
-
+import { Status } from "@/features/fila/components/types/types";
 export interface Empresa {
   filaId: any;
   id: string;
@@ -28,20 +28,22 @@ export interface Fila {
 }
 
 export interface Cliente {
-  id: string;
-  status: number;
-  nome: string;
-  ticket: string | null;
-  telefone: string;
-  posicao: number;
-  observacao: string;
-  filaId: string;
-  hash: string;
-  dataHoraOrdenacao: string;
-  dataHoraChamada: string | null;
-  dataHoraCriado?: string;
-  dataHoraAlterado?: string;
-  dataHoraDeletado?: string;
+   id: string;
+    nome: string;
+    telefone: string | null;
+    observacao: string | null;
+    hash: string;
+    filaId: string;
+    status: Status;
+    tempo?: string; // Calculado no frontend
+    ticket: string | null;
+    posicao?: number;
+    dataHoraCriado: string; // Sempre retornado pelo backend
+    dataHoraOrdenacao: string; // Sempre retornado pelo backend
+    dataHoraChamada: string | null;
+    dataHoraDeletado: string | null;
+    dataHoraEntrada?: string | null; // Opcional, não retornado pelo backend
+    dataHoraAlterado: string; // Sempre retornado pelo backend
 }
 
 export interface Vinculacao {

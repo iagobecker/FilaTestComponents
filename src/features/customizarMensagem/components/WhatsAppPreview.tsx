@@ -2,11 +2,15 @@ import { FaCamera, FaLaugh, FaMicrophone, FaPaperclip } from "react-icons/fa";
 
 interface WhatsAppPreviewProps {
   previews: string[];
-  renderWithVariables: (html: string, map: Record<string, string>) => string;
+  renderWithVariables: (text: string, map: Record<string, string>) => string;
   variablesMap: Record<string, string>;
 }
 
 export function WhatsAppPreview({ previews, renderWithVariables, variablesMap }: WhatsAppPreviewProps) {
+  console.log("Previews antes da renderização:", previews);
+  const renderedPreviews = previews.map(text => renderWithVariables(text, variablesMap));
+  console.log("Previews após renderização:", renderedPreviews);
+
   return (
     <div className="w-[300px] h-[600px] rounded-[30px] overflow-hidden shadow-xl bg-[#ece5dd] flex flex-col border-[6px] border-black relative">
       <div className="h-[50px] bg-[#075e54] text-white flex items-center px-3">
@@ -20,12 +24,12 @@ export function WhatsAppPreview({ previews, renderWithVariables, variablesMap }:
       </div>
 
       <div className="p-3 flex-1 overflow-y-auto space-y-4 text-sm">
-        {previews.map((html, idx) => (
+        {renderedPreviews.map((html, idx) => (
           <div key={idx}>
             <div className="relative max-w-[250px]">
               <div
                 className="relative bg-[#dcf8c6] px-4 py-3 shadow text-sm leading-snug chat-bubble-right rounded-lg"
-                dangerouslySetInnerHTML={{ __html: renderWithVariables(html, variablesMap) }}
+                dangerouslySetInnerHTML={{ __html: html }}
               />
             </div>
           </div>

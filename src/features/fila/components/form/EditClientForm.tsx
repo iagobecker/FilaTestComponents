@@ -2,12 +2,12 @@
 
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { FilaItem } from "@/features/fila/components/types/types";
+import { EditaCampos, FilaItem } from "@/features/fila/components/types/types"; // Importar EditaCampos
 import { useState } from "react";
 
 type EditClientFormProps = {
   client: FilaItem;
-  onSave: (client: FilaItem) => void;
+  onSave: (updatedFields: EditaCampos) => void;
 };
 
 export function EditClientForm({ client, onSave }: EditClientFormProps) {
@@ -17,13 +17,16 @@ export function EditClientForm({ client, onSave }: EditClientFormProps) {
     formState: { errors },
     setValue,
     watch,
-  } = useForm<FilaItem>({
-    defaultValues: client,
+  } = useForm<EditaCampos>({
+    defaultValues: {
+      nome: client.nome ?? "",
+      telefone: client.telefone ?? "",
+      observacao: client.observacao ?? "",
+    },
   });
 
   const [error, setError] = useState("");
 
-  // Função para formatar telefone enquanto o usuário digita
   const formatPhone = (value: string) => {
     let phoneNumber = value.replace(/\D/g, "");
     
@@ -40,8 +43,8 @@ export function EditClientForm({ client, onSave }: EditClientFormProps) {
     }
   };
 
-  const onSubmit = (data: FilaItem) => {
-    const phoneDigits = data.telefone.replace(/\D/g, "");
+  const onSubmit = (data: EditaCampos) => {
+    const phoneDigits = data.telefone?.replace(/\D/g, "") ?? "";
 
     if (errors.nome && errors.nome.type === "required") {
       setError("Nome é obrigatório.");
@@ -49,7 +52,11 @@ export function EditClientForm({ client, onSave }: EditClientFormProps) {
     }
 
     setError("");
-    onSave({ ...data, telefone: phoneDigits || "" }); // Envia apenas dígitos ou vazio
+    onSave({
+      nome: data.nome,
+      telefone: phoneDigits || "",
+      observacao: data.observacao,
+    });
   };
 
   return (

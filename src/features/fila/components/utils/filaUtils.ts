@@ -1,6 +1,6 @@
 import { parseISO } from "date-fns/parseISO";
 import { differenceInMinutes } from "date-fns/differenceInMinutes";
-import { EditaCampos, FilaItem, StatusType } from "@/features/fila/components/types/types";
+import { EditaCampos, FilaItem, Status } from "@/features/fila/components/types/types";
 
 export const calcularTempo = (dataHoraCriado?: string): string => {
   if (!dataHoraCriado) return "";
@@ -12,7 +12,7 @@ export const calcularTempo = (dataHoraCriado?: string): string => {
   return ` ${horas}h${(minutos % 60).toString().padStart(2, "0")}`;
 };
 
-export const getStatusText = (status: StatusType): string => {
+export const getStatusText = (status: Status): string => {
   switch (status) {
     case 1: return "Aguardando";
     case 2: return "Chamado";
@@ -23,7 +23,7 @@ export const getStatusText = (status: StatusType): string => {
   }
 };
 
-export const getStatusColor = (status: StatusType): string => {
+export const getStatusColor = (status: Status): string => {
   switch (status) {
     case 1: return "text-blue-500";
     case 2: return "text-green-500";

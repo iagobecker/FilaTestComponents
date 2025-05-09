@@ -8,7 +8,7 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import { ChamadaItem, EditaCampos, FilaItem, FilaItemExt, StatusType } from "@/features/fila/components/types/types";
+import { EditaCampos, FilaItem, Status } from "@/features/fila/components/types/types";
 import {
   addPerson,
   buscarClientesFila,
@@ -32,11 +32,11 @@ import { usePathname } from "next/navigation";
 interface FilaContextType {
   contagemSelecionada: number;
   setContagemSelecionada: (count: number) => void;
-  clientesAguardando: FilaItemExt[];
-  setclientesAguardando: Dispatch<SetStateAction<FilaItemExt[]>>;
-  clientesRecentes: ChamadaItem[];
-  setclientesRecentes: Dispatch<SetStateAction<ChamadaItem[]>>;
-  setAllClients: Dispatch<SetStateAction<(FilaItemExt | ChamadaItem)[]>>;
+  clientesAguardando: FilaItem[];
+  setclientesAguardando: Dispatch<SetStateAction<FilaItem[]>>;
+  clientesRecentes: FilaItem[];
+  setclientesRecentes: Dispatch<SetStateAction<FilaItem[]>>;
+  setAllClients: Dispatch<SetStateAction<(FilaItem)[]>>;
   chamarSelecionados: (ids: string[]) => Promise<void>;
   removerSelecionados: (selectedIds: string[]) => Promise<void>;
   trocarPosicaoCliente: (id: string, direction: "up" | "down") => Promise<void>;
@@ -47,8 +47,8 @@ interface FilaContextType {
   marcarComoAtendido: (id: string) => void;
   marcarComoNaoCompareceu: (id: string) => void;
   marcarComoDesistente: (id: string) => Promise<void>; // Nova função para desistência
-  getStatusText: (status: StatusType) => string;
-  getStatusColor: (status: StatusType) => string;
+  getStatusText: (status: Status) => string;
+  getStatusColor: (status: Status) => string;
   calcularTempo: (dataHoraCriado?: string) => string;
   editPayload: (orig: FilaItem, edicao: EditaCampos) => FilaItem;
   isSignalRConnected: boolean;
@@ -69,7 +69,7 @@ export function FilaProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, loading: authLoading, user, onTokenUpdated } = useAuth();
   const pathname = usePathname();
   const [contagemSelecionada, setContagemSelecionada] = useState(0);
-  const [allClients, setAllClients] = useState<(FilaItemExt | ChamadaItem)[]>([]);
+  const [allClients, setAllClients] = useState<(FilaItem)[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
   const [isSignalRConnected, setIsSignalRConnected] = useState(false);
 
@@ -92,21 +92,21 @@ export function FilaProvider({ children }: { children: ReactNode }) {
         const bData = b.dataHoraAlterado ? new Date(b.dataHoraAlterado).getTime() : 0;
         return bData - aData; // Ordem mais recente primeiro 
       });
-    return filtered;    
+    return filtered;
   }, [allClients]);
 
   const loadFila = async () => {
     if (pathname !== "/fila" || !isAuthenticated || authLoading || !user?.empresaId) return;
-  
+
     const { "auth.token": token } = parseCookies();
     if (!token) {
       setNotification("Erro: Token não encontrado nos cookies");
       setTimeout(() => setNotification(null), 3000);
       return;
     }
-  
+
     setAuthorizationHeader(token);
-  
+
     try {
       const filaId = await getDefaultFilaId(user.empresaId);
       if (!filaId) {
@@ -114,13 +114,13 @@ export function FilaProvider({ children }: { children: ReactNode }) {
         setTimeout(() => setNotification(null), 3000);
         return;
       }
-  
+
       const fila = await buscarClientesFila(filaId);
       const formattedClients = fila.map(item => ({
         ...item,
         tempo: item.tempo || calcularTempo(item.dataHoraCriado),
       }));
-  
+
       setAllClients(formattedClients);
     } catch (error: any) {
       setNotification(error.message || "Erro ao carregar fila");
@@ -209,11 +209,11 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     await loadFila(); // Força a atualização da UI
   };
 
-  const setclientesAguardando: Dispatch<SetStateAction<FilaItemExt[]>> = (updater) => {
+  const setclientesAguardando: Dispatch<SetStateAction<FilaItem[]>> = (updater) => {
     setAllClients((prev) => {
       const fila = prev.filter(c => c.status === 1);
       const chamadas = prev.filter(c => c.status !== 1);
-      let updated = typeof updater === "function" ? updater(fila as FilaItemExt[]) : updater;
+      let updated = typeof updater === "function" ? updater(fila as FilaItem[]) : updater;
 
       if (!Array.isArray(updated)) {
         console.error("setclientesAguardando: updater não é um array:", updated)
@@ -228,11 +228,11 @@ export function FilaProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const setclientesRecentes: Dispatch<SetStateAction<ChamadaItem[]>> = (updater) => {
+  const setclientesRecentes: Dispatch<SetStateAction<FilaItem[]>> = (updater) => {
     setAllClients((prev) => {
       const fila = prev.filter(c => c.status === 1);
       const chamadas = prev.filter(c => c.status !== 1);
-      let updated = typeof updater === "function" ? updater(chamadas as ChamadaItem[]) : updater;
+      let updated = typeof updater === "function" ? updater(chamadas as FilaItem[]) : updater;
 
       if (!Array.isArray(updated)) {
         console.error("setclientesRecentes: updater não é um array:", updated)

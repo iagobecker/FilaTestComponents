@@ -562,15 +562,7 @@ export function FilaTable({ data, }: FilaTableProps) {
             <EditClientForm
               client={editingClient}
               onSave={async (updatedFields) => {
-                const payload = {
-                  ...editingClient,     // todos os campos antigos
-                  ...updatedFields,      // sobrescreve só os campos editados
-                  dataHoraAleterado: new Date().toISOString(),
-                };
-
-
-
-                await editPerson(editingClient, updatedFields);
+                await editPerson(editingClient!, updatedFields);
                 setEditingClient(null);
                 setNotification("Cliente atualizado com sucesso!");
                 setTimeout(() => setNotification(null), 3000);

@@ -1,5 +1,5 @@
 import { Api } from "@/api/api";
-import { FilaItem, FilaResponse, ClienteAtualizado, EditaCampos } from "@/features/fila/components/types/types";
+import { FilaItem, FilaResponse, EditaCampos } from "@/features/fila/components/types/types";
 import { padraoCliente } from "@/lib/utils/padraoCliente";
 import { toast } from "sonner";
 import { EmpresaService, Fila } from "@/features/auth/components/services/empresaService";
@@ -252,8 +252,8 @@ export const editPerson = async (
     hash: clienteCompleto.hash ?? "",
     ticket: clienteCompleto.ticket ?? null,
     posicao: clienteCompleto.posicao !== undefined ? clienteCompleto.posicao : 0,
-    dataHoraCriado: clienteCompleto.dataHoraCriado ?? new Date().toISOString(),
-    dataHoraOrdenacao: clienteCompleto.dataHoraOrdenacao ?? clienteCompleto.dataHoraCriado ?? new Date().toISOString(),
+    dataHoraCriado: clienteCompleto.dataHoraCriado,
+    dataHoraOrdenacao: clienteCompleto.dataHoraOrdenacao ?? clienteCompleto.dataHoraCriado,
     dataHoraChamada: clienteCompleto.dataHoraChamada ?? null,
     dataHoraDeletado: clienteCompleto.dataHoraDeletado ?? null,
     dataHoraEntrada: clienteCompleto.dataHoraEntrada ?? null,
@@ -267,9 +267,7 @@ export const editPerson = async (
   try {
     const response = await Api.put("/clientes", payload);
     const clientesAtualizados = response.data.clientes.map(padraoCliente);
-
     setAllClients(() => [...clientesAtualizados]);
-
     toast.success("Cliente editado com sucesso!");
   } catch (error: any) {
     toast.error(error?.response?.data?.message || "Erro ao editar cliente");

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-
 import { toast } from "sonner";
 import { getConfiguracaoByEmpresaId, atualizarConfiguracao, criarConfiguracao } from "@/features/configuracoes/services/ConfiguracoesService";
 import { ConfiguracaoType } from "@/features/configuracoes/types/configTypes";
 import { EmpresaService } from "@/features/auth/components/services/empresaService";
 import { useConfigPreview } from "@/lib/hooks/useConfigPreview";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
+import { convertVariablesToHtml } from "@/lib/utils/variableConverter";
 
 export function useCustomMensagem(empresaId: string, filaId: string) {
   const [isValidFila, setIsValidFila] = useState<boolean>(false);
@@ -45,15 +45,16 @@ export function useCustomMensagem(empresaId: string, filaId: string) {
 
   const variablesMap: Record<string, string> = {
     nome: "João Silva",
-    link: `<a href='https://example.com/cliente-fila' class='font-bold underline text-blue-600' target='_blank'>https://example.com/cliente-fila</a>`,
+    link: `<a href='https://example.com/monitorFila' class='font-bold underline text-blue-600' target='_blank'>https://example.com/monitorFila</a>`,
   };
 
   const sectionTitles = ["Entrada", "Chamada", "Removido"];
 
-  const updatePreview = (index: number, newHtml: string) => {
+  const updatePreview = (index: number, newText: string) => {
     setPreviews((prev) => {
       const updated = [...prev];
-      updated[index] = newHtml;
+      updated[index] = newText;
+      console.log("Preview atualizado:", updated);
       return updated;
     });
   };
@@ -90,6 +91,11 @@ export function useCustomMensagem(empresaId: string, filaId: string) {
       if (updatedConfig) {
         updatePreviewsAfterSave(updatedConfig);
         toast.success("Mensagens salvas com sucesso!");
+        console.log("Mensagens salvas:", {
+          mensagemEntrada: previews[0],
+          mensagemChamada: previews[1],
+          mensagemRemovido: previews[2],
+        });
       } else {
         throw new Error("Falha ao recarregar configuração.");
       }

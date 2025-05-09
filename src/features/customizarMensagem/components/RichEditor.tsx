@@ -14,7 +14,7 @@ import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { WhatsAppPreview } from "./WhatsAppPreview";
 import { MenuBar } from "./tiptap-editor/TipTap";
 import { useCustomMensagem } from "../hooks/useCustomMensagem";
-import { convertHtmlToVariablesString, renderWithVariables } from "@/lib/utils/variableConverter";
+import { convertHtmlToVariablesString, renderWithVariables, convertVariablesToHtml } from "@/lib/utils/variableConverter";
 import { Variable } from "./variables/Variables";
 
 const extensions = [
@@ -22,37 +22,50 @@ const extensions = [
   Underline,
   TextStyle,
   ListItem,
-  Variable,
+  Variable.configure({
+    variableValues: {
+      nome: "João Silva",
+      link: "https://example.com/monitorFila",
+    },
+  }),
   Color.configure({ types: [TextStyle.name, ListItem.name] }),
 ];
 
 const variables = [
-  { label: "{nome}", value: "João Silva" },
-  { label: "{link}", value: "https://example.com/monitorFila" },
+  { label: "Nome", value: "nome" },
+  { label: "Link", value: "link" },
 ];
 
 function RichTextBlock({
   value,
   onChange,
   variables,
+  editorIndex,
 }: {
   value: string;
-  onChange: (html: string) => void;
+  onChange: (value: string) => void;
   variables: { label: string; value: string }[];
+  editorIndex: number;
 }) {
   const editor = useEditor({
     extensions,
-    content: value,
+    content: convertVariablesToHtml(value),
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      const converted = convertHtmlToVariablesString(html);
+      onChange(converted);
     },
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value);
+    if (editor && value !== convertHtmlToVariablesString(editor.getHTML())) {
+      editor.commands.setContent(convertVariablesToHtml(value));
     }
   }, [value, editor]);
+
+  const filteredVariables = editorIndex === 0
+    ? variables
+    : variables.filter((v) => v.value !== "link");
 
   return (
     <div className="border p-1 border-purple-300 rounded-md bg-white shadow-sm mb-6">
@@ -64,11 +77,11 @@ function RichTextBlock({
             className="w-full min-h-[80px] bg-white px-4 py-3 rounded-md [&_.ProseMirror]:outline-none [&_.ProseMirror]:border-none [&_.ProseMirror]:shadow-none"
           />
           <div className="flex flex-wrap pt-3 gap-2 mt-2 justify-start p-1">
-            {variables.map((v) => (
+            {filteredVariables.map((v) => (
               <button
                 key={v.label}
-                onClick={() => editor?.commands.insertVariable(v.label.replace(/[{}]/g, ""))}
-                className="px-3 py-1 text-sm border cursor-pointer text-purple-800 border-purple-300 bg-white hover:bg-purple-100 rounded"
+                onClick={() => editor?.commands.insertVariable(v.value)}
+                className="px-3 py-1 text-sm border cursor-pointer text-purple-800 border-gray-500 bg-white hover:bg-purple-100 rounded"
               >
                 {v.label}
               </button>
@@ -122,18 +135,19 @@ export function RichEditor() {
   return (
     <div className="w-full flex flex-col lg:flex-row gap-90 mt-10">
       <div className="w-full max-w-[850px] space-y-6">
-        {previews.map((html: string, idx: number) => (
+        {previews.map((text: string, idx: number) => (
           <div key={idx}>
             <h2 className="font-bold text-black text-lg mb-1">{sectionTitles[idx]}</h2>
             <RichTextBlock
-              value={html}
-              onChange={(html) => {
+              value={text}
+              onChange={(converted) => {
                 const updated = [...previews];
-                updated[idx] = convertHtmlToVariablesString(html);
+                updated[idx] = converted;
                 setPreviews(updated);
-                updatePreview(idx, html);
+                updatePreview(idx, converted);
               }}
               variables={variables}
+              editorIndex={idx}
             />
           </div>
         ))}

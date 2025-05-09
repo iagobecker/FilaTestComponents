@@ -2,6 +2,8 @@ import { Node, mergeAttributes } from "@tiptap/core";
 
 export interface VariableOptions {
   HTMLAttributes: Record<string, any>;
+  allowedVariables?: string[];
+  variableValues?: Record<string, string>; 
 }
 
 declare module "@tiptap/core" {
@@ -21,6 +23,11 @@ export const Variable = Node.create<VariableOptions>({
   addOptions() {
     return {
       HTMLAttributes: {},
+      allowedVariables: ["nome", "link"],
+      variableValues: {
+        nome: "João Silva", // Valor exibido no editor
+        link: "https://example.com/monitorFila", // Valor exibido no editor
+      },
     };
   },
 
@@ -47,14 +54,17 @@ export const Variable = Node.create<VariableOptions>({
   },
 
   renderHTML({ HTMLAttributes }) {
+    const variableName = HTMLAttributes.value?.toLowerCase();
+    const displayValue = this.options.variableValues?.[variableName] || `{${variableName}}`;
     return [
       "span",
       mergeAttributes(HTMLAttributes, {
-        "data-variable": HTMLAttributes.value,
+        "data-variable": variableName,
+        "data-value": variableName,
         class:
           "inline-block px-2 py-0.5 text-xs font-semibold rounded bg-black-200 text-purple-800 border border-purple-300",
       }),
-      `{${HTMLAttributes.value}}`,
+      displayValue, // Exibir "João Silva" ou "https://example.com/monitorFila" no editor
     ];
   },
 
@@ -63,10 +73,15 @@ export const Variable = Node.create<VariableOptions>({
       insertVariable:
         (value: string) =>
         ({ chain }) => {
+          const normalizedValue = value.toLowerCase();
+          if (!this.options.allowedVariables?.includes(normalizedValue)) {
+            console.warn(`Variável "${value}" não é permitida. Variáveis permitidas: ${this.options.allowedVariables}`);
+            return false;
+          }
           return chain()
             .insertContent({
               type: this.name,
-              attrs: { value },
+              attrs: { value: normalizedValue },
             })
             .run();
         },

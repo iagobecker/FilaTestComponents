@@ -14,24 +14,33 @@ export async function uploadLogo(file: File): Promise<string> {
 export function useConfigPreview(empresaId: string) {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<ConfiguracaoType | null>(null);
-  const [previews, setPreviews] = useState<string[]>(["", "", ""]);
+  const [previews, setPreviews] = useState<string[]>([
+    "{nome}, seja bem-vindo a fila do Restaurante Beira Rio!, {link}", // Valor padrão como string simples
+    "{nome}, você foi chamado!!", // Valor padrão como string simples
+    "{nome}, você foi removido da fila do Restaurante Beira Rio.", // Valor padrão como string simples
+  ]);
   const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
+        setLoading(true);
         const conf = await getConfiguracaoByEmpresaId(empresaId);
         if (!conf) {
-          toast.error("Configuração não encontrada.");
+          toast.error("Configuração não encontrada. Usando valores padrão.");
+          console.log("Configuração não encontrada. Previews padrão:", previews);
           return;
         }
         setConfig(conf);
         if (initialLoad) {
-          setPreviews([
-            conf.mensagemEntrada ? convertVariablesToHtml(conf.mensagemEntrada) : "",
-            conf.mensagemChamada ? convertVariablesToHtml(conf.mensagemChamada) : "",
-            conf.mensagemRemovido ? convertVariablesToHtml(conf.mensagemRemovido) : "",
-          ]);
+          const newPreviews = [
+            conf.mensagemEntrada ?? previews[0],
+            conf.mensagemChamada ?? previews[1],
+            conf.mensagemRemovido ?? previews[2],
+          ];
+          setPreviews(newPreviews);
+          console.log("Configuração carregada:", conf);
+          console.log("Previews inicializados:", newPreviews);
           setInitialLoad(false);
         }
       } catch (err) {
@@ -46,11 +55,13 @@ export function useConfigPreview(empresaId: string) {
 
   const updatePreviewsAfterSave = (newConfig: ConfiguracaoType) => {
     setConfig(newConfig);
-    setPreviews([
-      newConfig.mensagemEntrada ? convertVariablesToHtml(newConfig.mensagemEntrada) : "",
-      newConfig.mensagemChamada ? convertVariablesToHtml(newConfig.mensagemChamada) : "",
-      newConfig.mensagemRemovido ? convertVariablesToHtml(newConfig.mensagemRemovido) : "",
-    ]);
+    const updatedPreviews = [
+      newConfig.mensagemEntrada ?? previews[0],
+      newConfig.mensagemChamada ?? previews[1],
+      newConfig.mensagemRemovido ?? previews[2],
+    ];
+    setPreviews(updatedPreviews);
+    console.log("Previews atualizados após salvamento:", updatedPreviews);
   };
 
   return {

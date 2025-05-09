@@ -34,14 +34,14 @@
 
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FilaItem, StatusType } from "@/features/fila/components/types/types";
+import { FilaItem, Status } from "@/features/fila/components/types/types";
 
 export function padraoCliente(cliente: any): FilaItem {
   const dataHoraCriado = cliente.dataHoraCriado;
 
   return {
     ...cliente,
-    status: cliente.status as StatusType,
+    status: cliente.status as Status,
     tempo: formatDistanceToNowStrict(parseISO(dataHoraCriado), {
       locale: ptBR,
       addSuffix: true,
