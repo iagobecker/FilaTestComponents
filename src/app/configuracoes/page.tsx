@@ -115,6 +115,7 @@ export default function ConfiguracoesPage() {
             icon={<MessageCircle className="size-6 text-green-600" />}
             bgColor="bg-green-100"
             borderColor="border-green-200"
+            //href={user?.empresaId ? `/ativaWhatsapp/${user.empresaId}` : "#"}
             href="/ativaWhatsapp"
           />
 

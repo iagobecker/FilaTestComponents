@@ -522,6 +522,7 @@ export function FilaTable({ data, }: FilaTableProps) {
           )}
         </FilaContainer>
       </div>
+      
       {showModal && (
         <Modal open={showModal} onClose={handleCloseModal}>
           <div className="max-w-sm p-1 space-y-4 text-left">
